@@ -270,6 +270,17 @@ const en: typeof ar = {
     recurring: 'Recurring event',
     audience: 'Audience',
     publish: 'Publish event',
+    categories: {
+      football: 'Football',
+      padel: 'Padel',
+      walking: 'Walking',
+      cleanup: 'Cleanup',
+      coffee: 'Coffee',
+      iftar: 'Iftar',
+      kids: 'Kids',
+      family: 'Family',
+      community: 'Community',
+    },
   },
   discover: {
     title: 'Discover',

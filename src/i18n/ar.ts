@@ -268,6 +268,17 @@ const ar = {
     recurring: 'فعالية متكررة',
     audience: 'الجمهور',
     publish: 'نشر الفعالية',
+    categories: {
+      football: 'كرة قدم',
+      padel: 'بادل',
+      walking: 'مشي',
+      cleanup: 'تنظيف',
+      coffee: 'قهوة',
+      iftar: 'إفطار',
+      kids: 'أطفال',
+      family: 'عائلي',
+      community: 'مجتمعي',
+    },
   },
   discover: {
     title: 'استكشف',
