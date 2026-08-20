@@ -6,7 +6,7 @@ import { Calendar, MapPin, MessageCircle, Share2, Users } from 'lucide-react-nat
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, CURRENT_USER_ID } from '@/store/useStore';
-import { displayName, formatClock, formatDay } from '@/utils/format';
+import { formatClock, formatDay } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 import { messageService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';

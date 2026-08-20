@@ -9,7 +9,6 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { eventService } from '@/services';
 import { useAsync } from '@/hooks/useAsync';
-import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { SectionHeader } from '@/components/SectionHeader';
 import { EmptyState } from '@/components/EmptyState';

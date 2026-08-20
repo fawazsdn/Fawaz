@@ -13,14 +13,6 @@ export function formatDistance(meters: number, locale: Locale): string {
   return locale === 'ar' ? `${km} كم` : `${km} km`;
 }
 
-const AR_UNITS: [number, string, string][] = [
-  [60, 'الآن', 'الآن'],
-  [3600, 'د', 'دقيقة'],
-  [86400, 'س', 'ساعة'],
-  [2592000, 'ي', 'يوم'],
-  [31536000, 'ش', 'شهر'],
-];
-
 export function formatRelativeTime(iso: string, locale: Locale): string {
   const diffSec = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
   if (locale === 'en') {

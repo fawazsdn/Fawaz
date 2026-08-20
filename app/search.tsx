@@ -6,7 +6,6 @@ import { Clock, SearchX } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
-import { displayName } from '@/utils/format';
 import { AppHeader } from '@/components/AppHeader';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterBar } from '@/components/FilterBar';

@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { MapPin } from 'lucide-react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { MapPin as MapPinIcon } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 
@@ -63,7 +63,7 @@ export function MapPlaceholder({ centerLat, centerLng, pins = [], onPressPin, he
             accessibilityLabel={pin.label ?? 'map pin'}
           >
             <View style={[styles.pinBubble, { backgroundColor: pin.color ?? theme.colors.danger }]}>
-              <MapPin size={12} color="#fff" fill={pin.color ?? theme.colors.danger} />
+              <MapPinIcon size={12} color="#fff" fill={pin.color ?? theme.colors.danger} />
             </View>
           </Pressable>
         );

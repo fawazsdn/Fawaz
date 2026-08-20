@@ -6,7 +6,6 @@ import { ImagePlus, X } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
 import { postService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
@@ -19,8 +18,6 @@ export default function CreatePostScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
-  const user = useStore((s) => s.currentUser());
-
   const [text, setText] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [category, setCategory] = useState<PostType>('general');

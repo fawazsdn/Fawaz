@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Map as MapIcon } from 'lucide-react-native';
+import { Map as MapIcon, Sparkles } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
@@ -14,6 +14,7 @@ import { EventCard } from '@/features/events/EventCard';
 import { MarketplaceCard } from '@/features/marketplace/MarketplaceCard';
 import { HelpRequestCard } from '@/features/help/HelpRequestCard';
 import { PostCard } from '@/features/feed/PostCard';
+import { LostFoundCard } from '@/features/lostFound/LostFoundCard';
 
 export default function DiscoverScreen() {
   const theme = useTheme();
@@ -26,6 +27,7 @@ export default function DiscoverScreen() {
   const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3));
   const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4));
   const helpRequests = useStore((s) => s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3));
+  const lostFound = useStore((s) => s.lostFound.filter((l) => l.neighborhoodId === neighborhoodId && l.status !== 'reunited').slice(0, 3));
   const trendingPosts = useStore((s) =>
     [...s.posts]
       .filter((p) => p.neighborhoodId === neighborhoodId)
@@ -47,13 +49,22 @@ export default function DiscoverScreen() {
         </Pressable>
       </View>
 
-      <Pressable
-        onPress={() => router.push('/map')}
-        style={{ marginHorizontal: theme.spacing.md, marginBottom: 20, backgroundColor: theme.colors.primary, borderRadius: theme.radii.lg, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
-      >
-        <MapIcon size={20} color={theme.colors.onPrimary} />
-        <Text style={theme.text('title', theme.colors.onPrimary)}>{t.discover.map}</Text>
-      </Pressable>
+      <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: theme.spacing.md, marginBottom: 20 }}>
+        <Pressable
+          onPress={() => router.push('/map')}
+          style={{ flex: 1, backgroundColor: theme.colors.primary, borderRadius: theme.radii.lg, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+        >
+          <MapIcon size={20} color={theme.colors.onPrimary} />
+          <Text style={theme.text('title', theme.colors.onPrimary)}>{t.discover.map}</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/assistant')}
+          style={{ flex: 1, backgroundColor: theme.colors.secondary, borderRadius: theme.radii.lg, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+        >
+          <Sparkles size={20} color={theme.colors.onSecondary} />
+          <Text style={theme.text('title', theme.colors.onSecondary)}>{t.assistant.title}</Text>
+        </Pressable>
+      </View>
 
       <Section title={t.discover.events} onSeeAll={() => router.push('/(tabs)/events')}>
         {events.length === 0 ? (
@@ -107,6 +118,18 @@ export default function DiscoverScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: theme.spacing.md, gap: 12 }}>
             {listings.map((l) => (
               <MarketplaceCard key={l.id} listing={l} />
+            ))}
+          </View>
+        )}
+      </Section>
+
+      <Section title={t.lostFound.title} onSeeAll={() => router.push('/lost-found')}>
+        {lostFound.length === 0 ? (
+          <EmptyState title={t.emptyStates.noResults} compact />
+        ) : (
+          <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
+            {lostFound.map((l) => (
+              <LostFoundCard key={l.id} item={l} />
             ))}
           </View>
         )}

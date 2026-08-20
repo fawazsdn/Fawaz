@@ -36,7 +36,6 @@ export default function MapScreen() {
     if (layers.services) businesses.forEach((b, idx) => list.push({ id: b.id, lat: neighborhood.centerLat + (idx % 3) * 0.002 - 0.002, lng: neighborhood.centerLng + Math.floor(idx / 3) * 0.002 - 0.002, color: theme.colors.info, label: b.name, route: `/business/${b.id}` }));
     if (layers.lostFound) lostFound.forEach((l, idx) => list.push({ id: l.id, lat: neighborhood.centerLat - (idx % 3) * 0.0015, lng: neighborhood.centerLng - Math.floor(idx / 3) * 0.0015, color: theme.colors.danger, label: l.title, route: `/lost-found/${l.id}` }));
     return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [neighborhood, events, issues, businesses, lostFound, layers, theme]);
 
   if (!neighborhood) return null;

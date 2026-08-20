@@ -78,6 +78,9 @@ export default function SettingsScreen() {
 
         <SectionLabel title={t.settings.demoModeTitle} />
         <Row icon={Shield} label={t.settings.demoRole} value={t.roles[settings.demoRole]} onPress={() => setSheet('role')} Chevron={Chevron} />
+        {settings.demoRole === 'moderator' ? (
+          <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} />
+        ) : null}
         <Row icon={RotateCcw} label={t.settings.resetDemoData} onPress={() => setResetOpen(true)} Chevron={Chevron} />
 
         <SectionLabel title={t.settings.accountActions} />

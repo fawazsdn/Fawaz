@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Plus, ShoppingBag } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus, ShoppingBag, Wrench } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
@@ -16,8 +16,9 @@ import type { ListingType } from '@/models';
 
 export default function MarketplaceScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, isRTL } = useI18n();
   const router = useRouter();
+  const Chevron = isRTL ? ChevronLeft : ChevronRight;
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
   const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
 
@@ -43,6 +44,23 @@ export default function MarketplaceScreen() {
       <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 10 }}>
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.common.search} />
       </View>
+      <Pressable
+        onPress={() => router.push('/borrow')}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          marginHorizontal: theme.spacing.md,
+          marginBottom: 10,
+          padding: 12,
+          backgroundColor: theme.colors.backgroundAlt,
+          borderRadius: theme.radii.md,
+        }}
+      >
+        <Wrench size={16} color={theme.colors.primary} />
+        <Text style={[theme.text('bodySmall'), { flex: 1 }]}>{t.borrow.title}</Text>
+        <Chevron size={16} color={theme.colors.textMuted} />
+      </Pressable>
       <View style={{ marginBottom: 10 }}>
         <FilterBar
           options={[

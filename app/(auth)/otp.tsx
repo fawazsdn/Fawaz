@@ -21,7 +21,7 @@ export default function OtpScreen() {
   const [error, setError] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [countdown, setCountdown] = useState(30);
-  const inputs = useRef<Array<TextInput | null>>([]);
+  const inputs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
     if (countdown <= 0) return;

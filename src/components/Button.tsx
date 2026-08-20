@@ -96,7 +96,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       ) : (
         <>
           {icon}
-          <Text style={[theme.text('button', textColor), icon || trailingIcon ? styles.withIconGap : undefined]} numberOfLines={1}>
+          <Text style={[theme.text('button', textColor), { fontSize }, icon || trailingIcon ? styles.withIconGap : undefined]} numberOfLines={1}>
             {label}
           </Text>
           {trailingIcon}

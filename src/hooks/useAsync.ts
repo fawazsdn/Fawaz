@@ -37,7 +37,6 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
       .catch((error: Error) => {
         if (mounted.current) setState((s) => ({ ...s, loading: false, refreshing: false, error }));
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
