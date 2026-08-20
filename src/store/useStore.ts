@@ -11,6 +11,7 @@ import type {
   City,
   Comment,
   CommunityEvent,
+  CommunityGroup,
   Conversation,
   DemoRole,
   HelpRequest,
@@ -82,6 +83,7 @@ interface AppState {
   notifications: AppNotification[];
   institutions: Institution[];
   alerts: AlertItem[];
+  communityGroups: CommunityGroup[];
   reputationEvents: ReputationEvent[];
   blockedUserIds: string[];
   mutedUserIds: string[];
@@ -160,6 +162,9 @@ interface AppState {
   moderateReport: (reportId: string, status: 'reviewed' | 'dismissed' | 'actioned') => void;
   removeContent: (targetType: ReportTargetType, targetId: string) => void;
 
+  toggleAlertFollow: (alertId: string) => void;
+  toggleAlertHelpful: (alertId: string) => void;
+
   addSearchHistory: (query: string) => void;
   clearSearchHistory: () => void;
 }
@@ -207,6 +212,7 @@ function freshEntities() {
     notifications: structuredClone(seed.NOTIFICATIONS) as AppNotification[],
     institutions: structuredClone(seed.INSTITUTIONS) as Institution[],
     alerts: structuredClone(seed.ALERTS) as AlertItem[],
+    communityGroups: structuredClone(seed.COMMUNITY_GROUPS) as CommunityGroup[],
     reputationEvents: structuredClone(seed.REPUTATION_EVENTS) as ReputationEvent[],
     blockedUserIds: [] as string[],
     mutedUserIds: [] as string[],
@@ -549,6 +555,23 @@ export const useStore = create<AppState>()(
           if (targetType === 'listing') return { marketplaceListings: s.marketplaceListings.filter((m) => m.id !== targetId) };
           return {};
         }),
+
+      toggleAlertFollow: (alertId) =>
+        set((s) => ({
+          alerts: s.alerts.map((a) => {
+            if (a.id !== alertId) return a;
+            const following = a.followerIds.includes(CURRENT_USER_ID);
+            return { ...a, followerIds: following ? a.followerIds.filter((id) => id !== CURRENT_USER_ID) : [...a.followerIds, CURRENT_USER_ID] };
+          }),
+        })),
+      toggleAlertHelpful: (alertId) =>
+        set((s) => ({
+          alerts: s.alerts.map((a) => {
+            if (a.id !== alertId) return a;
+            const helpful = a.helpfulBy.includes(CURRENT_USER_ID);
+            return { ...a, helpfulBy: helpful ? a.helpfulBy.filter((id) => id !== CURRENT_USER_ID) : [...a.helpfulBy, CURRENT_USER_ID] };
+          }),
+        })),
 
       addSearchHistory: (query) =>
         set((s) => ({ searchHistory: [query, ...s.searchHistory.filter((q) => q !== query)].slice(0, 10) })),

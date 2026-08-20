@@ -400,6 +400,14 @@ export interface Report {
   status: 'open' | 'reviewed' | 'dismissed' | 'actioned';
 }
 
+export interface CommunityGroup {
+  id: string;
+  name: string;
+  description: string;
+  neighborhoodId: string;
+  memberCount: number;
+}
+
 export interface AlertItem {
   id: string;
   titleAr: string;

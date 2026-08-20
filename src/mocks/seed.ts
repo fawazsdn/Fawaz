@@ -4,6 +4,7 @@ import type {
   City,
   Comment,
   CommunityEvent,
+  CommunityGroup,
   Conversation,
   HelpRequest,
   Institution,
@@ -1126,6 +1127,12 @@ export const ALERTS: AlertItem[] = [
     followerIds: [],
     helpfulBy: ['u5'],
   },
+];
+
+export const COMMUNITY_GROUPS: CommunityGroup[] = [
+  { id: 'g1', name: 'لجنة الحي', description: 'مجموعة تنسيق بين سكان الحي واللجنة المسؤولة عن القرارات المشتركة.', neighborhoodId: 'n1', memberCount: 48 },
+  { id: 'g2', name: 'مجموعة الدعم الأسري', description: 'تبادل الدعم والمساعدة بين العائلات في الحي.', neighborhoodId: 'n1', memberCount: 63 },
+  { id: 'g3', name: 'نادي المشي الصباحي', description: 'لقاء يومي للمشي في الحديقة المركزية الساعة 6 صباحًا.', neighborhoodId: 'n1', memberCount: 27 },
 ];
 
 export const REPUTATION_EVENTS: ReputationEvent[] = [
