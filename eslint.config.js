@@ -1,5 +1,6 @@
 // https://docs.expo.dev/guides/using-eslint/
 const expoConfig = require('eslint-config-expo/flat');
+const globals = require('globals');
 
 module.exports = [
   ...expoConfig,
@@ -17,6 +18,12 @@ module.exports = [
       'react-hooks/purity': 'off',
       'react-hooks/refs': 'off',
       'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+  {
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', 'jest.setup.js'],
+    languageOptions: {
+      globals: globals.jest,
     },
   },
 ];
