@@ -182,6 +182,11 @@ const en: typeof ar = {
     deletePostConfirm: 'Delete this post?',
     postDeleted: 'Post deleted',
     reportReasonTitle: 'Reason for reporting',
+    categories: {
+      general: 'General',
+      announcement: 'Announcement',
+      recommendation: 'Recommendation',
+    },
   },
   issueCreate: {
     title: 'Report an issue',

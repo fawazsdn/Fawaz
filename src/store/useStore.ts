@@ -132,6 +132,7 @@ interface AppState {
   cancelEvent: (eventId: string) => void;
 
   voteInPoll: (pollId: string, optionId: string) => void;
+  createPoll: (input: { question: string; options: string[]; closesInHours: number }) => Poll;
 
   createListing: (input: Omit<MarketplaceListing, 'id' | 'sellerId' | 'createdAt' | 'savedBy' | 'status'>) => MarketplaceListing;
   toggleSaveListing: (listingId: string) => void;
@@ -428,6 +429,36 @@ export const useStore = create<AppState>()(
             return { ...p, options: p.options.map((o) => (o.id === optionId ? { ...o, votes: [...o.votes, CURRENT_USER_ID] } : o)) };
           }),
         })),
+
+      createPoll: ({ question, options, closesInHours }) => {
+        const s = get();
+        const neighborhoodId = s.session.neighborhoodId ?? s.currentUser().neighborhoodId;
+        const poll: Poll = {
+          id: uid('poll'),
+          postId: '',
+          question,
+          options: options.map((textAr) => ({ id: uid('o'), textAr, votes: [] })),
+          closesAt: new Date(Date.now() + closesInHours * 3600 * 1000).toISOString(),
+          neighborhoodId,
+        };
+        const post: Post = {
+          id: uid('p'),
+          type: 'poll',
+          authorId: CURRENT_USER_ID,
+          neighborhoodId,
+          textAr: question,
+          images: [],
+          createdAt: new Date().toISOString(),
+          reactions: [],
+          commentCount: 0,
+          savedBy: [],
+          linkedEntityId: poll.id,
+          audience: 'neighborhood',
+        };
+        poll.postId = post.id;
+        set((st) => ({ polls: [poll, ...st.polls], posts: [post, ...st.posts] }));
+        return poll;
+      },
 
       createListing: (input) => {
         const listing: MarketplaceListing = { ...input, id: uid('m'), sellerId: CURRENT_USER_ID, createdAt: new Date().toISOString(), savedBy: [], status: 'available' };

@@ -180,6 +180,11 @@ const ar = {
     deletePostConfirm: 'هل تريد حذف هذا المنشور؟',
     postDeleted: 'تم حذف المنشور',
     reportReasonTitle: 'سبب الإبلاغ',
+    categories: {
+      general: 'عام',
+      announcement: 'إعلان',
+      recommendation: 'توصية',
+    },
   },
   issueCreate: {
     title: 'الإبلاغ عن مشكلة',
