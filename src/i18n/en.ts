@@ -377,6 +377,7 @@ const en: typeof ar = {
       for_parts: 'For parts',
     },
     posted: 'Posted',
+    priceLabel: 'Price (SAR)',
   },
   borrow: {
     title: 'Borrow from a neighbor',

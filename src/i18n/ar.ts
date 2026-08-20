@@ -375,6 +375,7 @@ const ar = {
       for_parts: 'لقطع الغيار',
     },
     posted: 'نُشر',
+    priceLabel: 'السعر (ر.س)',
   },
   borrow: {
     title: 'استعارة من الجيران',
