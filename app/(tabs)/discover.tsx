@@ -1,0 +1,146 @@
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Map as MapIcon } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTheme } from '@/theme/useTheme';
+import { useI18n } from '@/i18n/useI18n';
+import { useStore } from '@/store/useStore';
+import { SearchBar } from '@/components/SearchBar';
+import { SectionHeader } from '@/components/SectionHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { IssueCard } from '@/features/issues/IssueCard';
+import { EventCard } from '@/features/events/EventCard';
+import { MarketplaceCard } from '@/features/marketplace/MarketplaceCard';
+import { HelpRequestCard } from '@/features/help/HelpRequestCard';
+import { PostCard } from '@/features/feed/PostCard';
+
+export default function DiscoverScreen() {
+  const theme = useTheme();
+  const { t } = useI18n();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const neighborhoodId = useStore((s) => s.session.neighborhoodId);
+
+  const events = useStore((s) => s.events.filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled).slice(0, 4));
+  const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3));
+  const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4));
+  const helpRequests = useStore((s) => s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3));
+  const trendingPosts = useStore((s) =>
+    [...s.posts]
+      .filter((p) => p.neighborhoodId === neighborhoodId)
+      .sort((a, b) => b.reactions.length + b.commentCount - (a.reactions.length + a.commentCount))
+      .slice(0, 3),
+  );
+  const businesses = useStore((s) => [...s.businesses].filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? '')).sort((a, b) => b.recommendationCount - a.recommendationCount).slice(0, 4));
+
+  if (!neighborhoodId) return null;
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ paddingBottom: 100 }}>
+      <View style={{ paddingTop: insets.top + 10, paddingHorizontal: theme.spacing.md, marginBottom: 12 }}>
+        <Text style={[theme.text('heading1'), { marginBottom: 12 }]}>{t.discover.title}</Text>
+        <Pressable onPress={() => router.push('/search')} accessibilityRole="button">
+          <View pointerEvents="none">
+            <SearchBar value="" onChangeText={() => {}} placeholder={t.discover.searchPlaceholder} />
+          </View>
+        </Pressable>
+      </View>
+
+      <Pressable
+        onPress={() => router.push('/map')}
+        style={{ marginHorizontal: theme.spacing.md, marginBottom: 20, backgroundColor: theme.colors.primary, borderRadius: theme.radii.lg, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+      >
+        <MapIcon size={20} color={theme.colors.onPrimary} />
+        <Text style={theme.text('title', theme.colors.onPrimary)}>{t.discover.map}</Text>
+      </Pressable>
+
+      <Section title={t.discover.events} onSeeAll={() => router.push('/(tabs)/events')}>
+        {events.length === 0 ? (
+          <EmptyState title={t.emptyStates.noEvents} compact />
+        ) : (
+          <HorizontalList items={events} render={(e) => <EventCard event={e} compact />} width={220} />
+        )}
+      </Section>
+
+      <Section title={t.discover.trending}>
+        {trendingPosts.length === 0 ? (
+          <EmptyState title={t.emptyStates.noPosts} compact />
+        ) : (
+          <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
+            {trendingPosts.map((p) => (
+              <PostCard key={p.id} post={p} />
+            ))}
+          </View>
+        )}
+      </Section>
+
+      <Section title={t.discover.issuesAround} onSeeAll={() => router.push('/(tabs)/community')}>
+        {issues.length === 0 ? (
+          <EmptyState title={t.emptyStates.noIssues} compact />
+        ) : (
+          <HorizontalList items={issues} render={(i) => <IssueCard issue={i} />} width={260} />
+        )}
+      </Section>
+
+      <Section title={t.discover.services}>
+        {businesses.length === 0 ? (
+          <EmptyState title={t.emptyStates.noResults} compact />
+        ) : (
+          <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
+            {businesses.map((b) => (
+              <Pressable key={b.id} onPress={() => router.push(`/business/${b.id}`)} style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radii.md, padding: 14 }}>
+                <Text style={theme.text('title')}>{b.name}</Text>
+                <Text style={theme.text('caption', theme.colors.textMuted)}>
+                  {t.recommendations.recommendedBy} {b.recommendationCount} {t.recommendations.neighbors}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </Section>
+
+      <Section title={t.discover.marketplace} onSeeAll={() => router.push('/marketplace')}>
+        {listings.length === 0 ? (
+          <EmptyState title={t.emptyStates.noMarketplace} compact />
+        ) : (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: theme.spacing.md, gap: 12 }}>
+            {listings.map((l) => (
+              <MarketplaceCard key={l.id} listing={l} />
+            ))}
+          </View>
+        )}
+      </Section>
+
+      <Section title={t.discover.requests}>
+        {helpRequests.length === 0 ? (
+          <EmptyState title={t.emptyStates.noResults} compact />
+        ) : (
+          <HorizontalList items={helpRequests} render={(h) => <HelpRequestCard request={h} />} width={240} />
+        )}
+      </Section>
+    </ScrollView>
+  );
+}
+
+function Section({ title, onSeeAll, children }: { title: string; onSeeAll?: () => void; children: React.ReactNode }) {
+  return (
+    <View style={{ marginBottom: 22 }}>
+      <SectionHeader title={title} onSeeAll={onSeeAll} />
+      {children}
+    </View>
+  );
+}
+
+function HorizontalList<T extends { id: string }>({ items, render, width }: { items: T[]; render: (item: T) => React.ReactNode; width: number }) {
+  const theme = useTheme();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+      {items.map((item) => (
+        <View key={item.id} style={{ width }}>
+          {render(item)}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
