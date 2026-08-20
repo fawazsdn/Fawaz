@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "حارتنا",
+    "slug": "haratna",
+    "scheme": "haratna",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "primaryColor": "#1F5D45",
+    "backgroundColor": "#FAF6EF",
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAF6EF",
+          "image": "./assets/icon.png",
+          "imageWidth": 140
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "sa.haratna.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "حارتنا يستخدم الصور لمشاركة المنشورات والفعاليات مع جيرانك.",
+        "NSCameraUsageDescription": "حارتنا يستخدم الكاميرا لالتقاط صور للمنشورات والبلاغات.",
+        "NSLocationWhenInUseUsageDescription": "حارتنا يستخدم موقعك التقريبي لعرض حيّك ومحتواه."
+      }
+    },
+    "android": {
+      "package": "sa.haratna.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static"
+    }
+  }
+}
