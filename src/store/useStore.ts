@@ -145,6 +145,7 @@ interface AppState {
   markLostFoundStatus: (id: string, status: LostFoundPost['status']) => void;
 
   sendMessage: (conversationId: string, text: string, image?: string) => Message;
+  simulateIncomingMessage: (conversationId: string, senderId: string, text: string) => Message;
   getOrCreateConversation: (otherUserId: string) => Conversation;
   markConversationRead: (conversationId: string) => void;
 
@@ -498,6 +499,14 @@ export const useStore = create<AppState>()(
 
       sendMessage: (conversationId, text, image) => {
         const message: Message = { id: uid('msg'), conversationId, senderId: CURRENT_USER_ID, text, image, createdAt: new Date().toISOString(), readBy: [CURRENT_USER_ID] };
+        set((s) => ({
+          messages: [...s.messages, message],
+          conversations: s.conversations.map((c) => (c.id === conversationId ? { ...c, lastMessageAt: message.createdAt } : c)),
+        }));
+        return message;
+      },
+      simulateIncomingMessage: (conversationId, senderId, text) => {
+        const message: Message = { id: uid('msg'), conversationId, senderId, text, createdAt: new Date().toISOString(), readBy: [senderId] };
         set((s) => ({
           messages: [...s.messages, message],
           conversations: s.conversations.map((c) => (c.id === conversationId ? { ...c, lastMessageAt: message.createdAt } : c)),
