@@ -3,11 +3,14 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { profileService } from '@/services';
+import { profileSchema, type ProfileFormValues } from '@/models/schemas';
 import type { NamePrivacy } from '@/models';
 import { AppHeader } from '@/components/AppHeader';
 import { Avatar } from '@/components/Avatar';
@@ -20,12 +23,22 @@ export default function EditProfileScreen() {
   const user = useStore((s) => s.currentUser());
   const createProfile = useStore((s) => s.createProfile);
 
-  const [firstName, setFirstName] = useState(user.firstName);
-  const [lastName, setLastName] = useState(user.lastName);
-  const [bio, setBio] = useState(user.bio ?? '');
-  const [namePrivacy, setNamePrivacy] = useState<NamePrivacy>(user.namePrivacy);
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
   const [saving, setSaving] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    mode: 'onChange',
+    defaultValues: { firstName: user.firstName, lastName: user.lastName, bio: user.bio ?? '', namePrivacy: user.namePrivacy },
+  });
+
+  const firstName = watch('firstName');
+  const namePrivacy = watch('namePrivacy');
 
   const options: { key: NamePrivacy; label: string }[] = [
     { key: 'full', label: t.profileSetup.displayFull },
@@ -40,16 +53,17 @@ export default function EditProfileScreen() {
     if (!result.canceled && result.assets[0]) setAvatarUrl(result.assets[0].uri);
   };
 
-  const onSave = async () => {
+  const onSave = async (values: ProfileFormValues) => {
     setSaving(true);
-    await profileService.updateProfile({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      namePrivacy,
-      bio: bio.trim() || undefined,
+    const input = {
+      firstName: values.firstName.trim(),
+      lastName: (values.lastName ?? '').trim(),
+      namePrivacy: values.namePrivacy,
+      bio: values.bio?.trim() || undefined,
       avatarUrl,
-    });
-    createProfile({ firstName: firstName.trim(), lastName: lastName.trim(), namePrivacy, bio: bio.trim() || undefined, avatarUrl });
+    };
+    await profileService.updateProfile(input);
+    createProfile(input);
     setSaving(false);
     router.back();
   };
@@ -65,61 +79,91 @@ export default function EditProfileScreen() {
           </View>
         </Pressable>
 
-        <Field label={t.profileSetup.firstName}>
-          <TextInput value={firstName} onChangeText={setFirstName} style={fieldStyle(theme)} />
+        <Field label={t.profileSetup.firstName} error={errors.firstName?.message}>
+          <Controller
+            control={control}
+            name="firstName"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextInput value={value} onChangeText={onChange} onBlur={onBlur} style={fieldStyle(theme, !!errors.firstName)} />
+            )}
+          />
         </Field>
         <Field label={t.profileSetup.lastNameOptional}>
-          <TextInput value={lastName} onChangeText={setLastName} style={fieldStyle(theme)} />
+          <Controller
+            control={control}
+            name="lastName"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextInput value={value} onChangeText={onChange} onBlur={onBlur} style={fieldStyle(theme, false)} />
+            )}
+          />
         </Field>
         <Field label={t.profileSetup.bio}>
-          <TextInput
-            value={bio}
-            onChangeText={setBio}
-            multiline
-            style={[fieldStyle(theme), { height: 84, textAlignVertical: 'top', paddingTop: 12 }]}
+          <Controller
+            control={control}
+            name="bio"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextInput
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                multiline
+                style={[fieldStyle(theme, false), { height: 84, textAlignVertical: 'top', paddingTop: 12 }]}
+              />
+            )}
           />
         </Field>
 
         <Text style={[theme.text('title'), { marginBottom: 10 }]}>{t.profileSetup.displayPreference}</Text>
-        <View style={{ gap: 8 }}>
-          {options.map((opt) => (
-            <Pressable
-              key={opt.key}
-              onPress={() => setNamePrivacy(opt.key)}
-              style={[theme.row(), styles.radioRow, { borderColor: namePrivacy === opt.key ? theme.colors.primary : theme.colors.border }]}
-            >
-              <View style={[styles.radioDot, { borderColor: namePrivacy === opt.key ? theme.colors.primary : theme.colors.border }]}>
-                {namePrivacy === opt.key ? <View style={[styles.radioInner, { backgroundColor: theme.colors.primary }]} /> : null}
-              </View>
-              <Text style={theme.text('body')}>{opt.label}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <Controller
+          control={control}
+          name="namePrivacy"
+          render={({ field: { onChange } }) => (
+            <View style={{ gap: 8 }}>
+              {options.map((opt) => (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => onChange(opt.key)}
+                  style={[
+                    theme.row(),
+                    styles.radioRow,
+                    { borderColor: namePrivacy === opt.key ? theme.colors.primary : theme.colors.border },
+                  ]}
+                >
+                  <View style={[styles.radioDot, { borderColor: namePrivacy === opt.key ? theme.colors.primary : theme.colors.border }]}>
+                    {namePrivacy === opt.key ? <View style={[styles.radioInner, { backgroundColor: theme.colors.primary }]} /> : null}
+                  </View>
+                  <Text style={theme.text('body')}>{opt.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        />
 
         <View style={{ height: 24 }} />
-        <Button label={t.common.save} onPress={onSave} loading={saving} fullWidth size="lg" />
+        <Button label={t.common.save} onPress={handleSubmit(onSave)} disabled={!isValid} loading={saving} fullWidth size="lg" />
       </View>
     </View>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   const theme = useTheme();
   return (
     <View style={{ marginBottom: 16 }}>
       <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginBottom: 6 }]}>{label}</Text>
       {children}
+      {error ? <Text style={[theme.text('caption', theme.colors.danger), { marginTop: 4 }]}>{error}</Text> : null}
     </View>
   );
 }
 
-function fieldStyle(theme: ReturnType<typeof useTheme>) {
+function fieldStyle(theme: ReturnType<typeof useTheme>, hasError: boolean) {
   return [
     theme.text('body'),
     {
       height: 50,
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.border,
+      borderColor: hasError ? theme.colors.danger : theme.colors.border,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radii.md,
       paddingHorizontal: 14,
