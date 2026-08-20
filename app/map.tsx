@@ -24,17 +24,49 @@ export default function MapScreen() {
   const businesses = useStore((s) => s.businesses.filter((b) => b.neighborhoodIds.includes(neighborhood?.id ?? '')));
   const lostFound = useStore((s) => s.lostFound.filter((l) => l.neighborhoodId === neighborhood?.id && l.status !== 'reunited'));
 
-  const [layers, setLayers] = useState<Record<LayerKey, boolean>>({ events: true, issues: true, marketplace: false, services: false, lostFound: true });
+  const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
+    events: true,
+    issues: true,
+    marketplace: false,
+    services: false,
+    lostFound: true,
+  });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedPin, setSelectedPin] = useState<{ label: string; route: string } | null>(null);
 
   const pins: (MapPin & { route: string })[] = useMemo(() => {
     if (!neighborhood) return [];
     const list: (MapPin & { route: string })[] = [];
-    if (layers.events) events.forEach((e) => list.push({ id: e.id, lat: e.approxLat, lng: e.approxLng, color: theme.colors.primary, label: e.title, route: `/event/${e.id}` }));
-    if (layers.issues) issues.forEach((i) => list.push({ id: i.id, lat: i.approxLat, lng: i.approxLng, color: theme.colors.warning, label: i.title, route: `/issue/${i.id}` }));
-    if (layers.services) businesses.forEach((b, idx) => list.push({ id: b.id, lat: neighborhood.centerLat + (idx % 3) * 0.002 - 0.002, lng: neighborhood.centerLng + Math.floor(idx / 3) * 0.002 - 0.002, color: theme.colors.info, label: b.name, route: `/business/${b.id}` }));
-    if (layers.lostFound) lostFound.forEach((l, idx) => list.push({ id: l.id, lat: neighborhood.centerLat - (idx % 3) * 0.0015, lng: neighborhood.centerLng - Math.floor(idx / 3) * 0.0015, color: theme.colors.danger, label: l.title, route: `/lost-found/${l.id}` }));
+    if (layers.events)
+      events.forEach((e) =>
+        list.push({ id: e.id, lat: e.approxLat, lng: e.approxLng, color: theme.colors.primary, label: e.title, route: `/event/${e.id}` }),
+      );
+    if (layers.issues)
+      issues.forEach((i) =>
+        list.push({ id: i.id, lat: i.approxLat, lng: i.approxLng, color: theme.colors.warning, label: i.title, route: `/issue/${i.id}` }),
+      );
+    if (layers.services)
+      businesses.forEach((b, idx) =>
+        list.push({
+          id: b.id,
+          lat: neighborhood.centerLat + (idx % 3) * 0.002 - 0.002,
+          lng: neighborhood.centerLng + Math.floor(idx / 3) * 0.002 - 0.002,
+          color: theme.colors.info,
+          label: b.name,
+          route: `/business/${b.id}`,
+        }),
+      );
+    if (layers.lostFound)
+      lostFound.forEach((l, idx) =>
+        list.push({
+          id: l.id,
+          lat: neighborhood.centerLat - (idx % 3) * 0.0015,
+          lng: neighborhood.centerLng - Math.floor(idx / 3) * 0.0015,
+          color: theme.colors.danger,
+          label: l.title,
+          route: `/lost-found/${l.id}`,
+        }),
+      );
     return list;
   }, [neighborhood, events, issues, businesses, lostFound, layers, theme]);
 
@@ -73,7 +105,9 @@ export default function MapScreen() {
           }}
         />
       </View>
-      <Text style={[theme.text('caption', theme.colors.textMuted), { textAlign: 'center', paddingVertical: 10 }]}>{t.map.approxNotice}</Text>
+      <Text style={[theme.text('caption', theme.colors.textMuted), { textAlign: 'center', paddingVertical: 10 }]}>
+        {t.map.approxNotice}
+      </Text>
 
       <BottomSheet visible={filtersOpen} onClose={() => setFiltersOpen(false)}>
         <View style={{ paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.md }}>

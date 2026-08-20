@@ -87,7 +87,15 @@ interface AppState {
   reputationEvents: ReputationEvent[];
   blockedUserIds: string[];
   mutedUserIds: string[];
-  reports: { id: string; targetType: ReportTargetType; targetId: string; reasonType: ReportReason; note?: string; createdAt: string; status: 'open' | 'reviewed' | 'dismissed' | 'actioned' }[];
+  reports: {
+    id: string;
+    targetType: ReportTargetType;
+    targetId: string;
+    reasonType: ReportReason;
+    note?: string;
+    createdAt: string;
+    status: 'open' | 'reviewed' | 'dismissed' | 'actioned';
+  }[];
   searchHistory: string[];
 
   // -- actions --
@@ -100,7 +108,13 @@ interface AppState {
   completeOnboarding: () => void;
   setPhone: (phone: string) => void;
   verifyOtp: () => void;
-  createProfile: (input: { firstName: string; lastName: string; namePrivacy: User['namePrivacy']; bio?: string; avatarUrl?: string }) => void;
+  createProfile: (input: {
+    firstName: string;
+    lastName: string;
+    namePrivacy: User['namePrivacy'];
+    bio?: string;
+    avatarUrl?: string;
+  }) => void;
   selectCity: (citySlug: string) => void;
   selectNeighborhood: (neighborhoodId: string) => void;
   setVerification: (status: VerificationStatus) => void;
@@ -143,7 +157,9 @@ interface AppState {
 
   recommendBusiness: (businessId: string, textAr: string) => void;
 
-  createLostFound: (input: Omit<LostFoundPost, 'id' | 'authorId' | 'createdAt' | 'status'> & { status?: LostFoundPost['status'] }) => LostFoundPost;
+  createLostFound: (
+    input: Omit<LostFoundPost, 'id' | 'authorId' | 'createdAt' | 'status'> & { status?: LostFoundPost['status'] },
+  ) => LostFoundPost;
   markLostFoundStatus: (id: string, status: LostFoundPost['status']) => void;
 
   sendMessage: (conversationId: string, text: string, image?: string) => Message;
@@ -246,9 +262,7 @@ export const useStore = create<AppState>()(
       createProfile: ({ firstName, lastName, namePrivacy, bio, avatarUrl }) =>
         set((s) => ({
           session: { ...s.session, profileCreated: true },
-          users: s.users.map((u) =>
-            u.id === CURRENT_USER_ID ? { ...u, firstName, lastName, namePrivacy, bio, avatarUrl } : u,
-          ),
+          users: s.users.map((u) => (u.id === CURRENT_USER_ID ? { ...u, firstName, lastName, namePrivacy, bio, avatarUrl } : u)),
         })),
       selectCity: (citySlug) => set((s) => ({ session: { ...s.session, citySlug, neighborhoodId: null } })),
       selectNeighborhood: (neighborhoodId) =>
@@ -370,7 +384,10 @@ export const useStore = create<AppState>()(
           issues: s.issues.map((i) => {
             if (i.id !== issueId) return i;
             const following = i.followerIds.includes(CURRENT_USER_ID);
-            return { ...i, followerIds: following ? i.followerIds.filter((id) => id !== CURRENT_USER_ID) : [...i.followerIds, CURRENT_USER_ID] };
+            return {
+              ...i,
+              followerIds: following ? i.followerIds.filter((id) => id !== CURRENT_USER_ID) : [...i.followerIds, CURRENT_USER_ID],
+            };
           }),
         })),
       setIssueStatus: (issueId, status, note) =>
@@ -380,7 +397,14 @@ export const useStore = create<AppState>()(
         })),
 
       createHelpRequest: (input) => {
-        const req: HelpRequest = { ...input, id: uid('h'), requesterId: CURRENT_USER_ID, createdAt: new Date().toISOString(), offeredBy: [], status: 'open' };
+        const req: HelpRequest = {
+          ...input,
+          id: uid('h'),
+          requesterId: CURRENT_USER_ID,
+          createdAt: new Date().toISOString(),
+          offeredBy: [],
+          status: 'open',
+        };
         set((s) => ({ helpRequests: [req, ...s.helpRequests] }));
         return req;
       },
@@ -396,7 +420,12 @@ export const useStore = create<AppState>()(
         set((s) => ({ helpRequests: s.helpRequests.map((h) => (h.id === helpRequestId ? { ...h, status: 'resolved' } : h)) })),
 
       createEvent: (input) => {
-        const event: CommunityEvent = { ...input, id: uid('e'), hostId: CURRENT_USER_ID, attendees: [{ userId: CURRENT_USER_ID, status: 'going', joinedAt: new Date().toISOString() }] };
+        const event: CommunityEvent = {
+          ...input,
+          id: uid('e'),
+          hostId: CURRENT_USER_ID,
+          attendees: [{ userId: CURRENT_USER_ID, status: 'going', joinedAt: new Date().toISOString() }],
+        };
         set((s) => ({ events: [event, ...s.events] }));
         return event;
       },
@@ -468,7 +497,14 @@ export const useStore = create<AppState>()(
       },
 
       createListing: (input) => {
-        const listing: MarketplaceListing = { ...input, id: uid('m'), sellerId: CURRENT_USER_ID, createdAt: new Date().toISOString(), savedBy: [], status: 'available' };
+        const listing: MarketplaceListing = {
+          ...input,
+          id: uid('m'),
+          sellerId: CURRENT_USER_ID,
+          createdAt: new Date().toISOString(),
+          savedBy: [],
+          status: 'available',
+        };
         set((s) => ({ marketplaceListings: [listing, ...s.marketplaceListings] }));
         return listing;
       },
@@ -492,19 +528,36 @@ export const useStore = create<AppState>()(
 
       recommendBusiness: (businessId, textAr) =>
         set((s) => ({
-          recommendations: [{ id: uid('r'), businessId, authorId: CURRENT_USER_ID, textAr, createdAt: new Date().toISOString(), sentiment: 'positive' }, ...s.recommendations],
+          recommendations: [
+            { id: uid('r'), businessId, authorId: CURRENT_USER_ID, textAr, createdAt: new Date().toISOString(), sentiment: 'positive' },
+            ...s.recommendations,
+          ],
           businesses: s.businesses.map((b) => (b.id === businessId ? { ...b, recommendationCount: b.recommendationCount + 1 } : b)),
         })),
 
       createLostFound: (input) => {
-        const post: LostFoundPost = { ...input, id: uid('lf'), authorId: CURRENT_USER_ID, createdAt: new Date().toISOString(), status: input.status ?? 'lost' };
+        const post: LostFoundPost = {
+          ...input,
+          id: uid('lf'),
+          authorId: CURRENT_USER_ID,
+          createdAt: new Date().toISOString(),
+          status: input.status ?? 'lost',
+        };
         set((s) => ({ lostFound: [post, ...s.lostFound] }));
         return post;
       },
       markLostFoundStatus: (id, status) => set((s) => ({ lostFound: s.lostFound.map((l) => (l.id === id ? { ...l, status } : l)) })),
 
       sendMessage: (conversationId, text, image) => {
-        const message: Message = { id: uid('msg'), conversationId, senderId: CURRENT_USER_ID, text, image, createdAt: new Date().toISOString(), readBy: [CURRENT_USER_ID] };
+        const message: Message = {
+          id: uid('msg'),
+          conversationId,
+          senderId: CURRENT_USER_ID,
+          text,
+          image,
+          createdAt: new Date().toISOString(),
+          readBy: [CURRENT_USER_ID],
+        };
         set((s) => ({
           messages: [...s.messages, message],
           conversations: s.conversations.map((c) => (c.id === conversationId ? { ...c, lastMessageAt: message.createdAt } : c)),
@@ -512,7 +565,14 @@ export const useStore = create<AppState>()(
         return message;
       },
       simulateIncomingMessage: (conversationId, senderId, text) => {
-        const message: Message = { id: uid('msg'), conversationId, senderId, text, createdAt: new Date().toISOString(), readBy: [senderId] };
+        const message: Message = {
+          id: uid('msg'),
+          conversationId,
+          senderId,
+          text,
+          createdAt: new Date().toISOString(),
+          readBy: [senderId],
+        };
         set((s) => ({
           messages: [...s.messages, message],
           conversations: s.conversations.map((c) => (c.id === conversationId ? { ...c, lastMessageAt: message.createdAt } : c)),
@@ -521,15 +581,25 @@ export const useStore = create<AppState>()(
       },
       getOrCreateConversation: (otherUserId) => {
         const s = get();
-        const existing = s.conversations.find((c) => !c.isGroup && c.participantIds.includes(otherUserId) && c.participantIds.includes(CURRENT_USER_ID));
+        const existing = s.conversations.find(
+          (c) => !c.isGroup && c.participantIds.includes(otherUserId) && c.participantIds.includes(CURRENT_USER_ID),
+        );
         if (existing) return existing;
-        const convo: Conversation = { id: uid('conv'), participantIds: [CURRENT_USER_ID, otherUserId], lastMessageAt: new Date().toISOString() };
+        const convo: Conversation = {
+          id: uid('conv'),
+          participantIds: [CURRENT_USER_ID, otherUserId],
+          lastMessageAt: new Date().toISOString(),
+        };
         set((st) => ({ conversations: [convo, ...st.conversations] }));
         return convo;
       },
       markConversationRead: (conversationId) =>
         set((s) => ({
-          messages: s.messages.map((m) => (m.conversationId === conversationId && !m.readBy.includes(CURRENT_USER_ID) ? { ...m, readBy: [...m.readBy, CURRENT_USER_ID] } : m)),
+          messages: s.messages.map((m) =>
+            m.conversationId === conversationId && !m.readBy.includes(CURRENT_USER_ID)
+              ? { ...m, readBy: [...m.readBy, CURRENT_USER_ID] }
+              : m,
+          ),
         })),
 
       markNotificationRead: (id) => set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
@@ -537,16 +607,37 @@ export const useStore = create<AppState>()(
 
       thankUser: (userId, reasonAr, message) =>
         set((s) => ({
-          reputationEvents: [{ id: uid('re'), userId, type: 'thanks', reasonAr: message ? `${reasonAr} — ${message}` : reasonAr, fromUserId: CURRENT_USER_ID, createdAt: new Date().toISOString() }, ...s.reputationEvents],
+          reputationEvents: [
+            {
+              id: uid('re'),
+              userId,
+              type: 'thanks',
+              reasonAr: message ? `${reasonAr} — ${message}` : reasonAr,
+              fromUserId: CURRENT_USER_ID,
+              createdAt: new Date().toISOString(),
+            },
+            ...s.reputationEvents,
+          ],
           users: s.users.map((u) => (u.id === userId ? { ...u, stats: { ...u.stats, thanksReceived: u.stats.thanksReceived + 1 } } : u)),
         })),
 
       toggleBlockUser: (userId) =>
-        set((s) => ({ blockedUserIds: s.blockedUserIds.includes(userId) ? s.blockedUserIds.filter((id) => id !== userId) : [...s.blockedUserIds, userId] })),
+        set((s) => ({
+          blockedUserIds: s.blockedUserIds.includes(userId)
+            ? s.blockedUserIds.filter((id) => id !== userId)
+            : [...s.blockedUserIds, userId],
+        })),
       toggleMuteUser: (userId) =>
-        set((s) => ({ mutedUserIds: s.mutedUserIds.includes(userId) ? s.mutedUserIds.filter((id) => id !== userId) : [...s.mutedUserIds, userId] })),
+        set((s) => ({
+          mutedUserIds: s.mutedUserIds.includes(userId) ? s.mutedUserIds.filter((id) => id !== userId) : [...s.mutedUserIds, userId],
+        })),
       submitReport: (targetType, targetId, reasonType, note) =>
-        set((s) => ({ reports: [{ id: uid('rep'), targetType, targetId, reasonType, note, createdAt: new Date().toISOString(), status: 'open' }, ...s.reports] })),
+        set((s) => ({
+          reports: [
+            { id: uid('rep'), targetType, targetId, reasonType, note, createdAt: new Date().toISOString(), status: 'open' },
+            ...s.reports,
+          ],
+        })),
       moderateReport: (reportId, status) => set((s) => ({ reports: s.reports.map((r) => (r.id === reportId ? { ...r, status } : r)) })),
       removeContent: (targetType, targetId) =>
         set((s) => {
@@ -561,7 +652,10 @@ export const useStore = create<AppState>()(
           alerts: s.alerts.map((a) => {
             if (a.id !== alertId) return a;
             const following = a.followerIds.includes(CURRENT_USER_ID);
-            return { ...a, followerIds: following ? a.followerIds.filter((id) => id !== CURRENT_USER_ID) : [...a.followerIds, CURRENT_USER_ID] };
+            return {
+              ...a,
+              followerIds: following ? a.followerIds.filter((id) => id !== CURRENT_USER_ID) : [...a.followerIds, CURRENT_USER_ID],
+            };
           }),
         })),
       toggleAlertHelpful: (alertId) =>
@@ -573,8 +667,7 @@ export const useStore = create<AppState>()(
           }),
         })),
 
-      addSearchHistory: (query) =>
-        set((s) => ({ searchHistory: [query, ...s.searchHistory.filter((q) => q !== query)].slice(0, 10) })),
+      addSearchHistory: (query) => set((s) => ({ searchHistory: [query, ...s.searchHistory.filter((q) => q !== query)].slice(0, 10) })),
       clearSearchHistory: () => set({ searchHistory: [] }),
     }),
     {

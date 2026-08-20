@@ -14,13 +14,48 @@ export default function CreateSheetScreen() {
   const insets = useSafeAreaInsets();
 
   const options = [
-    { key: 'post', icon: MessageSquarePlus, tone: theme.colors.primary, title: t.create.post, desc: t.create.postDesc, route: '/create/post' },
+    {
+      key: 'post',
+      icon: MessageSquarePlus,
+      tone: theme.colors.primary,
+      title: t.create.post,
+      desc: t.create.postDesc,
+      route: '/create/post',
+    },
     { key: 'event', icon: Calendar, tone: theme.colors.secondary, title: t.create.event, desc: t.create.eventDesc, route: '/event/create' },
-    { key: 'issue', icon: AlertTriangle, tone: theme.colors.warning, title: t.create.issue, desc: t.create.issueDesc, route: '/issue/create' },
-    { key: 'help', icon: HeartHandshake, tone: theme.colors.info, title: t.create.help, desc: t.create.helpDesc, route: '/help-request/create' },
+    {
+      key: 'issue',
+      icon: AlertTriangle,
+      tone: theme.colors.warning,
+      title: t.create.issue,
+      desc: t.create.issueDesc,
+      route: '/issue/create',
+    },
+    {
+      key: 'help',
+      icon: HeartHandshake,
+      tone: theme.colors.info,
+      title: t.create.help,
+      desc: t.create.helpDesc,
+      route: '/help-request/create',
+    },
     { key: 'poll', icon: BarChart3, tone: theme.colors.primary, title: t.create.poll, desc: t.create.pollDesc, route: '/create/poll' },
-    { key: 'sell', icon: HandCoins, tone: theme.colors.secondary, title: t.create.sell, desc: t.create.sellDesc, route: '/marketplace/create' },
-    { key: 'lostFound', icon: PawPrint, tone: theme.colors.danger, title: t.create.lostFound, desc: t.create.lostFoundDesc, route: '/lost-found/create' },
+    {
+      key: 'sell',
+      icon: HandCoins,
+      tone: theme.colors.secondary,
+      title: t.create.sell,
+      desc: t.create.sellDesc,
+      route: '/marketplace/create',
+    },
+    {
+      key: 'lostFound',
+      icon: PawPrint,
+      tone: theme.colors.danger,
+      title: t.create.lostFound,
+      desc: t.create.lostFoundDesc,
+      route: '/lost-found/create',
+    },
   ] as const;
 
   return (
@@ -37,7 +72,11 @@ export default function CreateSheetScreen() {
           <Pressable
             key={opt.key}
             onPress={() => router.push(opt.route as never)}
-            style={[theme.row(), styles.row, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
+            style={[
+              theme.row(),
+              styles.row,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+            ]}
             accessibilityRole="button"
           >
             <View style={[styles.iconWrap, { backgroundColor: opt.tone + '1a' }]}>

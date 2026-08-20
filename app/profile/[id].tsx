@@ -61,16 +61,19 @@ export default function ProfileScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={displayName(user)} right={isOwn ? (
-        <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" hitSlop={8}>
-          <Settings size={20} color={theme.colors.textPrimary} />
-        </Pressable>
-      ) : undefined} />
+      <AppHeader
+        title={displayName(user)}
+        right={
+          isOwn ? (
+            <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" hitSlop={8}>
+              <Settings size={20} color={theme.colors.textPrimary} />
+            </Pressable>
+          ) : undefined
+        }
+      />
 
       <FlatList
-        data={
-          tab === 'activity' ? posts : tab === 'events' ? events : recommendations
-        }
+        data={tab === 'activity' ? posts : tab === 'events' ? events : recommendations}
         keyExtractor={(item: { id: string }) => item.id}
         contentContainerStyle={{ paddingBottom: 60 }}
         ListHeaderComponent={
@@ -111,8 +114,17 @@ export default function ProfileScreen() {
                   <Button label={t.profile.editProfile} onPress={() => router.push('/settings/edit-profile')} variant="outline" />
                 ) : (
                   <>
-                    <Button label={t.profile.thankNeighbor} onPress={() => setThankOpen(true)} icon={<HandHeart size={16} color={theme.colors.onPrimary} />} />
-                    <Button label={t.common.message} onPress={startConversation} variant="outline" icon={<MessageCircle size={16} color={theme.colors.primary} />} />
+                    <Button
+                      label={t.profile.thankNeighbor}
+                      onPress={() => setThankOpen(true)}
+                      icon={<HandHeart size={16} color={theme.colors.onPrimary} />}
+                    />
+                    <Button
+                      label={t.common.message}
+                      onPress={startConversation}
+                      variant="outline"
+                      icon={<MessageCircle size={16} color={theme.colors.primary} />}
+                    />
                   </>
                 )}
               </View>
@@ -164,7 +176,13 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-function RecommendationRow({ recommendation, businesses }: { recommendation: { id: string; businessId: string; textAr: string }; businesses: { id: string; name: string }[] }) {
+function RecommendationRow({
+  recommendation,
+  businesses,
+}: {
+  recommendation: { id: string; businessId: string; textAr: string };
+  businesses: { id: string; name: string }[];
+}) {
   const theme = useTheme();
   const router = useRouter();
   const business = businesses.find((b) => b.id === recommendation.businessId);

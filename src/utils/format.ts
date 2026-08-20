@@ -46,9 +46,11 @@ export function formatShortDate(iso: string, locale: Locale): string {
   return d.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { day: 'numeric', month: 'short' });
 }
 
-export function displayName(
-  user: { firstName: string; lastName: string; namePrivacy: 'full' | 'first_last_initial' | 'first_only' },
-): string {
+export function displayName(user: {
+  firstName: string;
+  lastName: string;
+  namePrivacy: 'full' | 'first_last_initial' | 'first_only';
+}): string {
   switch (user.namePrivacy) {
     case 'full':
       return `${user.firstName} ${user.lastName}`.trim();

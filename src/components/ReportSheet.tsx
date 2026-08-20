@@ -17,7 +17,16 @@ interface ReportSheetProps {
   onSubmitted?: () => void;
 }
 
-const REASONS: ReportReason[] = ['spam', 'scam', 'harassment', 'privacy_violation', 'inappropriate', 'misinformation', 'impersonation', 'other'];
+const REASONS: ReportReason[] = [
+  'spam',
+  'scam',
+  'harassment',
+  'privacy_violation',
+  'inappropriate',
+  'misinformation',
+  'impersonation',
+  'other',
+];
 
 export function ReportSheet({ visible, onClose, targetType, targetId, onSubmitted }: ReportSheetProps) {
   const theme = useTheme();
@@ -55,7 +64,11 @@ export function ReportSheet({ visible, onClose, targetType, targetId, onSubmitte
               <Pressable
                 key={reason}
                 onPress={() => setSelected(reason)}
-                style={[theme.row(), styles.row, { borderColor: selected === reason ? theme.colors.primary : theme.colors.border, borderRadius: theme.radii.md }]}
+                style={[
+                  theme.row(),
+                  styles.row,
+                  { borderColor: selected === reason ? theme.colors.primary : theme.colors.border, borderRadius: theme.radii.md },
+                ]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: selected === reason }}
               >

@@ -54,7 +54,16 @@ export default function ModerationScreen() {
           <EmptyState title={t.moderation.empty} />
         ) : (
           filtered.map((r) => (
-            <View key={r.id} style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radii.md, padding: 14 }}>
+            <View
+              key={r.id}
+              style={{
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                borderWidth: 1,
+                borderRadius: theme.radii.md,
+                padding: 14,
+              }}
+            >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                 <Badge label={t.report.reasons[r.reasonType]} tone={TONE[r.status]} />
                 <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(r.createdAt, locale)}</Text>

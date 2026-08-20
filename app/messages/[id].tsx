@@ -25,7 +25,9 @@ export default function ConversationScreen() {
   const listRef = useRef<FlatList>(null);
 
   const conversation = useStore((s) => s.conversations.find((c) => c.id === id));
-  const messages = useStore((s) => s.messages.filter((m) => m.conversationId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)));
+  const messages = useStore((s) =>
+    s.messages.filter((m) => m.conversationId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+  );
   const otherUserId = conversation?.participantIds.find((p) => p !== CURRENT_USER_ID);
   const otherUser = useStore((s) => s.getUser(otherUserId ?? ''));
   const event = useStore((s) => s.events.find((e) => e.id === conversation?.eventId));
@@ -53,7 +55,7 @@ export default function ConversationScreen() {
     );
   }
 
-  const title = conversation.isGroup ? conversation.title ?? '' : otherUser ? displayName(otherUser) : '';
+  const title = conversation.isGroup ? (conversation.title ?? '') : otherUser ? displayName(otherUser) : '';
 
   const onSend = (msgText: string, image?: string) => {
     sendMessage(conversation.id, msgText, image);
@@ -76,7 +78,11 @@ export default function ConversationScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={90}
+    >
       <AppHeader
         title={title}
         right={
@@ -89,7 +95,10 @@ export default function ConversationScreen() {
       />
 
       {conversation.isGroup && event ? (
-        <Pressable onPress={() => router.push(`/event/${event.id}`)} style={[theme.row(), styles.eventBanner, { backgroundColor: theme.colors.backgroundAlt }]}>
+        <Pressable
+          onPress={() => router.push(`/event/${event.id}`)}
+          style={[theme.row(), styles.eventBanner, { backgroundColor: theme.colors.backgroundAlt }]}
+        >
           <Calendar size={14} color={theme.colors.primary} />
           <Text style={theme.text('caption', theme.colors.primary)}>{t.messages.backToEvent}</Text>
         </Pressable>
@@ -103,12 +112,19 @@ export default function ConversationScreen() {
         renderItem={({ item, index }) => {
           const next = messages[index + 1];
           const showTail = !next || next.senderId !== item.senderId;
-          return <MessageBubble message={item} isOwn={item.senderId === CURRENT_USER_ID} read={item.readBy.length > 1} showTail={showTail} />;
+          return (
+            <MessageBubble message={item} isOwn={item.senderId === CURRENT_USER_ID} read={item.readBy.length > 1} showTail={showTail} />
+          );
         }}
         ListFooterComponent={
           typing ? (
             <View style={{ alignSelf: isRTL ? 'flex-end' : 'flex-start', marginTop: 4 }}>
-              <View style={[styles.typingBubble, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
+              <View
+                style={[
+                  styles.typingBubble,
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+                ]}
+              >
                 <Text style={theme.text('caption', theme.colors.textMuted)}>{t.messages.typing}</Text>
               </View>
             </View>
@@ -116,7 +132,12 @@ export default function ConversationScreen() {
         }
       />
 
-      <View style={[styles.composer, { paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surfaceElevated, borderTopColor: theme.colors.divider }]}>
+      <View
+        style={[
+          styles.composer,
+          { paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surfaceElevated, borderTopColor: theme.colors.divider },
+        ]}
+      >
         <View style={[theme.row(), { alignItems: 'flex-end', gap: 8 }]}>
           <Pressable onPress={pickImage} hitSlop={8} style={styles.imgBtn} accessibilityRole="button" accessibilityLabel={t.post.addImages}>
             <ImagePlus size={20} color={theme.colors.primary} />

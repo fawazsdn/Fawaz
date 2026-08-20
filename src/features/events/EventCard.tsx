@@ -37,7 +37,10 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
   const going = event.attendees.filter((a) => a.status === 'going');
   const mine = event.attendees.find((a) => a.userId === CURRENT_USER_ID);
   const isFull = going.length >= event.capacity;
-  const avatars = going.slice(0, 3).map((a) => users.find((u) => u.id === a.userId)).filter(Boolean);
+  const avatars = going
+    .slice(0, 3)
+    .map((a) => users.find((u) => u.id === a.userId))
+    .filter(Boolean);
 
   const onJoin = () => {
     haptics.medium();
@@ -58,7 +61,12 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
       style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
       accessibilityRole="button"
     >
-      <Image source={{ uri: event.coverImage }} style={{ width: '100%', height: compact ? 110 : 150 }} contentFit="cover" transition={150} />
+      <Image
+        source={{ uri: event.coverImage }}
+        style={{ width: '100%', height: compact ? 110 : 150 }}
+        contentFit="cover"
+        transition={150}
+      />
       <View style={{ padding: 12 }}>
         <View style={[theme.row(), { alignItems: 'center', gap: 6, marginBottom: 6 }]}>
           <Badge label={`${CATEGORY_ICON[event.category] ?? ''} ${formatClock(event.startsAt, locale)}`} tone="primary" />

@@ -48,7 +48,9 @@ export default function InstitutionDetailScreen() {
               {institution.announcements.map((a) => (
                 <Card key={a.id} style={{ marginBottom: 8 }}>
                   <Text style={theme.text('bodySmall')}>{a.textAr}</Text>
-                  <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>{formatRelativeTime(a.createdAt, locale)}</Text>
+                  <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>
+                    {formatRelativeTime(a.createdAt, locale)}
+                  </Text>
                 </Card>
               ))}
             </Section>

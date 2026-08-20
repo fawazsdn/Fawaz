@@ -5,7 +5,9 @@ import { mockDelay } from '../shared';
 export interface LostFoundService {
   getPosts(neighborhoodId: string): Promise<LostFoundPost[]>;
   getPost(id: string): Promise<LostFoundPost | undefined>;
-  create(input: Omit<LostFoundPost, 'id' | 'authorId' | 'createdAt' | 'status'> & { status?: LostFoundPost['status'] }): Promise<LostFoundPost>;
+  create(
+    input: Omit<LostFoundPost, 'id' | 'authorId' | 'createdAt' | 'status'> & { status?: LostFoundPost['status'] },
+  ): Promise<LostFoundPost>;
   setStatus(id: string, status: LostFoundPost['status']): Promise<void>;
 }
 

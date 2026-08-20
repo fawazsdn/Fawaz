@@ -73,7 +73,11 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           }}
           style={({ pressed }) => [
             styles.createButton,
-            { backgroundColor: theme.colors.primary, borderColor: theme.colors.surfaceElevated, transform: [{ scale: pressed ? 0.94 : 1 }] },
+            {
+              backgroundColor: theme.colors.primary,
+              borderColor: theme.colors.surfaceElevated,
+              transform: [{ scale: pressed ? 0.94 : 1 }],
+            },
           ]}
         >
           <Plus size={26} color={theme.colors.onPrimary} strokeWidth={2.4} />

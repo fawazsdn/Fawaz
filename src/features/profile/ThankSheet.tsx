@@ -64,10 +64,16 @@ export function ThankSheet({ visible, onClose, userId }: ThankSheetProps) {
                   onPress={() => setSelected(reason)}
                   style={[
                     styles.reasonChip,
-                    { borderColor: selected === reason ? theme.colors.primary : theme.colors.border, backgroundColor: selected === reason ? theme.colors.successSurface : theme.colors.surface, borderRadius: theme.radii.md },
+                    {
+                      borderColor: selected === reason ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: selected === reason ? theme.colors.successSurface : theme.colors.surface,
+                      borderRadius: theme.radii.md,
+                    },
                   ]}
                 >
-                  <Text style={theme.text('bodySmall', selected === reason ? theme.colors.primary : theme.colors.textPrimary)}>{reason}</Text>
+                  <Text style={theme.text('bodySmall', selected === reason ? theme.colors.primary : theme.colors.textPrimary)}>
+                    {reason}
+                  </Text>
                 </Pressable>
               ))}
             </View>

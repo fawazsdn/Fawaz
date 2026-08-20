@@ -25,7 +25,12 @@ export default function BlockedUsersScreen() {
         data={blocked}
         keyExtractor={(u) => u.id}
         contentContainerStyle={{ padding: theme.spacing.md }}
-        renderItem={({ item }) => <UserRow user={item} right={<Button label={t.common.unblock} size="sm" variant="outline" onPress={() => toggleBlockUser(item.id)} />} />}
+        renderItem={({ item }) => (
+          <UserRow
+            user={item}
+            right={<Button label={t.common.unblock} size="sm" variant="outline" onPress={() => toggleBlockUser(item.id)} />}
+          />
+        )}
         ListEmptyComponent={<EmptyState icon={UserX} title={t.emptyStates.noResults} />}
       />
     </View>

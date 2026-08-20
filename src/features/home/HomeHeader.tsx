@@ -24,7 +24,11 @@ export function HomeHeader() {
   const selectNeighborhood = useStore((s) => s.selectNeighborhood);
   const unreadNotifications = useStore((s) => s.notifications.filter((n) => n.userId === CURRENT_USER_ID && !n.read).length);
   const unreadMessages = useStore((s) =>
-    s.conversations.filter((c) => c.participantIds.includes(CURRENT_USER_ID)).some((c) => s.messages.some((m) => m.conversationId === c.id && m.senderId !== CURRENT_USER_ID && !m.readBy.includes(CURRENT_USER_ID))),
+    s.conversations
+      .filter((c) => c.participantIds.includes(CURRENT_USER_ID))
+      .some((c) =>
+        s.messages.some((m) => m.conversationId === c.id && m.senderId !== CURRENT_USER_ID && !m.readBy.includes(CURRENT_USER_ID)),
+      ),
   );
 
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -44,7 +48,11 @@ export function HomeHeader() {
         <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>
           {greeting}، {user.firstName} 👋
         </Text>
-        <Pressable onPress={() => setSwitcherOpen(true)} style={[theme.row(), { alignItems: 'center', gap: 3, marginTop: 2 }]} accessibilityRole="button">
+        <Pressable
+          onPress={() => setSwitcherOpen(true)}
+          style={[theme.row(), { alignItems: 'center', gap: 3, marginTop: 2 }]}
+          accessibilityRole="button"
+        >
           <Text style={theme.text('title')} numberOfLines={1}>
             {neighborhood ? (locale === 'ar' ? neighborhood.nameAr : neighborhood.nameEn) : ''}
           </Text>
@@ -57,13 +65,17 @@ export function HomeHeader() {
           <IconButton accessibilityLabel={t.messages.title} variant="surface" onPress={() => router.push('/messages')}>
             <MessageSquare size={19} color={theme.colors.textPrimary} />
           </IconButton>
-          {unreadMessages ? <View style={[styles.dot, { backgroundColor: theme.colors.danger, borderColor: theme.colors.background }]} /> : null}
+          {unreadMessages ? (
+            <View style={[styles.dot, { backgroundColor: theme.colors.danger, borderColor: theme.colors.background }]} />
+          ) : null}
         </View>
         <View>
           <IconButton accessibilityLabel={t.notifications.title} variant="surface" onPress={() => router.push('/notifications')}>
             <Bell size={19} color={theme.colors.textPrimary} />
           </IconButton>
-          {unreadNotifications > 0 ? <View style={[styles.dot, { backgroundColor: theme.colors.danger, borderColor: theme.colors.background }]} /> : null}
+          {unreadNotifications > 0 ? (
+            <View style={[styles.dot, { backgroundColor: theme.colors.danger, borderColor: theme.colors.background }]} />
+          ) : null}
         </View>
       </View>
 

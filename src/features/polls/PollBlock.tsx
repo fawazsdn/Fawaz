@@ -44,7 +44,8 @@ export function PollBlock({ poll }: PollBlockProps) {
         ))}
       </View>
       <Text style={theme.text('caption', theme.colors.textMuted)}>
-        {totalVotes} {t.polls.votes} · {closed ? t.polls.closed : `${t.polls.closesIn} ${formatRelativeTime(poll.closesAt, locale).replace('قبل', '').trim()}`}
+        {totalVotes} {t.polls.votes} ·{' '}
+        {closed ? t.polls.closed : `${t.polls.closesIn} ${formatRelativeTime(poll.closesAt, locale).replace('قبل', '').trim()}`}
       </Text>
     </View>
   );
@@ -83,12 +84,18 @@ function PollOptionRow({
       disabled={disabled}
       style={[
         styles.optionWrap,
-        { borderColor: selected ? theme.colors.primary : theme.colors.border, borderRadius: theme.radii.sm, backgroundColor: theme.colors.surface },
+        {
+          borderColor: selected ? theme.colors.primary : theme.colors.border,
+          borderRadius: theme.radii.sm,
+          backgroundColor: theme.colors.surface,
+        },
       ]}
       accessibilityRole="button"
     >
       {showResults ? (
-        <Animated.View style={[StyleSheet.absoluteFill, barStyle, { backgroundColor: theme.colors.successSurface, borderRadius: theme.radii.sm }]} />
+        <Animated.View
+          style={[StyleSheet.absoluteFill, barStyle, { backgroundColor: theme.colors.successSurface, borderRadius: theme.radii.sm }]}
+        />
       ) : null}
       <View style={[theme.row(), styles.optionContent]}>
         <Text style={theme.text('bodySmall')}>{label}</Text>

@@ -21,11 +21,7 @@ export function SkeletonBlock({ width = '100%', height = 14, radius = 8, style }
 
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
-  return (
-    <Animated.View
-      style={[{ width, height, borderRadius: radius, backgroundColor: theme.colors.shimmer }, animatedStyle, style]}
-    />
-  );
+  return <Animated.View style={[{ width, height, borderRadius: radius, backgroundColor: theme.colors.shimmer }, animatedStyle, style]} />;
 }
 
 export function SkeletonPostCard() {

@@ -37,7 +37,11 @@ export default function SelectCityScreen() {
     <Pressable
       key={city.id}
       onPress={() => onSelect(city)}
-      style={[theme.row(), styles.row, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md }]}
+      style={[
+        theme.row(),
+        styles.row,
+        { borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md },
+      ]}
       accessibilityRole="button"
     >
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.backgroundAlt }]}>
@@ -54,7 +58,10 @@ export default function SelectCityScreen() {
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.city.searchPlaceholder} />
       </View>
       <FlatList
-        data={[{ header: t.city.popular, items: popular }, { header: t.city.all, items: rest }]}
+        data={[
+          { header: t.city.popular, items: popular },
+          { header: t.city.all, items: rest },
+        ]}
         keyExtractor={(section) => section.header}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 24 }}
         renderItem={({ item: section }) =>

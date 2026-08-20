@@ -28,7 +28,12 @@ export function Composer({ placeholder, onSend, replyingTo, onCancelReply, cance
   };
 
   return (
-    <View style={[styles.wrap, { paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surfaceElevated, borderTopColor: theme.colors.divider }]}>
+    <View
+      style={[
+        styles.wrap,
+        { paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surfaceElevated, borderTopColor: theme.colors.divider },
+      ]}
+    >
       {replyingTo ? (
         <View style={[theme.row(), styles.replyBar, { backgroundColor: theme.colors.backgroundAlt }]}>
           <Text style={theme.text('caption', theme.colors.textSecondary)} numberOfLines={1}>

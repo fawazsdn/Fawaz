@@ -45,7 +45,13 @@ export default function VerificationScreen() {
 
       {verification === 'not_started' || verification === 'failed' ? (
         <View style={{ gap: 10 }}>
-          <Button label={t.verification.confirmLocation} onPress={startCheck} icon={<MapPinned size={17} color={theme.colors.onPrimary} />} fullWidth size="lg" />
+          <Button
+            label={t.verification.confirmLocation}
+            onPress={startCheck}
+            icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
+            fullWidth
+            size="lg"
+          />
           <Button label={t.verification.manualReview} onPress={requestManualReview} variant="outline" fullWidth />
           <DisabledFutureRow label={t.verification.futureId} />
         </View>
@@ -55,7 +61,9 @@ export default function VerificationScreen() {
 
       {verification === 'verified' ? <Button label={t.verification.continueToApp} onPress={goToApp} fullWidth size="lg" /> : null}
 
-      {verification === 'pending' ? <Button label={t.verification.continueToApp} onPress={goToApp} variant="outline" fullWidth size="lg" /> : null}
+      {verification === 'pending' ? (
+        <Button label={t.verification.continueToApp} onPress={goToApp} variant="outline" fullWidth size="lg" />
+      ) : null}
 
       {verification !== 'verified' ? (
         <Text onPress={goToApp} style={[theme.text('bodySmall', theme.colors.textMuted), styles.skipText]}>
@@ -90,7 +98,11 @@ function StatusCard({ status }: { status: VerificationStatus }) {
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value * 360}deg` }] }));
 
   const map: Record<VerificationStatus, { icon: React.ReactNode; label: string; body?: string; tone: string }> = {
-    not_started: { icon: <ShieldQuestion size={26} color={theme.colors.textMuted} />, label: t.verification.notStarted, tone: theme.colors.textMuted },
+    not_started: {
+      icon: <ShieldQuestion size={26} color={theme.colors.textMuted} />,
+      label: t.verification.notStarted,
+      tone: theme.colors.textMuted,
+    },
     checking: {
       icon: (
         <Animated.View style={spinStyle}>
@@ -101,8 +113,18 @@ function StatusCard({ status }: { status: VerificationStatus }) {
       tone: theme.colors.info,
     },
     pending: { icon: <UserCheck2 size={26} color={theme.colors.warning} />, label: t.verification.pending, tone: theme.colors.warning },
-    verified: { icon: <BadgeCheck size={26} color={theme.colors.success} />, label: t.verification.verified, body: t.verification.verifiedBody, tone: theme.colors.success },
-    failed: { icon: <ShieldAlert size={26} color={theme.colors.danger} />, label: t.verification.failed, body: t.verification.failedBody, tone: theme.colors.danger },
+    verified: {
+      icon: <BadgeCheck size={26} color={theme.colors.success} />,
+      label: t.verification.verified,
+      body: t.verification.verifiedBody,
+      tone: theme.colors.success,
+    },
+    failed: {
+      icon: <ShieldAlert size={26} color={theme.colors.danger} />,
+      label: t.verification.failed,
+      body: t.verification.failedBody,
+      tone: theme.colors.danger,
+    },
   };
 
   const entry = map[status];

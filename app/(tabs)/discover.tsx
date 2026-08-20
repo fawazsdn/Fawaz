@@ -26,7 +26,9 @@ export default function DiscoverScreen() {
   const events = useStore((s) => s.events.filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled).slice(0, 4));
   const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3));
   const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4));
-  const helpRequests = useStore((s) => s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3));
+  const helpRequests = useStore((s) =>
+    s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3),
+  );
   const lostFound = useStore((s) => s.lostFound.filter((l) => l.neighborhoodId === neighborhoodId && l.status !== 'reunited').slice(0, 3));
   const trendingPosts = useStore((s) =>
     [...s.posts]
@@ -34,7 +36,12 @@ export default function DiscoverScreen() {
       .sort((a, b) => b.reactions.length + b.commentCount - (a.reactions.length + a.commentCount))
       .slice(0, 3),
   );
-  const businesses = useStore((s) => [...s.businesses].filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? '')).sort((a, b) => b.recommendationCount - a.recommendationCount).slice(0, 4));
+  const businesses = useStore((s) =>
+    [...s.businesses]
+      .filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? ''))
+      .sort((a, b) => b.recommendationCount - a.recommendationCount)
+      .slice(0, 4),
+  );
 
   if (!neighborhoodId) return null;
 
@@ -52,14 +59,30 @@ export default function DiscoverScreen() {
       <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: theme.spacing.md, marginBottom: 20 }}>
         <Pressable
           onPress={() => router.push('/map')}
-          style={{ flex: 1, backgroundColor: theme.colors.primary, borderRadius: theme.radii.lg, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+          style={{
+            flex: 1,
+            backgroundColor: theme.colors.primary,
+            borderRadius: theme.radii.lg,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+          }}
         >
           <MapIcon size={20} color={theme.colors.onPrimary} />
           <Text style={theme.text('title', theme.colors.onPrimary)}>{t.discover.map}</Text>
         </Pressable>
         <Pressable
           onPress={() => router.push('/assistant')}
-          style={{ flex: 1, backgroundColor: theme.colors.secondary, borderRadius: theme.radii.lg, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+          style={{
+            flex: 1,
+            backgroundColor: theme.colors.secondary,
+            borderRadius: theme.radii.lg,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+          }}
         >
           <Sparkles size={20} color={theme.colors.onSecondary} />
           <Text style={theme.text('title', theme.colors.onSecondary)}>{t.assistant.title}</Text>
@@ -100,7 +123,17 @@ export default function DiscoverScreen() {
         ) : (
           <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
             {businesses.map((b) => (
-              <Pressable key={b.id} onPress={() => router.push(`/business/${b.id}`)} style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radii.md, padding: 14 }}>
+              <Pressable
+                key={b.id}
+                onPress={() => router.push(`/business/${b.id}`)}
+                style={{
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderWidth: 1,
+                  borderRadius: theme.radii.md,
+                  padding: 14,
+                }}
+              >
                 <Text style={theme.text('title')}>{b.name}</Text>
                 <Text style={theme.text('caption', theme.colors.textMuted)}>
                   {t.recommendations.recommendedBy} {b.recommendationCount} {t.recommendations.neighbors}
@@ -115,7 +148,15 @@ export default function DiscoverScreen() {
         {listings.length === 0 ? (
           <EmptyState title={t.emptyStates.noMarketplace} compact />
         ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: theme.spacing.md, gap: 12 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              paddingHorizontal: theme.spacing.md,
+              gap: 12,
+            }}
+          >
             {listings.map((l) => (
               <MarketplaceCard key={l.id} listing={l} />
             ))}
@@ -155,10 +196,22 @@ function Section({ title, onSeeAll, children }: { title: string; onSeeAll?: () =
   );
 }
 
-function HorizontalList<T extends { id: string }>({ items, render, width }: { items: T[]; render: (item: T) => React.ReactNode; width: number }) {
+function HorizontalList<T extends { id: string }>({
+  items,
+  render,
+  width,
+}: {
+  items: T[];
+  render: (item: T) => React.ReactNode;
+  width: number;
+}) {
   const theme = useTheme();
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}
+    >
       {items.map((item) => (
         <View key={item.id} style={{ width }}>
           {render(item)}

@@ -54,13 +54,7 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
           </View>
           {editing ? (
             <View style={{ marginTop: 4 }}>
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                style={[theme.text('bodySmall'), { minHeight: 36 }]}
-                multiline
-                autoFocus
-              />
+              <TextInput value={draft} onChangeText={setDraft} style={[theme.text('bodySmall'), { minHeight: 36 }]} multiline autoFocus />
               <View style={[theme.row(), { gap: 12, marginTop: 6 }]}>
                 <Text
                   onPress={() => {
@@ -89,8 +83,14 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{t.post.reply}</Text>
           </Pressable>
           <Pressable onPress={() => toggleCommentLike(comment.id)} style={[theme.row(), { alignItems: 'center', gap: 3 }]}>
-            <Heart size={12} color={liked ? theme.colors.danger : theme.colors.textMuted} fill={liked ? theme.colors.danger : 'transparent'} />
-            {comment.likedBy.length > 0 ? <Text style={theme.text('caption', theme.colors.textMuted)}>{comment.likedBy.length}</Text> : null}
+            <Heart
+              size={12}
+              color={liked ? theme.colors.danger : theme.colors.textMuted}
+              fill={liked ? theme.colors.danger : 'transparent'}
+            />
+            {comment.likedBy.length > 0 ? (
+              <Text style={theme.text('caption', theme.colors.textMuted)}>{comment.likedBy.length}</Text>
+            ) : null}
           </Pressable>
         </View>
       </View>

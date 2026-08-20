@@ -16,7 +16,9 @@ export default function MessagesScreen() {
   const { t } = useI18n();
 
   const conversations = useStore((s) =>
-    s.conversations.filter((c) => c.participantIds.includes(CURRENT_USER_ID)).sort((a, b) => +new Date(b.lastMessageAt) - +new Date(a.lastMessageAt)),
+    s.conversations
+      .filter((c) => c.participantIds.includes(CURRENT_USER_ID))
+      .sort((a, b) => +new Date(b.lastMessageAt) - +new Date(a.lastMessageAt)),
   );
   const users = useStore((s) => s.users);
 

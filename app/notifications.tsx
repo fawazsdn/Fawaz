@@ -16,7 +16,9 @@ export default function NotificationsScreen() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const notifications = useStore((s) => s.notifications.filter((n) => n.userId === CURRENT_USER_ID).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+  const notifications = useStore((s) =>
+    s.notifications.filter((n) => n.userId === CURRENT_USER_ID).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  );
   const markNotificationRead = useStore((s) => s.markNotificationRead);
   const markAllNotificationsRead = useStore((s) => s.markAllNotificationsRead);
   const getUser = useStore((s) => s.getUser);
@@ -58,7 +60,9 @@ export default function NotificationsScreen() {
         sections={sections}
         keyExtractor={(n) => n.id}
         contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 40 }}
-        renderSectionHeader={({ section }) => <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 14, marginBottom: 6 }]}>{section.title}</Text>}
+        renderSectionHeader={({ section }) => (
+          <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 14, marginBottom: 6 }]}>{section.title}</Text>
+        )}
         renderItem={({ item }) => {
           const actor = item.actorId ? getUser(item.actorId) : undefined;
           return (
@@ -69,7 +73,16 @@ export default function NotificationsScreen() {
               {actor ? (
                 <Avatar uri={actor.avatarUrl} name={actor.firstName} size={40} />
               ) : (
-                <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.backgroundAlt }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: theme.colors.backgroundAlt,
+                  }}
+                >
                   <Bell size={17} color={theme.colors.primary} />
                 </View>
               )}

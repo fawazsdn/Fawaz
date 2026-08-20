@@ -18,16 +18,7 @@ export const fontFamilies = {
 } as const;
 
 export type TypeScaleKey =
-  | 'display'
-  | 'heading1'
-  | 'heading2'
-  | 'heading3'
-  | 'title'
-  | 'body'
-  | 'bodySmall'
-  | 'caption'
-  | 'button'
-  | 'metadata';
+  'display' | 'heading1' | 'heading2' | 'heading3' | 'title' | 'body' | 'bodySmall' | 'caption' | 'button' | 'metadata';
 
 interface TypeSpec {
   fontSize: number;

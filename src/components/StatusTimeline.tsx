@@ -37,7 +37,9 @@ export function StatusTimeline({ steps, activeIndex }: StatusTimelineProps) {
               >
                 {done ? <Check size={11} color={theme.colors.onPrimary} /> : null}
               </View>
-              {!isLast ? <View style={[styles.line, { backgroundColor: i < activeIndex ? theme.colors.primary : theme.colors.border }]} /> : null}
+              {!isLast ? (
+                <View style={[styles.line, { backgroundColor: i < activeIndex ? theme.colors.primary : theme.colors.border }]} />
+              ) : null}
             </View>
             <View style={{ flex: 1, paddingBottom: isLast ? 0 : 18 }}>
               <Text style={theme.text('body', done ? theme.colors.textPrimary : theme.colors.textMuted)}>{step.label}</Text>

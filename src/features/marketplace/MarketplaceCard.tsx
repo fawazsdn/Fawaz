@@ -17,12 +17,25 @@ export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
   const toggleSaveListing = useStore((s) => s.toggleSaveListing);
   const saved = listing.savedBy.includes(CURRENT_USER_ID);
 
-  const priceLabel = listing.listingType === 'sale' ? formatSAR(listing.price ?? 0, locale) : listing.listingType === 'free' ? t.marketplace.free : t.marketplace.wanted;
+  const priceLabel =
+    listing.listingType === 'sale'
+      ? formatSAR(listing.price ?? 0, locale)
+      : listing.listingType === 'free'
+        ? t.marketplace.free
+        : t.marketplace.wanted;
 
   return (
-    <Pressable onPress={() => router.push(`/marketplace/${listing.id}`)} style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]} accessibilityRole="button">
+    <Pressable
+      onPress={() => router.push(`/marketplace/${listing.id}`)}
+      style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
+      accessibilityRole="button"
+    >
       <View>
-        {listing.images[0] ? <Image source={{ uri: listing.images[0] }} style={styles.image} contentFit="cover" /> : <View style={[styles.image, { backgroundColor: theme.colors.backgroundAlt }]} />}
+        {listing.images[0] ? (
+          <Image source={{ uri: listing.images[0] }} style={styles.image} contentFit="cover" />
+        ) : (
+          <View style={[styles.image, { backgroundColor: theme.colors.backgroundAlt }]} />
+        )}
         <Pressable
           onPress={(e) => {
             e.stopPropagation?.();
@@ -57,6 +70,15 @@ export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
 const styles = StyleSheet.create({
   card: { width: '48%', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   image: { width: '100%', height: 120 },
-  saveBtn: { position: 'absolute', top: 6, end: 6, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  saveBtn: {
+    position: 'absolute',
+    top: 6,
+    end: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   statusOverlay: { alignItems: 'center', justifyContent: 'center' },
 });

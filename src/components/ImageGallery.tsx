@@ -24,9 +24,19 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
     return (
       <>
         <Pressable onPress={() => open(0)} accessibilityRole="imagebutton">
-          <Image source={{ uri: images[0] }} style={{ width: '100%', height: maxHeight, borderRadius: r }} contentFit="cover" transition={150} />
+          <Image
+            source={{ uri: images[0] }}
+            style={{ width: '100%', height: maxHeight, borderRadius: r }}
+            contentFit="cover"
+            transition={150}
+          />
         </Pressable>
-        <ImageViewerModal visible={viewerIndex !== null} images={images} initialIndex={viewerIndex ?? 0} onClose={() => setViewerIndex(null)} />
+        <ImageViewerModal
+          visible={viewerIndex !== null}
+          images={images}
+          initialIndex={viewerIndex ?? 0}
+          onClose={() => setViewerIndex(null)}
+        />
       </>
     );
   }
@@ -37,11 +47,21 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
         <View style={[styles.row, { gap: 4 }]}>
           {images.map((uri, i) => (
             <Pressable key={i} onPress={() => open(i)} style={{ flex: 1 }} accessibilityRole="imagebutton">
-              <Image source={{ uri }} style={{ width: '100%', height: maxHeight * 0.7, borderRadius: r }} contentFit="cover" transition={150} />
+              <Image
+                source={{ uri }}
+                style={{ width: '100%', height: maxHeight * 0.7, borderRadius: r }}
+                contentFit="cover"
+                transition={150}
+              />
             </Pressable>
           ))}
         </View>
-        <ImageViewerModal visible={viewerIndex !== null} images={images} initialIndex={viewerIndex ?? 0} onClose={() => setViewerIndex(null)} />
+        <ImageViewerModal
+          visible={viewerIndex !== null}
+          images={images}
+          initialIndex={viewerIndex ?? 0}
+          onClose={() => setViewerIndex(null)}
+        />
       </>
     );
   }
@@ -51,7 +71,12 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
       <>
         <View style={[styles.row, { gap: 4, height: maxHeight * 0.75 }]}>
           <Pressable onPress={() => open(0)} style={{ flex: 1.4 }} accessibilityRole="imagebutton">
-            <Image source={{ uri: images[0] }} style={{ width: '100%', height: '100%', borderRadius: r }} contentFit="cover" transition={150} />
+            <Image
+              source={{ uri: images[0] }}
+              style={{ width: '100%', height: '100%', borderRadius: r }}
+              contentFit="cover"
+              transition={150}
+            />
           </Pressable>
           <View style={{ flex: 1, gap: 4 }}>
             {images.slice(1, 3).map((uri, i) => (
@@ -61,7 +86,12 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
             ))}
           </View>
         </View>
-        <ImageViewerModal visible={viewerIndex !== null} images={images} initialIndex={viewerIndex ?? 0} onClose={() => setViewerIndex(null)} />
+        <ImageViewerModal
+          visible={viewerIndex !== null}
+          images={images}
+          initialIndex={viewerIndex ?? 0}
+          onClose={() => setViewerIndex(null)}
+        />
       </>
     );
   }
@@ -81,7 +111,12 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
           </Pressable>
         ))}
       </View>
-      <ImageViewerModal visible={viewerIndex !== null} images={images} initialIndex={viewerIndex ?? 0} onClose={() => setViewerIndex(null)} />
+      <ImageViewerModal
+        visible={viewerIndex !== null}
+        images={images}
+        initialIndex={viewerIndex ?? 0}
+        onClose={() => setViewerIndex(null)}
+      />
     </>
   );
 }

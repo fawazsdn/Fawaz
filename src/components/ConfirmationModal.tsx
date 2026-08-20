@@ -15,7 +15,16 @@ interface ConfirmationModalProps {
   onCancel: () => void;
 }
 
-export function ConfirmationModal({ visible, title, body, confirmLabel, cancelLabel, destructive, onConfirm, onCancel }: ConfirmationModalProps) {
+export function ConfirmationModal({
+  visible,
+  title,
+  body,
+  confirmLabel,
+  cancelLabel,
+  destructive,
+  onConfirm,
+  onCancel,
+}: ConfirmationModalProps) {
   const theme = useTheme();
   const { t } = useI18n();
   if (!visible) return null;

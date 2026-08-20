@@ -26,7 +26,10 @@ export default function DirectoryScreen() {
 
   const filtered = useMemo(() => {
     let list = users;
-    if (filter === 'contributors') list = list.filter((u) => u.reputationTier === 'contributor' || u.reputationTier === 'community_builder' || u.reputationTier === 'community_champion');
+    if (filter === 'contributors')
+      list = list.filter(
+        (u) => u.reputationTier === 'contributor' || u.reputationTier === 'community_builder' || u.reputationTier === 'community_champion',
+      );
     if (filter === 'organizers') list = list.filter((u) => u.role === 'organizer');
     if (filter === 'leaders') list = list.filter((u) => u.reputationTier === 'community_champion' || u.role === 'moderator');
     if (query.trim()) list = list.filter((u) => `${u.firstName} ${u.lastName}`.toLowerCase().includes(query.trim().toLowerCase()));

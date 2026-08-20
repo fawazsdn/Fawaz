@@ -77,7 +77,12 @@ export function IssueCard({ issue }: { issue: Issue }) {
             markIssueAffected(issue.id);
           }}
         />
-        <Button label={following ? t.issue.following : t.common.follow} size="sm" variant="ghost" onPress={() => toggleFollowIssue(issue.id)} />
+        <Button
+          label={following ? t.issue.following : t.common.follow}
+          size="sm"
+          variant="ghost"
+          onPress={() => toggleFollowIssue(issue.id)}
+        />
       </View>
     </Pressable>
   );

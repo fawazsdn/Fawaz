@@ -4,7 +4,13 @@ import { mockDelay } from '../shared';
 
 export interface ProfileService {
   getUser(id: string): Promise<User | undefined>;
-  updateProfile(input: { firstName: string; lastName: string; namePrivacy: User['namePrivacy']; bio?: string; avatarUrl?: string }): Promise<void>;
+  updateProfile(input: {
+    firstName: string;
+    lastName: string;
+    namePrivacy: User['namePrivacy'];
+    bio?: string;
+    avatarUrl?: string;
+  }): Promise<void>;
   getReputationEvents(userId: string): Promise<ReputationEvent[]>;
   thankUser(userId: string, reasonAr: string, message?: string): Promise<void>;
 }

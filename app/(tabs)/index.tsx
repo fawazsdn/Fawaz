@@ -23,10 +23,7 @@ export default function HomeScreen() {
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
   const ramadanMode = useStore((s) => s.settings.ramadanMode);
 
-  const { data: posts, loading, refreshing, error, refresh } = useAsync(
-    () => postService.getFeed(neighborhoodId ?? ''),
-    [neighborhoodId],
-  );
+  const { data: posts, loading, refreshing, error, refresh } = useAsync(() => postService.getFeed(neighborhoodId ?? ''), [neighborhoodId]);
 
   const onRefresh = useCallback(() => refresh(), [refresh]);
 
@@ -35,7 +32,7 @@ export default function HomeScreen() {
   return (
     <FlatList
       style={{ backgroundColor: theme.colors.background }}
-      data={loading || error ? [] : posts ?? []}
+      data={loading || error ? [] : (posts ?? [])}
       keyExtractor={(p) => p.id}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
       contentContainerStyle={{ paddingBottom: 100 }}
@@ -70,11 +67,7 @@ export default function HomeScreen() {
           {error ? <ErrorState onRetry={refresh} /> : null}
         </View>
       }
-      ListEmptyComponent={
-        !loading && !error ? (
-          <EmptyState icon={MessageSquareOff} title={t.emptyStates.noPosts} compact />
-        ) : null
-      }
+      ListEmptyComponent={!loading && !error ? <EmptyState icon={MessageSquareOff} title={t.emptyStates.noPosts} compact /> : null}
     />
   );
 }
@@ -83,7 +76,12 @@ function RamadanBanner() {
   const theme = useTheme();
   const { t } = useI18n();
   return (
-    <View style={[styles.ramadanBanner, { backgroundColor: theme.colors.primary, marginHorizontal: theme.spacing.md, borderRadius: theme.radii.lg }]}>
+    <View
+      style={[
+        styles.ramadanBanner,
+        { backgroundColor: theme.colors.primary, marginHorizontal: theme.spacing.md, borderRadius: theme.radii.lg },
+      ]}
+    >
       <Text style={[theme.text('title', theme.colors.onPrimary)]}>{t.ramadan.bannerTitle}</Text>
       <Text style={[theme.text('bodySmall', theme.colors.onPrimary), { opacity: 0.9, marginTop: 4 }]}>{t.ramadan.bannerBody}</Text>
     </View>

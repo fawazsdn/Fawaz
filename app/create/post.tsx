@@ -27,7 +27,12 @@ export default function CreatePostScreen() {
   const pickImage = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsMultipleSelection: true, selectionLimit: 4 - images.length });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsMultipleSelection: true,
+      selectionLimit: 4 - images.length,
+    });
     if (!result.canceled) setImages((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4));
   };
 
@@ -41,7 +46,10 @@ export default function CreatePostScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <AppHeader title={t.create.post} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <TextInput
@@ -59,7 +67,10 @@ export default function CreatePostScreen() {
             {images.map((uri, i) => (
               <View key={uri} style={styles.imageWrap}>
                 <Image source={{ uri }} style={styles.image} />
-                <Pressable style={[styles.removeBtn, { backgroundColor: theme.colors.overlay }]} onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}>
+                <Pressable
+                  style={[styles.removeBtn, { backgroundColor: theme.colors.overlay }]}
+                  onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
+                >
                   <X size={13} color="#fff" />
                 </Pressable>
               </View>
@@ -67,7 +78,11 @@ export default function CreatePostScreen() {
           </View>
         ) : null}
 
-        <Pressable onPress={pickImage} style={[theme.row(), styles.addImageBtn, { borderColor: theme.colors.border }]} accessibilityRole="button">
+        <Pressable
+          onPress={pickImage}
+          style={[theme.row(), styles.addImageBtn, { borderColor: theme.colors.border }]}
+          accessibilityRole="button"
+        >
           <ImagePlus size={17} color={theme.colors.primary} />
           <Text style={theme.text('bodySmall', theme.colors.primary)}>{t.post.addImages}</Text>
         </Pressable>
@@ -75,7 +90,12 @@ export default function CreatePostScreen() {
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.post.category}</Text>
         <View style={[theme.row(), { gap: 8 }]}>
           {CATEGORY_TYPES.map((c) => (
-            <Chip key={c} label={t.post.categories[c as 'general' | 'announcement' | 'recommendation']} selected={category === c} onPress={() => setCategory(c)} />
+            <Chip
+              key={c}
+              label={t.post.categories[c as 'general' | 'announcement' | 'recommendation']}
+              selected={category === c}
+              onPress={() => setCategory(c)}
+            />
           ))}
         </View>
 
@@ -97,7 +117,27 @@ const styles = StyleSheet.create({
   imageRow: { gap: 8, marginTop: 12, flexWrap: 'wrap' },
   imageWrap: { width: 84, height: 84, borderRadius: 10, overflow: 'hidden' },
   image: { width: '100%', height: '100%' },
-  removeBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  addImageBtn: { alignItems: 'center', gap: 8, alignSelf: 'flex-start', borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, marginTop: 12, marginBottom: 20 },
+  removeBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addImageBtn: {
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 12,
+    marginBottom: 20,
+  },
   label: { marginBottom: 8, marginTop: 4 },
 });

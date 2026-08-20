@@ -77,7 +77,11 @@ export default function CommunityScreen() {
               <Pressable
                 key={g.id}
                 onPress={() => setSelectedGroup(g)}
-                style={[theme.row(), styles.groupRow, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.md }]}
+                style={[
+                  theme.row(),
+                  styles.groupRow,
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.md },
+                ]}
               >
                 <View style={[styles.groupIcon, { backgroundColor: theme.colors.backgroundAlt }]}>
                   <Users size={16} color={theme.colors.primary} />
@@ -93,9 +97,17 @@ export default function CommunityScreen() {
 
         <View style={{ marginTop: 14 }}>
           <SectionHeader title={t.community.institutions} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}
+          >
             {institutions.map((inst) => (
-              <Pressable key={inst.id} onPress={() => router.push(`/institution/${inst.id}`)} style={[styles.instCard, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
+              <Pressable
+                key={inst.id}
+                onPress={() => router.push(`/institution/${inst.id}`)}
+                style={[styles.instCard, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
+              >
                 <Image source={{ uri: inst.coverImage }} style={styles.instImage} />
                 <View style={{ padding: 10 }}>
                   <Text style={theme.text('bodySmall')} numberOfLines={1}>

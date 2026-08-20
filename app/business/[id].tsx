@@ -20,7 +20,9 @@ export default function BusinessDetailScreen() {
   const { t, locale } = useI18n();
 
   const business = useStore((s) => s.businesses.find((b) => b.id === id));
-  const recommendations = useStore((s) => s.recommendations.filter((r) => r.businessId === id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+  const recommendations = useStore((s) =>
+    s.recommendations.filter((r) => r.businessId === id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  );
   const users = useStore((s) => s.users);
   const recommendBusiness = useStore((s) => s.recommendBusiness);
 
@@ -85,10 +87,21 @@ export default function BusinessDetailScreen() {
             {recommendations.map((r) => {
               const author = users.find((u) => u.id === r.authorId);
               return author ? (
-                <View key={r.id} style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radii.md, padding: 12 }}>
+                <View
+                  key={r.id}
+                  style={{
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    borderWidth: 1,
+                    borderRadius: theme.radii.md,
+                    padding: 12,
+                  }}
+                >
                   <Text style={theme.text('bodySmall')}>{displayName(author)}</Text>
                   <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginTop: 4 }]}>{r.textAr}</Text>
-                  <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>{formatRelativeTime(r.createdAt, locale)}</Text>
+                  <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>
+                    {formatRelativeTime(r.createdAt, locale)}
+                  </Text>
                 </View>
               ) : null;
             })}
@@ -105,7 +118,17 @@ export default function BusinessDetailScreen() {
             placeholder={t.recommendations.recommendPlaceholder}
             placeholderTextColor={theme.colors.textMuted}
             multiline
-            style={[theme.text('body'), { borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radii.md, padding: 12, minHeight: 80, textAlignVertical: 'top' }]}
+            style={[
+              theme.text('body'),
+              {
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                borderRadius: theme.radii.md,
+                padding: 12,
+                minHeight: 80,
+                textAlignVertical: 'top',
+              },
+            ]}
           />
           <View style={{ marginTop: 14 }}>
             <Button label={t.common.submit} onPress={submit} disabled={!text.trim()} fullWidth />

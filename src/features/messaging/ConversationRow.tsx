@@ -20,7 +20,7 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
   const lastMessage = messages[messages.length - 1];
   const unread = messages.some((m) => m.senderId !== CURRENT_USER_ID && !m.readBy.includes(CURRENT_USER_ID));
 
-  const title = conversation.isGroup ? conversation.title ?? '' : otherUser ? displayName(otherUser) : '';
+  const title = conversation.isGroup ? (conversation.title ?? '') : otherUser ? displayName(otherUser) : '';
 
   return (
     <Pressable onPress={() => router.push(`/messages/${conversation.id}`)} style={[theme.row(), styles.row]} accessibilityRole="button">
@@ -36,7 +36,9 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
           <Text style={theme.text('title')} numberOfLines={1}>
             {title}
           </Text>
-          {lastMessage ? <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(lastMessage.createdAt, locale)}</Text> : null}
+          {lastMessage ? (
+            <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(lastMessage.createdAt, locale)}</Text>
+          ) : null}
         </View>
         <View style={[theme.row(), { justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }]}>
           <Text style={theme.text('bodySmall', unread ? theme.colors.textPrimary : theme.colors.textMuted)} numberOfLines={1}>

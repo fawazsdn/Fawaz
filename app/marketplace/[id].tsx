@@ -36,7 +36,12 @@ export default function MarketplaceDetailScreen() {
   }
 
   const saved = listing.savedBy.includes(CURRENT_USER_ID);
-  const priceLabel = listing.listingType === 'sale' ? formatSAR(listing.price ?? 0, locale) : listing.listingType === 'free' ? t.marketplace.free : t.marketplace.wanted;
+  const priceLabel =
+    listing.listingType === 'sale'
+      ? formatSAR(listing.price ?? 0, locale)
+      : listing.listingType === 'free'
+        ? t.marketplace.free
+        : t.marketplace.wanted;
 
   const messageSeller = async () => {
     const convo = await messageService.getOrCreateConversation(seller.id);
@@ -50,7 +55,11 @@ export default function MarketplaceDetailScreen() {
         right={
           <View style={{ flexDirection: 'row', gap: 6 }}>
             <IconButton accessibilityLabel={t.common.save} onPress={() => toggleSaveListing(listing.id)}>
-              <Bookmark size={19} color={saved ? theme.colors.primary : theme.colors.textPrimary} fill={saved ? theme.colors.primary : 'transparent'} />
+              <Bookmark
+                size={19}
+                color={saved ? theme.colors.primary : theme.colors.textPrimary}
+                fill={saved ? theme.colors.primary : 'transparent'}
+              />
             </IconButton>
             <IconButton accessibilityLabel={t.common.share}>
               <Share2 size={19} color={theme.colors.textPrimary} />
@@ -72,7 +81,8 @@ export default function MarketplaceDetailScreen() {
         <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 14 }]}>{listing.description}</Text>
 
         <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 12 }]}>
-          {t.marketplace.posted} {formatRelativeTime(listing.createdAt, locale)} · {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn} · {formatDistance(listing.approxDistanceM, locale)}
+          {t.marketplace.posted} {formatRelativeTime(listing.createdAt, locale)} ·{' '}
+          {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn} · {formatDistance(listing.approxDistanceM, locale)}
         </Text>
 
         <View style={{ marginTop: 16 }}>

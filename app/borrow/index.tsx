@@ -31,7 +31,13 @@ export default function BorrowScreen() {
         renderItem={({ item }) => {
           const owner = users.find((u) => u.id === item.ownerId);
           return (
-            <Pressable onPress={() => router.push(`/borrow/${item.id}`)} style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
+            <Pressable
+              onPress={() => router.push(`/borrow/${item.id}`)}
+              style={[
+                styles.card,
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+              ]}
+            >
               <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" />
               <View style={{ padding: 10 }}>
                 <Text style={theme.text('title')} numberOfLines={1}>

@@ -13,11 +13,15 @@ export function NeighborhoodPulse({ neighborhoodId }: { neighborhoodId: string }
   const { t } = useI18n();
   const router = useRouter();
 
-  const events = useStore((s) => s.events.filter((e) => e.neighborhoodId === neighborhoodId && new Date(e.startsAt).getTime() > Date.now()));
+  const events = useStore((s) =>
+    s.events.filter((e) => e.neighborhoodId === neighborhoodId && new Date(e.startsAt).getTime() > Date.now()),
+  );
   const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved'));
   const helpRequests = useStore((s) => s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open'));
   const listings = useStore((s) =>
-    s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId && Date.now() - new Date(m.createdAt).getTime() < 48 * 3600 * 1000),
+    s.marketplaceListings.filter(
+      (m) => m.neighborhoodId === neighborhoodId && Date.now() - new Date(m.createdAt).getTime() < 48 * 3600 * 1000,
+    ),
   );
 
   const stats = [

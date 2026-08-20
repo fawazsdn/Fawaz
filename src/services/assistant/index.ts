@@ -34,7 +34,9 @@ function computeAnswer(query: string, neighborhoodId: string): string {
   }
 
   if (/تكييف|ac|كهرباء|كهربائي/.test(q)) {
-    const businesses = s.businesses.filter((b) => b.neighborhoodIds.includes(neighborhoodId) && (b.category === 'ac_repair' || b.category === 'electrician'));
+    const businesses = s.businesses.filter(
+      (b) => b.neighborhoodIds.includes(neighborhoodId) && (b.category === 'ac_repair' || b.category === 'electrician'),
+    );
     const top = businesses[0];
     if (!top) return 'ما لقيت توصية مناسبة حاليًا، جرب تسأل في قسم التوصيات.';
     return `أعلى توصية: "${top.name}" — أوصى فيه ${top.recommendationCount} جار.`;

@@ -34,7 +34,12 @@ export default function CreateListingScreen() {
   const pickImage = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsMultipleSelection: true, selectionLimit: 4 - images.length });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsMultipleSelection: true,
+      selectionLimit: 4 - images.length,
+    });
     if (!result.canceled) setImages((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4));
   };
 
@@ -59,14 +64,20 @@ export default function CreateListingScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <AppHeader title={t.marketplace.createListing} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <View style={[theme.row(), { gap: 8, flexWrap: 'wrap' }]}>
           {images.map((uri, i) => (
             <View key={uri} style={styles.imageWrap}>
               <Image source={{ uri }} style={styles.image} />
-              <Pressable style={[styles.removeBtn, { backgroundColor: theme.colors.overlay }]} onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}>
+              <Pressable
+                style={[styles.removeBtn, { backgroundColor: theme.colors.overlay }]}
+                onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
+              >
                 <X size={13} color="#fff" />
               </Pressable>
             </View>
@@ -79,11 +90,22 @@ export default function CreateListingScreen() {
         </View>
 
         <Field label={t.eventCreate.titleLabel}>
-          <TextInput value={title} onChangeText={setTitle} style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.eventCreate.description}>
-          <TextInput value={description} onChangeText={setDescription} multiline style={[theme.text('body'), styles.textArea, { borderColor: theme.colors.border }]} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            style={[theme.text('body'), styles.textArea, { borderColor: theme.colors.border }]}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.post.category}>
@@ -104,7 +126,12 @@ export default function CreateListingScreen() {
 
         {listingType === 'sale' ? (
           <Field label={t.marketplace.priceLabel}>
-            <TextInput value={price} onChangeText={(v) => setPrice(v.replace(/\D/g, ''))} keyboardType="number-pad" style={[theme.text('body'), styles.input, { borderColor: theme.colors.border, width: 140 }]} />
+            <TextInput
+              value={price}
+              onChangeText={(v) => setPrice(v.replace(/\D/g, ''))}
+              keyboardType="number-pad"
+              style={[theme.text('body'), styles.input, { borderColor: theme.colors.border, width: 140 }]}
+            />
           </Field>
         ) : null}
 
@@ -136,8 +163,25 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const styles = StyleSheet.create({
   imageWrap: { width: 84, height: 84, borderRadius: 10, overflow: 'hidden' },
   image: { width: '100%', height: '100%' },
-  removeBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  addImage: { width: 84, height: 84, borderRadius: 10, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  removeBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addImage: {
+    width: 84,
+    height: 84,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   input: { height: 48, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 14 },
   textArea: { minHeight: 90, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, padding: 14, textAlignVertical: 'top' },
 });

@@ -35,7 +35,13 @@ export default function EventsScreen() {
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
   const [filter, setFilter] = useState<EventCategory | 'all'>('all');
 
-  const { data: events, loading, refreshing, error, refresh } = useAsync(() => eventService.getEvents(neighborhoodId ?? ''), [neighborhoodId]);
+  const {
+    data: events,
+    loading,
+    refreshing,
+    error,
+    refresh,
+  } = useAsync(() => eventService.getEvents(neighborhoodId ?? ''), [neighborhoodId]);
 
   const active = useMemo(() => (events ?? []).filter((e) => !e.cancelled && (filter === 'all' || e.category === filter)), [events, filter]);
 
@@ -46,7 +52,9 @@ export default function EventsScreen() {
   const upcoming = active.filter((e) => +new Date(e.startsAt) - now >= 7 * dayMs);
   const sports = active.filter((e) => e.category === 'football' || e.category === 'padel' || e.category === 'walking');
   const family = active.filter((e) => e.category === 'family' || e.category === 'kids');
-  const community = active.filter((e) => e.category === 'community' || e.category === 'cleanup' || e.category === 'coffee' || e.category === 'iftar');
+  const community = active.filter(
+    (e) => e.category === 'community' || e.category === 'cleanup' || e.category === 'coffee' || e.category === 'iftar',
+  );
 
   if (!neighborhoodId) return null;
 
@@ -71,7 +79,12 @@ export default function EventsScreen() {
         ) : error ? (
           <ErrorState onRetry={refresh} />
         ) : active.length === 0 ? (
-          <EmptyState icon={CalendarOff} title={t.emptyStates.noEvents} actionLabel={t.events.create} onAction={() => router.push('/event/create')} />
+          <EmptyState
+            icon={CalendarOff}
+            title={t.emptyStates.noEvents}
+            actionLabel={t.events.create}
+            onAction={() => router.push('/event/create')}
+          />
         ) : (
           <>
             <EventSection title={t.events.happeningToday} events={today} />
@@ -93,7 +106,11 @@ function EventSection({ title, events }: { title: string; events: ReturnType<typ
   return (
     <View style={{ marginBottom: 20 }}>
       <SectionHeader title={title} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}
+      >
         {events.map((e) => (
           <View key={e.id} style={{ width: 240 }}>
             <EventCard event={e} compact />

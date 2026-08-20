@@ -42,7 +42,13 @@ export default function EditProfileScreen() {
 
   const onSave = async () => {
     setSaving(true);
-    await profileService.updateProfile({ firstName: firstName.trim(), lastName: lastName.trim(), namePrivacy, bio: bio.trim() || undefined, avatarUrl });
+    await profileService.updateProfile({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      namePrivacy,
+      bio: bio.trim() || undefined,
+      avatarUrl,
+    });
     createProfile({ firstName: firstName.trim(), lastName: lastName.trim(), namePrivacy, bio: bio.trim() || undefined, avatarUrl });
     setSaving(false);
     router.back();
@@ -66,7 +72,12 @@ export default function EditProfileScreen() {
           <TextInput value={lastName} onChangeText={setLastName} style={fieldStyle(theme)} />
         </Field>
         <Field label={t.profileSetup.bio}>
-          <TextInput value={bio} onChangeText={setBio} multiline style={[fieldStyle(theme), { height: 84, textAlignVertical: 'top', paddingTop: 12 }]} />
+          <TextInput
+            value={bio}
+            onChangeText={setBio}
+            multiline
+            style={[fieldStyle(theme), { height: 84, textAlignVertical: 'top', paddingTop: 12 }]}
+          />
         </Field>
 
         <Text style={[theme.text('title'), { marginBottom: 10 }]}>{t.profileSetup.displayPreference}</Text>
@@ -103,12 +114,32 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function fieldStyle(theme: ReturnType<typeof useTheme>) {
-  return [theme.text('body'), { height: 50, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md, paddingHorizontal: 14 }];
+  return [
+    theme.text('body'),
+    {
+      height: 50,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.md,
+      paddingHorizontal: 14,
+    },
+  ];
 }
 
 const styles = StyleSheet.create({
   avatarPicker: { alignSelf: 'center', marginBottom: 24 },
-  cameraBadge: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
   radioRow: { alignItems: 'center', gap: 10, padding: 14, borderWidth: 1.5, borderRadius: 10 },
   radioDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioInner: { width: 10, height: 10, borderRadius: 5 },

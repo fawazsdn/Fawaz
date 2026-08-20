@@ -64,7 +64,13 @@ export default function EventDetailScreen() {
     else await messageHost();
   };
 
-  const joinLabel = mine ? (mine.status === 'waitlisted' ? t.events.waitlisted : t.events.joined) : isFull ? t.events.joinWaitlist : t.events.join;
+  const joinLabel = mine
+    ? mine.status === 'waitlisted'
+      ? t.events.waitlisted
+      : t.events.joined
+    : isFull
+      ? t.events.joinWaitlist
+      : t.events.join;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -96,7 +102,12 @@ export default function EventDetailScreen() {
           </View>
 
           <View style={{ marginTop: 16 }}>
-            <MapPlaceholder centerLat={event.approxLat} centerLng={event.approxLng} pins={[{ id: event.id, lat: event.approxLat, lng: event.approxLng, color: theme.colors.primary }]} height={140} />
+            <MapPlaceholder
+              centerLat={event.approxLat}
+              centerLng={event.approxLng}
+              pins={[{ id: event.id, lat: event.approxLat, lng: event.approxLng, color: theme.colors.primary }]}
+              height={140}
+            />
           </View>
 
           <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 16 }]}>{event.description}</Text>
@@ -116,7 +127,13 @@ export default function EventDetailScreen() {
           ) : isOwn ? (
             <View style={{ marginTop: 16, gap: 10 }}>
               <Button label={t.common.share} variant="outline" fullWidth />
-              <Button label={t.events.discussion} onPress={openDiscussion} variant="outline" icon={<MessageCircle size={16} color={theme.colors.primary} />} fullWidth />
+              <Button
+                label={t.events.discussion}
+                onPress={openDiscussion}
+                variant="outline"
+                icon={<MessageCircle size={16} color={theme.colors.primary} />}
+                fullWidth
+              />
               <Button label={t.common.cancel} onPress={() => setCancelOpen(true)} variant="danger" fullWidth />
             </View>
           ) : (
@@ -127,7 +144,13 @@ export default function EventDetailScreen() {
                 <Button label={joinLabel} onPress={onJoin} fullWidth size="lg" />
               )}
               <Button label={t.events.messageHost} onPress={messageHost} variant="outline" fullWidth />
-              <Button label={t.events.discussion} onPress={openDiscussion} variant="ghost" icon={<MessageCircle size={16} color={theme.colors.primary} />} fullWidth />
+              <Button
+                label={t.events.discussion}
+                onPress={openDiscussion}
+                variant="ghost"
+                icon={<MessageCircle size={16} color={theme.colors.primary} />}
+                fullWidth
+              />
             </View>
           )}
 

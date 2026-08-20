@@ -32,7 +32,9 @@ export function MessageBubble({ message, isOwn, read, showTail }: MessageBubbleP
         ]}
       >
         {message.image ? <Image source={{ uri: message.image }} style={styles.image} /> : null}
-        {message.text ? <Text style={theme.text('body', isOwn ? theme.colors.onPrimary : theme.colors.textPrimary)}>{message.text}</Text> : null}
+        {message.text ? (
+          <Text style={theme.text('body', isOwn ? theme.colors.onPrimary : theme.colors.textPrimary)}>{message.text}</Text>
+        ) : null}
       </View>
       {showTail ? (
         <View style={[theme.row(), { gap: 4, marginTop: 3, justifyContent: isOwn ? (isRTL ? 'flex-start' : 'flex-end') : 'flex-start' }]}>

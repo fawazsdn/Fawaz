@@ -41,10 +41,54 @@ export function HappeningNow({ neighborhoodId }: { neighborhoodId: string }) {
       subtitle: formatClock(e.startsAt, locale),
       route: `/event/${e.id}`,
     })),
-    ...(alert ? [{ id: alert.id, icon: TriangleAlert, tone: theme.colors.warning, title: alert.titleAr, subtitle: t.notifications.title, route: '/(tabs)' }] : []),
-    ...(help ? [{ id: help.id, icon: HeartHandshake, tone: theme.colors.info, title: help.title, subtitle: t.help.categories[help.category], route: `/help-request/${help.id}` }] : []),
-    ...(lostPet ? [{ id: lostPet.id, icon: PawPrint, tone: theme.colors.danger, title: lostPet.title, subtitle: t.lostFound.lost, route: `/lost-found/${lostPet.id}` }] : []),
-    ...(issue ? [{ id: issue.id, icon: AlertTriangle, tone: theme.colors.warning, title: issue.title, subtitle: t.issueCreate.categories[issue.category], route: `/issue/${issue.id}` }] : []),
+    ...(alert
+      ? [
+          {
+            id: alert.id,
+            icon: TriangleAlert,
+            tone: theme.colors.warning,
+            title: alert.titleAr,
+            subtitle: t.notifications.title,
+            route: '/(tabs)',
+          },
+        ]
+      : []),
+    ...(help
+      ? [
+          {
+            id: help.id,
+            icon: HeartHandshake,
+            tone: theme.colors.info,
+            title: help.title,
+            subtitle: t.help.categories[help.category],
+            route: `/help-request/${help.id}`,
+          },
+        ]
+      : []),
+    ...(lostPet
+      ? [
+          {
+            id: lostPet.id,
+            icon: PawPrint,
+            tone: theme.colors.danger,
+            title: lostPet.title,
+            subtitle: t.lostFound.lost,
+            route: `/lost-found/${lostPet.id}`,
+          },
+        ]
+      : []),
+    ...(issue
+      ? [
+          {
+            id: issue.id,
+            icon: AlertTriangle,
+            tone: theme.colors.warning,
+            title: issue.title,
+            subtitle: t.issueCreate.categories[issue.category],
+            route: `/issue/${issue.id}`,
+          },
+        ]
+      : []),
   ];
 
   if (items.length === 0) return null;

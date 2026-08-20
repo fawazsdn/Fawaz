@@ -11,17 +11,36 @@ import { FilterBar } from '@/components/FilterBar';
 import { EmptyState } from '@/components/EmptyState';
 import type { ServiceCategory } from '@/models';
 
-const CATEGORIES: ServiceCategory[] = ['electrician', 'plumber', 'ac_repair', 'car_wash', 'cleaning', 'restaurant', 'cafe', 'barber', 'tailor', 'tutor', 'pet_services'];
+const CATEGORIES: ServiceCategory[] = [
+  'electrician',
+  'plumber',
+  'ac_repair',
+  'car_wash',
+  'cleaning',
+  'restaurant',
+  'cafe',
+  'barber',
+  'tailor',
+  'tutor',
+  'pet_services',
+];
 
 export default function RecommendationsScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const businesses = useStore((s) => s.businesses.filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? '')).sort((a, b) => b.recommendationCount - a.recommendationCount));
+  const businesses = useStore((s) =>
+    s.businesses
+      .filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? ''))
+      .sort((a, b) => b.recommendationCount - a.recommendationCount),
+  );
 
   const [category, setCategory] = useState<ServiceCategory | 'all'>('all');
-  const filtered = useMemo(() => (category === 'all' ? businesses : businesses.filter((b) => b.category === category)), [businesses, category]);
+  const filtered = useMemo(
+    () => (category === 'all' ? businesses : businesses.filter((b) => b.category === category)),
+    [businesses, category],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -40,7 +59,13 @@ export default function RecommendationsScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push(`/business/${item.id}`)}
-            style={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1, borderRadius: theme.radii.md, padding: 14 }}
+            style={{
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              borderRadius: theme.radii.md,
+              padding: 14,
+            }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={theme.text('title')}>{item.name}</Text>

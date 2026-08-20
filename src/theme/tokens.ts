@@ -124,7 +124,4 @@ export const shadows = {
   },
 } as const;
 
-export type ReputationColors = Record<
-  string,
-  { color: string; surface: string }
->;
+export type ReputationColors = Record<string, { color: string; surface: string }>;

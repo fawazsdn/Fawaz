@@ -20,7 +20,11 @@ export default function MarketplaceScreen() {
   const router = useRouter();
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+  const listings = useStore((s) =>
+    s.marketplaceListings
+      .filter((m) => m.neighborhoodId === neighborhoodId)
+      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  );
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<ListingType>('sale');
@@ -79,7 +83,14 @@ export default function MarketplaceScreen() {
         columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: theme.spacing.md }}
         contentContainerStyle={{ gap: 12, paddingBottom: 40 }}
         renderItem={({ item }) => <MarketplaceCard listing={item} />}
-        ListEmptyComponent={<EmptyState icon={ShoppingBag} title={t.emptyStates.noMarketplace} actionLabel={t.marketplace.createListing} onAction={() => router.push('/marketplace/create')} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon={ShoppingBag}
+            title={t.emptyStates.noMarketplace}
+            actionLabel={t.marketplace.createListing}
+            onAction={() => router.push('/marketplace/create')}
+          />
+        }
       />
     </View>
   );

@@ -44,7 +44,9 @@ export function AuthShell({ title, body, children, footer, showBack = true }: Au
         </View>
         {children}
       </ScrollView>
-      {footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + 16, borderTopColor: theme.colors.divider }]}>{footer}</View> : null}
+      {footer ? (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16, borderTopColor: theme.colors.divider }]}>{footer}</View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }

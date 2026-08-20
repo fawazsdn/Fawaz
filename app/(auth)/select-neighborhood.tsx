@@ -112,7 +112,11 @@ function NeighborhoodRow({ n, locale, onPress }: { n: Neighborhood; locale: 'ar'
   return (
     <Pressable
       onPress={onPress}
-      style={[theme.row(), styles.row, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md }]}
+      style={[
+        theme.row(),
+        styles.row,
+        { borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md },
+      ]}
       accessibilityRole="button"
     >
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.backgroundAlt }]}>

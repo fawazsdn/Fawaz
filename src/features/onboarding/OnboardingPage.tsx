@@ -36,7 +36,9 @@ export function OnboardingPage({
   const tone = iconTone ?? theme.colors.primary;
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24, backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.wrap, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24, backgroundColor: theme.colors.background }]}
+    >
       <View style={[theme.row(), styles.topRow]}>
         <View style={[theme.row(), styles.dots]}>
           {Array.from({ length: totalSteps }).map((_, i) => (
@@ -56,7 +58,10 @@ export function OnboardingPage({
       </View>
 
       <View style={styles.center}>
-        <Animated.View entering={FadeIn.duration(420)} style={[styles.iconWrap, { backgroundColor: tone + '1c', borderRadius: theme.radii.xl }]}>
+        <Animated.View
+          entering={FadeIn.duration(420)}
+          style={[styles.iconWrap, { backgroundColor: tone + '1c', borderRadius: theme.radii.xl }]}
+        >
           <Icon size={56} color={tone} strokeWidth={1.6} />
         </Animated.View>
         <Animated.Text entering={FadeInDown.duration(420).delay(80)} style={[theme.text('heading1'), styles.title]}>

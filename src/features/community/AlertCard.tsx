@@ -32,10 +32,14 @@ export function AlertCard({ alert }: { alert: AlertItem }) {
       <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{alert.bodyAr}</Text>
       <View style={[theme.row(), { gap: 16, marginTop: 10 }]}>
         <Pressable accessibilityRole="button" onPress={() => toggleAlertHelpful(alert.id)}>
-          <Text style={theme.text('caption', foundHelpful ? tone : theme.colors.textMuted)}>{t.alerts.helpful} · {helpfulBy.length}</Text>
+          <Text style={theme.text('caption', foundHelpful ? tone : theme.colors.textMuted)}>
+            {t.alerts.helpful} · {helpfulBy.length}
+          </Text>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={() => toggleAlertFollow(alert.id)}>
-          <Text style={theme.text('caption', following ? tone : theme.colors.textMuted)}>{following ? t.common.following : t.alerts.follow}</Text>
+          <Text style={theme.text('caption', following ? tone : theme.colors.textMuted)}>
+            {following ? t.common.following : t.alerts.follow}
+          </Text>
         </Pressable>
       </View>
     </View>

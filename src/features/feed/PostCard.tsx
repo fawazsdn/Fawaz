@@ -51,9 +51,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
   const goToDetail = () => (onPress ? onPress() : router.push(`/post/${post.id}`));
 
   const menuItems: ActionSheetItem[] = isOwn
-    ? [
-        { key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) },
-      ]
+    ? [{ key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) }]
     : [
         { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => toggleSavePost(post.id) },
         { key: 'report', label: t.common.report, onPress: () => setReportOpen(true) },
@@ -88,7 +86,13 @@ export function PostCard({ post, onPress }: PostCardProps) {
             <Badge
               label={post.type === 'announcement' ? t.create.post : t.notifications.title}
               tone={post.type === 'alert' ? 'warning' : 'info'}
-              icon={post.type === 'alert' ? <TriangleAlert size={12} color={theme.colors.warning} /> : <Megaphone size={12} color={theme.colors.info} />}
+              icon={
+                post.type === 'alert' ? (
+                  <TriangleAlert size={12} color={theme.colors.warning} />
+                ) : (
+                  <Megaphone size={12} color={theme.colors.info} />
+                )
+              }
             />
           </View>
         ) : null}
@@ -116,8 +120,14 @@ export function PostCard({ post, onPress }: PostCardProps) {
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
           >
-            <ThumbsUp size={17} color={liked ? theme.colors.primary : theme.colors.textMuted} fill={liked ? theme.colors.primary : 'transparent'} />
-            <Text style={theme.text('bodySmall', liked ? theme.colors.primary : theme.colors.textMuted)}>{post.reactions.length || ''}</Text>
+            <ThumbsUp
+              size={17}
+              color={liked ? theme.colors.primary : theme.colors.textMuted}
+              fill={liked ? theme.colors.primary : 'transparent'}
+            />
+            <Text style={theme.text('bodySmall', liked ? theme.colors.primary : theme.colors.textMuted)}>
+              {post.reactions.length || ''}
+            </Text>
           </Pressable>
 
           <Pressable onPress={goToDetail} style={[theme.row(), styles.footerBtn]} accessibilityRole="button">
@@ -133,10 +143,18 @@ export function PostCard({ post, onPress }: PostCardProps) {
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
           >
-            <Bookmark size={17} color={saved ? theme.colors.primary : theme.colors.textMuted} fill={saved ? theme.colors.primary : 'transparent'} />
+            <Bookmark
+              size={17}
+              color={saved ? theme.colors.primary : theme.colors.textMuted}
+              fill={saved ? theme.colors.primary : 'transparent'}
+            />
           </Pressable>
 
-          <Pressable onPress={(e) => e.stopPropagation?.()} style={[theme.row(), styles.footerBtn, isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }]} accessibilityRole="button">
+          <Pressable
+            onPress={(e) => e.stopPropagation?.()}
+            style={[theme.row(), styles.footerBtn, isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }]}
+            accessibilityRole="button"
+          >
             <Share2 size={17} color={theme.colors.textMuted} />
           </Pressable>
         </View>

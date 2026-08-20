@@ -28,7 +28,9 @@ export default function IssueDetailScreen() {
   const { t, locale } = useI18n();
 
   const issue = useStore((s) => s.issues.find((i) => i.id === id));
-  const updates = useStore((s) => s.issueUpdates.filter((u) => u.issueId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)));
+  const updates = useStore((s) =>
+    s.issueUpdates.filter((u) => u.issueId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+  );
   const reporter = useStore((s) => s.getUser(issue?.reporterId ?? ''));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === issue?.neighborhoodId));
   const comments = useStore((s) => s.comments.filter((c) => c.postId === id));
@@ -73,7 +75,12 @@ export default function IssueDetailScreen() {
           </View>
         ) : (
           <View style={{ marginBottom: 12 }}>
-            <MapPlaceholder centerLat={issue.approxLat} centerLng={issue.approxLng} pins={[{ id: issue.id, lat: issue.approxLat, lng: issue.approxLng }]} height={160} />
+            <MapPlaceholder
+              centerLat={issue.approxLat}
+              centerLng={issue.approxLng}
+              pins={[{ id: issue.id, lat: issue.approxLat, lng: issue.approxLng }]}
+              height={160}
+            />
           </View>
         )}
 
@@ -83,7 +90,8 @@ export default function IssueDetailScreen() {
         <View style={[theme.row(), { alignItems: 'center', gap: 6, marginTop: 12 }]}>
           <Users size={14} color={theme.colors.textMuted} />
           <Text style={theme.text('caption', theme.colors.textMuted)}>
-            {displayName(reporter)} · {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn} · {formatRelativeTime(issue.createdAt, locale)}
+            {displayName(reporter)} · {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn} ·{' '}
+            {formatRelativeTime(issue.createdAt, locale)}
           </Text>
         </View>
 
@@ -106,7 +114,12 @@ export default function IssueDetailScreen() {
             size="lg"
           />
           <View style={{ height: 10 }} />
-          <Button label={following ? t.issue.following : t.common.follow} onPress={() => toggleFollowIssue(issue.id)} variant="outline" fullWidth />
+          <Button
+            label={following ? t.issue.following : t.common.follow}
+            onPress={() => toggleFollowIssue(issue.id)}
+            variant="outline"
+            fullWidth
+          />
         </View>
 
         <Text style={[theme.text('title'), styles.sectionTitle]}>{t.issue.progress}</Text>
@@ -119,7 +132,12 @@ export default function IssueDetailScreen() {
             <Text style={theme.text('caption', theme.colors.textMuted)}>{t.issue.devControls}</Text>
             <View style={[theme.row(), { gap: 6, marginTop: 8, flexWrap: 'wrap' }]}>
               {STATUS_ORDER.map((status) => (
-                <Chip key={status} label={t.issue[`status${statusKey(status)}` as keyof typeof t.issue] as string} selected={issue.status === status} onPress={() => setIssueStatus(issue.id, status)} />
+                <Chip
+                  key={status}
+                  label={t.issue[`status${statusKey(status)}` as keyof typeof t.issue] as string}
+                  selected={issue.status === status}
+                  onPress={() => setIssueStatus(issue.id, status)}
+                />
               ))}
             </View>
           </View>

@@ -40,7 +40,10 @@ export default function CreateHelpRequestScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <AppHeader title={t.create.help} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.post.category}</Text>
@@ -49,15 +52,29 @@ export default function CreateHelpRequestScreen() {
             <Pressable
               key={c}
               onPress={() => setCategory(c)}
-              style={[styles.cell, { borderColor: category === c ? theme.colors.primary : theme.colors.border, backgroundColor: category === c ? theme.colors.infoSurface : theme.colors.surface, borderRadius: theme.radii.md }]}
+              style={[
+                styles.cell,
+                {
+                  borderColor: category === c ? theme.colors.primary : theme.colors.border,
+                  backgroundColor: category === c ? theme.colors.infoSurface : theme.colors.surface,
+                  borderRadius: theme.radii.md,
+                },
+              ]}
             >
-              <Text style={theme.text('bodySmall', category === c ? theme.colors.info : theme.colors.textPrimary)}>{t.help.categories[c]}</Text>
+              <Text style={theme.text('bodySmall', category === c ? theme.colors.info : theme.colors.textPrimary)}>
+                {t.help.categories[c]}
+              </Text>
             </Pressable>
           ))}
         </View>
 
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.eventCreate.titleLabel}</Text>
-        <TextInput value={title} onChangeText={setTitle} style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]} placeholderTextColor={theme.colors.textMuted} />
+        <TextInput
+          value={title}
+          onChangeText={setTitle}
+          style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]}
+          placeholderTextColor={theme.colors.textMuted}
+        />
 
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.eventCreate.description}</Text>
         <TextInput

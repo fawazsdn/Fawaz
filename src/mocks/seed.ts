@@ -300,7 +300,10 @@ export const POSTS: Post[] = [
     textAr: 'صباح الخير يا جيران! الجو اليوم جميل جدًا للمشي في الحديقة المركزية 🌳',
     images: [],
     createdAt: hoursAgo(1),
-    reactions: [{ userId: 'u2', type: 'like' }, { userId: 'u8', type: 'like' }],
+    reactions: [
+      { userId: 'u2', type: 'like' },
+      { userId: 'u8', type: 'like' },
+    ],
     commentCount: 2,
     savedBy: [],
     audience: 'neighborhood',
@@ -330,7 +333,11 @@ export const POSTS: Post[] = [
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800',
     ],
     createdAt: hoursAgo(5),
-    reactions: [{ userId: 'u3', type: 'like' }, { userId: 'u4', type: 'like' }, { userId: 'u9', type: 'like' }],
+    reactions: [
+      { userId: 'u3', type: 'like' },
+      { userId: 'u4', type: 'like' },
+      { userId: 'u9', type: 'like' },
+    ],
     commentCount: 3,
     savedBy: [],
     audience: 'neighborhood',
@@ -343,7 +350,10 @@ export const POSTS: Post[] = [
     textAr: 'انقطاع مؤقت للمياه غدًا من الساعة 10 صباحًا حتى 2 ظهرًا بسبب أعمال صيانة على الخط الرئيسي.',
     images: [],
     createdAt: hoursAgo(8),
-    reactions: [{ userId: 'u1', type: 'helpful' }, { userId: 'u8', type: 'helpful' }],
+    reactions: [
+      { userId: 'u1', type: 'helpful' },
+      { userId: 'u8', type: 'helpful' },
+    ],
     commentCount: 5,
     savedBy: ['u1', 'u8'],
     audience: 'neighborhood',
@@ -369,7 +379,10 @@ export const POSTS: Post[] = [
     textAr: 'شروق اليوم من سطح المنزل 😍 الحمدلله على النعمة',
     images: ['https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800'],
     createdAt: hoursAgo(14),
-    reactions: [{ userId: 'u1', type: 'like' }, { userId: 'u3', type: 'like' }],
+    reactions: [
+      { userId: 'u1', type: 'like' },
+      { userId: 'u3', type: 'like' },
+    ],
     commentCount: 1,
     savedBy: [],
     audience: 'neighborhood',
@@ -679,9 +692,7 @@ export const EVENTS: CommunityEvent[] = [
     capacity: 20,
     audience: 'neighborhood',
     recurring: true,
-    attendees: [
-      { userId: 'u5', status: 'going', joinedAt: hoursAgo(2) },
-    ],
+    attendees: [{ userId: 'u5', status: 'going', joinedAt: hoursAgo(2) }],
   },
   {
     id: 'e6',
@@ -969,10 +980,38 @@ export const BUSINESSES: Business[] = [
 ];
 
 export const RECOMMENDATIONS: Recommendation[] = [
-  { id: 'r1', businessId: 'biz1', authorId: 'u1', textAr: 'سريع وصادق في السعر، تعامل ممتاز.', createdAt: hoursAgo(40), sentiment: 'positive' },
-  { id: 'r2', businessId: 'biz1', authorId: 'u3', textAr: 'حل مشكلة الكهرباء عندي بربع ساعة فقط.', createdAt: hoursAgo(90), sentiment: 'positive' },
-  { id: 'r3', businessId: 'biz3', authorId: 'u8', textAr: 'أفضل قهوة مختصة بالحي بدون منازع.', createdAt: hoursAgo(20), sentiment: 'positive' },
-  { id: 'r4', businessId: 'biz2', authorId: 'u4', textAr: 'ضبط التكييف بسرعة والسعر مناسب.', createdAt: hoursAgo(150), sentiment: 'positive' },
+  {
+    id: 'r1',
+    businessId: 'biz1',
+    authorId: 'u1',
+    textAr: 'سريع وصادق في السعر، تعامل ممتاز.',
+    createdAt: hoursAgo(40),
+    sentiment: 'positive',
+  },
+  {
+    id: 'r2',
+    businessId: 'biz1',
+    authorId: 'u3',
+    textAr: 'حل مشكلة الكهرباء عندي بربع ساعة فقط.',
+    createdAt: hoursAgo(90),
+    sentiment: 'positive',
+  },
+  {
+    id: 'r3',
+    businessId: 'biz3',
+    authorId: 'u8',
+    textAr: 'أفضل قهوة مختصة بالحي بدون منازع.',
+    createdAt: hoursAgo(20),
+    sentiment: 'positive',
+  },
+  {
+    id: 'r4',
+    businessId: 'biz2',
+    authorId: 'u4',
+    textAr: 'ضبط التكييف بسرعة والسعر مناسب.',
+    createdAt: hoursAgo(150),
+    sentiment: 'positive',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1034,13 +1073,55 @@ export const CONVERSATIONS: Conversation[] = [
 ];
 
 export const MESSAGES: Message[] = [
-  { id: 'msg1', conversationId: 'conv1', senderId: 'u2', text: 'هلا فواز، جاهز لمباراة اليوم؟', createdAt: hoursAgo(1), readBy: ['u1', 'u2'] },
-  { id: 'msg2', conversationId: 'conv1', senderId: 'u1', text: 'أكيد ان شاء الله، بكون هناك الساعة 9', createdAt: hoursAgo(0.7), readBy: ['u1', 'u2'] },
+  {
+    id: 'msg1',
+    conversationId: 'conv1',
+    senderId: 'u2',
+    text: 'هلا فواز، جاهز لمباراة اليوم؟',
+    createdAt: hoursAgo(1),
+    readBy: ['u1', 'u2'],
+  },
+  {
+    id: 'msg2',
+    conversationId: 'conv1',
+    senderId: 'u1',
+    text: 'أكيد ان شاء الله، بكون هناك الساعة 9',
+    createdAt: hoursAgo(0.7),
+    readBy: ['u1', 'u2'],
+  },
   { id: 'msg3', conversationId: 'conv1', senderId: 'u2', text: 'تمام، لا تتأخر 😄', createdAt: hoursAgo(0.5), readBy: ['u2'] },
-  { id: 'msg4', conversationId: 'conv2', senderId: 'u9', text: 'مرحبا، لسه محتاج جمبر إذا تقدر تساعد', createdAt: hoursAgo(0.15), readBy: ['u9'] },
-  { id: 'msg5', conversationId: 'conv3', senderId: 'u1', text: 'السلام عليكم، ودي أستفسر عن سعر تمديد كهرباء إضافي', createdAt: hoursAgo(21), readBy: ['u1', 'u6'] },
-  { id: 'msg6', conversationId: 'conv3', senderId: 'u6', text: 'وعليكم السلام، يعتمد على المسافة والنقاط. أقدر أمر عليك بكرة للمعاينة', createdAt: hoursAgo(20), readBy: ['u1', 'u6'] },
-  { id: 'msg7', conversationId: 'conv4', senderId: 'u2', text: 'الملعب محجوز الساعة 9، لا تنسون الجزم الرياضية', createdAt: hoursAgo(3), readBy: ['u2', 'u8', 'u10'] },
+  {
+    id: 'msg4',
+    conversationId: 'conv2',
+    senderId: 'u9',
+    text: 'مرحبا، لسه محتاج جمبر إذا تقدر تساعد',
+    createdAt: hoursAgo(0.15),
+    readBy: ['u9'],
+  },
+  {
+    id: 'msg5',
+    conversationId: 'conv3',
+    senderId: 'u1',
+    text: 'السلام عليكم، ودي أستفسر عن سعر تمديد كهرباء إضافي',
+    createdAt: hoursAgo(21),
+    readBy: ['u1', 'u6'],
+  },
+  {
+    id: 'msg6',
+    conversationId: 'conv3',
+    senderId: 'u6',
+    text: 'وعليكم السلام، يعتمد على المسافة والنقاط. أقدر أمر عليك بكرة للمعاينة',
+    createdAt: hoursAgo(20),
+    readBy: ['u1', 'u6'],
+  },
+  {
+    id: 'msg7',
+    conversationId: 'conv4',
+    senderId: 'u2',
+    text: 'الملعب محجوز الساعة 9، لا تنسون الجزم الرياضية',
+    createdAt: hoursAgo(3),
+    readBy: ['u2', 'u8', 'u10'],
+  },
   { id: 'msg8', conversationId: 'conv4', senderId: 'u8', text: 'تمام نشوفكم هناك', createdAt: hoursAgo(2), readBy: ['u8'] },
 ];
 
@@ -1049,14 +1130,90 @@ export const MESSAGES: Message[] = [
 // ---------------------------------------------------------------------------
 
 export const NOTIFICATIONS: AppNotification[] = [
-  { id: 'not1', userId: 'u1', type: 'reply', titleAr: 'أحمد القحطاني', bodyAr: 'رد على منشورك: "صباح النور! بشوفك هناك 😄"', createdAt: hoursAgo(0.8), read: false, deepLink: '/post/p1', actorId: 'u2' },
-  { id: 'not2', userId: 'u1', type: 'thanks', titleAr: 'نورة الدوسري', bodyAr: 'شكرتك على مساعدتك في نقل الأثاث', createdAt: hoursAgo(3), read: false, deepLink: '/profile/u1', actorId: 'u5' },
-  { id: 'not3', userId: 'u1', type: 'event_reminder', titleAr: 'تذكير بفعالية', bodyAr: 'مباراة كرة قدم مسائية تبدأ خلال 5 ساعات', createdAt: hoursAgo(1), read: true, deepLink: '/event/e1' },
-  { id: 'not4', userId: 'u1', type: 'issue_update', titleAr: 'تحديث بلاغ', bodyAr: 'تم تحديث حالة بلاغ "عمود إنارة معطل" إلى قيد التنفيذ', createdAt: hoursAgo(6), read: true, deepLink: '/issue/i1' },
-  { id: 'not5', userId: 'u1', type: 'message', titleAr: 'رسالة جديدة', bodyAr: 'ريم الغامدي: مرحبا، لسه محتاج جمبر...', createdAt: hoursAgo(0.15), read: false, deepLink: '/messages/conv2', actorId: 'u9' },
-  { id: 'not6', userId: 'u1', type: 'alert', titleAr: 'تنبيه الحي', bodyAr: 'انقطاع مؤقت للمياه غدًا من 10ص حتى 2ظ', createdAt: hoursAgo(8), read: true, deepLink: '/post/p4' },
-  { id: 'not7', userId: 'u1', type: 'help_response', titleAr: 'ماجد الزهراني', bodyAr: 'عرض المساعدة في طلبك: قطتي مفقودة منذ الصباح', createdAt: hoursAgo(9), read: true, deepLink: '/help-request/h3', actorId: 'u10' },
-  { id: 'not8', userId: 'u1', type: 'marketplace_inquiry', titleAr: 'استفسار سوق', bodyAr: 'سؤال جديد على إعلان "جهاز بلايستيشن 5"', createdAt: hoursAgo(30), read: true, deepLink: '/marketplace/m4' },
+  {
+    id: 'not1',
+    userId: 'u1',
+    type: 'reply',
+    titleAr: 'أحمد القحطاني',
+    bodyAr: 'رد على منشورك: "صباح النور! بشوفك هناك 😄"',
+    createdAt: hoursAgo(0.8),
+    read: false,
+    deepLink: '/post/p1',
+    actorId: 'u2',
+  },
+  {
+    id: 'not2',
+    userId: 'u1',
+    type: 'thanks',
+    titleAr: 'نورة الدوسري',
+    bodyAr: 'شكرتك على مساعدتك في نقل الأثاث',
+    createdAt: hoursAgo(3),
+    read: false,
+    deepLink: '/profile/u1',
+    actorId: 'u5',
+  },
+  {
+    id: 'not3',
+    userId: 'u1',
+    type: 'event_reminder',
+    titleAr: 'تذكير بفعالية',
+    bodyAr: 'مباراة كرة قدم مسائية تبدأ خلال 5 ساعات',
+    createdAt: hoursAgo(1),
+    read: true,
+    deepLink: '/event/e1',
+  },
+  {
+    id: 'not4',
+    userId: 'u1',
+    type: 'issue_update',
+    titleAr: 'تحديث بلاغ',
+    bodyAr: 'تم تحديث حالة بلاغ "عمود إنارة معطل" إلى قيد التنفيذ',
+    createdAt: hoursAgo(6),
+    read: true,
+    deepLink: '/issue/i1',
+  },
+  {
+    id: 'not5',
+    userId: 'u1',
+    type: 'message',
+    titleAr: 'رسالة جديدة',
+    bodyAr: 'ريم الغامدي: مرحبا، لسه محتاج جمبر...',
+    createdAt: hoursAgo(0.15),
+    read: false,
+    deepLink: '/messages/conv2',
+    actorId: 'u9',
+  },
+  {
+    id: 'not6',
+    userId: 'u1',
+    type: 'alert',
+    titleAr: 'تنبيه الحي',
+    bodyAr: 'انقطاع مؤقت للمياه غدًا من 10ص حتى 2ظ',
+    createdAt: hoursAgo(8),
+    read: true,
+    deepLink: '/post/p4',
+  },
+  {
+    id: 'not7',
+    userId: 'u1',
+    type: 'help_response',
+    titleAr: 'ماجد الزهراني',
+    bodyAr: 'عرض المساعدة في طلبك: قطتي مفقودة منذ الصباح',
+    createdAt: hoursAgo(9),
+    read: true,
+    deepLink: '/help-request/h3',
+    actorId: 'u10',
+  },
+  {
+    id: 'not8',
+    userId: 'u1',
+    type: 'marketplace_inquiry',
+    titleAr: 'استفسار سوق',
+    bodyAr: 'سؤال جديد على إعلان "جهاز بلايستيشن 5"',
+    createdAt: hoursAgo(30),
+    read: true,
+    deepLink: '/marketplace/m4',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1130,9 +1287,27 @@ export const ALERTS: AlertItem[] = [
 ];
 
 export const COMMUNITY_GROUPS: CommunityGroup[] = [
-  { id: 'g1', name: 'لجنة الحي', description: 'مجموعة تنسيق بين سكان الحي واللجنة المسؤولة عن القرارات المشتركة.', neighborhoodId: 'n1', memberCount: 48 },
-  { id: 'g2', name: 'مجموعة الدعم الأسري', description: 'تبادل الدعم والمساعدة بين العائلات في الحي.', neighborhoodId: 'n1', memberCount: 63 },
-  { id: 'g3', name: 'نادي المشي الصباحي', description: 'لقاء يومي للمشي في الحديقة المركزية الساعة 6 صباحًا.', neighborhoodId: 'n1', memberCount: 27 },
+  {
+    id: 'g1',
+    name: 'لجنة الحي',
+    description: 'مجموعة تنسيق بين سكان الحي واللجنة المسؤولة عن القرارات المشتركة.',
+    neighborhoodId: 'n1',
+    memberCount: 48,
+  },
+  {
+    id: 'g2',
+    name: 'مجموعة الدعم الأسري',
+    description: 'تبادل الدعم والمساعدة بين العائلات في الحي.',
+    neighborhoodId: 'n1',
+    memberCount: 63,
+  },
+  {
+    id: 'g3',
+    name: 'نادي المشي الصباحي',
+    description: 'لقاء يومي للمشي في الحديقة المركزية الساعة 6 صباحًا.',
+    neighborhoodId: 'n1',
+    memberCount: 27,
+  },
 ];
 
 export const REPUTATION_EVENTS: ReputationEvent[] = [

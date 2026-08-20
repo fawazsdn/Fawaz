@@ -26,7 +26,13 @@ export default function AssistantScreen() {
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
 
-  const suggestions = [t.assistant.suggestion1, t.assistant.suggestion2, t.assistant.suggestion3, t.assistant.suggestion4, t.assistant.suggestion5];
+  const suggestions = [
+    t.assistant.suggestion1,
+    t.assistant.suggestion2,
+    t.assistant.suggestion3,
+    t.assistant.suggestion4,
+    t.assistant.suggestion5,
+  ];
 
   const ask = async (query: string) => {
     if (!query.trim() || !neighborhoodId) return;
@@ -40,7 +46,11 @@ export default function AssistantScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={90}
+    >
       <AppHeader title={t.assistant.title} />
       <FlatList
         ref={listRef}
@@ -52,7 +62,11 @@ export default function AssistantScreen() {
             <View
               style={[
                 styles.bubble,
-                { backgroundColor: item.fromUser ? theme.colors.primary : theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+                {
+                  backgroundColor: item.fromUser ? theme.colors.primary : theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.radii.lg,
+                },
               ]}
             >
               <Text style={theme.text('body', item.fromUser ? theme.colors.onPrimary : theme.colors.textPrimary)}>{item.text}</Text>
@@ -68,7 +82,11 @@ export default function AssistantScreen() {
               <Text style={theme.text('title')}>{t.assistant.title}</Text>
               <View style={{ gap: 8, width: '100%' }}>
                 {suggestions.map((s) => (
-                  <Pressable key={s} onPress={() => ask(s)} style={[styles.suggestion, { borderColor: theme.colors.border, borderRadius: theme.radii.md }]}>
+                  <Pressable
+                    key={s}
+                    onPress={() => ask(s)}
+                    style={[styles.suggestion, { borderColor: theme.colors.border, borderRadius: theme.radii.md }]}
+                  >
                     <Text style={theme.text('bodySmall')}>{s}</Text>
                   </Pressable>
                 ))}
@@ -78,13 +96,28 @@ export default function AssistantScreen() {
         }
         ListFooterComponent={
           thinking ? (
-            <View style={[styles.bubble, { alignSelf: 'flex-start', backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
+            <View
+              style={[
+                styles.bubble,
+                {
+                  alignSelf: 'flex-start',
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                  borderRadius: theme.radii.lg,
+                },
+              ]}
+            >
               <Text style={theme.text('bodySmall', theme.colors.textMuted)}>{t.common.loading}</Text>
             </View>
           ) : null
         }
       />
-      <View style={[styles.composer, { paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surfaceElevated, borderTopColor: theme.colors.divider }]}>
+      <View
+        style={[
+          styles.composer,
+          { paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surfaceElevated, borderTopColor: theme.colors.divider },
+        ]}
+      >
         <TextInput
           value={input}
           onChangeText={setInput}

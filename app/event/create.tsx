@@ -77,7 +77,10 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <AppHeader title={t.eventCreate.title} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <Pressable onPress={pickImage} style={[styles.imagePicker, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
@@ -85,7 +88,12 @@ export default function CreateEventScreen() {
         </Pressable>
 
         <Field label={t.eventCreate.titleLabel}>
-          <TextInput value={title} onChangeText={setTitle} style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.eventCreate.category}>
@@ -123,7 +131,12 @@ export default function CreateEventScreen() {
         </Field>
 
         <Field label={t.eventCreate.location}>
-          <TextInput value={location} onChangeText={setLocation} style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={location}
+            onChangeText={setLocation}
+            style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.eventCreate.capacity}>
@@ -165,7 +178,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const styles = StyleSheet.create({
-  imagePicker: { height: 150, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', marginBottom: 18 },
+  imagePicker: {
+    height: 150,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: 18,
+  },
   image: { width: '100%', height: '100%' },
   input: { height: 48, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 14 },
   textArea: { minHeight: 90, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, padding: 14, textAlignVertical: 'top' },

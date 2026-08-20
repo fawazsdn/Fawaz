@@ -89,7 +89,11 @@ export default function SearchScreen() {
                 </Pressable>
               </View>
               {searchHistory.map((h) => (
-                <Pressable key={h} onPress={() => setQuery(h)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 }}>
+                <Pressable
+                  key={h}
+                  onPress={() => setQuery(h)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 }}
+                >
                   <Clock size={15} color={theme.colors.textMuted} />
                   <Text style={theme.text('body')}>{h}</Text>
                 </Pressable>

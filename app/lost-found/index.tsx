@@ -18,7 +18,9 @@ export default function LostFoundScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const items = useStore((s) => s.lostFound.filter((l) => l.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+  const items = useStore((s) =>
+    s.lostFound.filter((l) => l.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  );
 
   const [filter, setFilter] = useState<LostFoundStatus | 'all'>('all');
 

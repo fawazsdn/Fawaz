@@ -60,7 +60,16 @@ export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }:
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: '#000' },
-  closeBtn: { position: 'absolute', right: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  closeBtn: {
+    position: 'absolute',
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   counter: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
 });

@@ -56,18 +56,56 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 60 }}>
         <SectionLabel title={t.settings.account} />
         <Row icon={User} label={t.settings.editProfile} onPress={() => router.push('/settings/edit-profile')} Chevron={Chevron} />
-        <Row icon={MapPin} label={t.settings.neighborhood} value={neighborhood?.nameAr} onPress={() => router.push('/(auth)/select-neighborhood')} Chevron={Chevron} />
-        <Row icon={BadgeCheck} label={t.settings.verificationStatus} value={verificationLabel(verification, t)} onPress={() => router.push('/(auth)/verification')} Chevron={Chevron} />
+        <Row
+          icon={MapPin}
+          label={t.settings.neighborhood}
+          value={neighborhood?.nameAr}
+          onPress={() => router.push('/(auth)/select-neighborhood')}
+          Chevron={Chevron}
+        />
+        <Row
+          icon={BadgeCheck}
+          label={t.settings.verificationStatus}
+          value={verificationLabel(verification, t)}
+          onPress={() => router.push('/(auth)/verification')}
+          Chevron={Chevron}
+        />
 
         <SectionLabel title={t.settings.preferences} />
-        <Row icon={Globe} label={t.settings.language} value={settings.locale === 'ar' ? 'العربية' : 'English'} onPress={() => setSheet('language')} Chevron={Chevron} />
-        <Row icon={Moon} label={t.settings.theme} value={themeLabel(settings.themeMode, t)} onPress={() => setSheet('theme')} Chevron={Chevron} />
-        <SwitchRow label={t.settings.notifications} value={settings.notificationsEnabled} onChange={(v) => setSettings({ notificationsEnabled: v })} />
+        <Row
+          icon={Globe}
+          label={t.settings.language}
+          value={settings.locale === 'ar' ? 'العربية' : 'English'}
+          onPress={() => setSheet('language')}
+          Chevron={Chevron}
+        />
+        <Row
+          icon={Moon}
+          label={t.settings.theme}
+          value={themeLabel(settings.themeMode, t)}
+          onPress={() => setSheet('theme')}
+          Chevron={Chevron}
+        />
+        <SwitchRow
+          label={t.settings.notifications}
+          value={settings.notificationsEnabled}
+          onChange={(v) => setSettings({ notificationsEnabled: v })}
+        />
         <SwitchRow label={t.settings.ramadanMode} value={settings.ramadanMode} onChange={setRamadanMode} />
 
         <SectionLabel title={t.settings.privacy} />
-        <Row icon={MessageCircle} label={t.settings.whoCanMessage} value={whoCanMessageLabel(settings.whoCanMessage, t)} onPress={() => setSheet('message')} Chevron={Chevron} />
-        <SwitchRow label={t.settings.activityVisibility} value={settings.activityVisible} onChange={(v) => setSettings({ activityVisible: v })} />
+        <Row
+          icon={MessageCircle}
+          label={t.settings.whoCanMessage}
+          value={whoCanMessageLabel(settings.whoCanMessage, t)}
+          onPress={() => setSheet('message')}
+          Chevron={Chevron}
+        />
+        <SwitchRow
+          label={t.settings.activityVisibility}
+          value={settings.activityVisible}
+          onChange={(v) => setSettings({ activityVisible: v })}
+        />
         <Row icon={UserX} label={t.settings.blockedUsers} onPress={() => router.push('/settings/blocked-users')} Chevron={Chevron} />
 
         <SectionLabel title={t.settings.app} />
@@ -77,7 +115,13 @@ export default function SettingsScreen() {
         <Row icon={Shield} label={t.settings.privacyPolicy} onPress={() => router.push('/settings/info/privacy')} Chevron={Chevron} />
 
         <SectionLabel title={t.settings.demoModeTitle} />
-        <Row icon={Shield} label={t.settings.demoRole} value={t.roles[settings.demoRole]} onPress={() => setSheet('role')} Chevron={Chevron} />
+        <Row
+          icon={Shield}
+          label={t.settings.demoRole}
+          value={t.roles[settings.demoRole]}
+          onPress={() => setSheet('role')}
+          Chevron={Chevron}
+        />
         {settings.demoRole === 'moderator' ? (
           <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} />
         ) : null}
@@ -212,7 +256,11 @@ function themeLabel(mode: ThemeMode, t: ReturnType<typeof useI18n>['t']) {
 }
 
 function whoCanMessageLabel(v: 'everyone' | 'neighbors' | 'nobody', t: ReturnType<typeof useI18n>['t']) {
-  return v === 'everyone' ? t.settings.whoCanMessageEveryone : v === 'neighbors' ? t.settings.whoCanMessageNeighbors : t.settings.whoCanMessageNobody;
+  return v === 'everyone'
+    ? t.settings.whoCanMessageEveryone
+    : v === 'neighbors'
+      ? t.settings.whoCanMessageNeighbors
+      : t.settings.whoCanMessageNobody;
 }
 
 function SectionLabel({ title }: { title: string }) {
@@ -258,13 +306,27 @@ function SwitchRow({ label, value, onChange }: { label: string; value: boolean; 
   );
 }
 
-function OptionList({ title, options, selected, onSelect }: { title: string; options: { key: string; label: string }[]; selected: string; onSelect: (k: string) => void }) {
+function OptionList({
+  title,
+  options,
+  selected,
+  onSelect,
+}: {
+  title: string;
+  options: { key: string; label: string }[];
+  selected: string;
+  onSelect: (k: string) => void;
+}) {
   const theme = useTheme();
   return (
     <View style={{ paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.md }}>
       <Text style={[theme.text('heading3'), { marginBottom: 12 }]}>{title}</Text>
       {options.map((opt) => (
-        <Pressable key={opt.key} onPress={() => onSelect(opt.key)} style={[theme.row(), styles.optionRow, { borderColor: selected === opt.key ? theme.colors.primary : theme.colors.border }]}>
+        <Pressable
+          key={opt.key}
+          onPress={() => onSelect(opt.key)}
+          style={[theme.row(), styles.optionRow, { borderColor: selected === opt.key ? theme.colors.primary : theme.colors.border }]}
+        >
           <Text style={theme.text('body', selected === opt.key ? theme.colors.primary : theme.colors.textPrimary)}>{opt.label}</Text>
         </Pressable>
       ))}

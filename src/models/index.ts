@@ -32,12 +32,7 @@ export interface Neighborhood {
   centerLng: number;
 }
 
-export type VerificationStatus =
-  | 'not_started'
-  | 'checking'
-  | 'pending'
-  | 'verified'
-  | 'failed';
+export type VerificationStatus = 'not_started' | 'checking' | 'pending' | 'verified' | 'failed';
 
 export interface User {
   id: string;
@@ -59,12 +54,7 @@ export interface User {
   isSelf?: boolean;
 }
 
-export type ReputationTier =
-  | 'new_neighbor'
-  | 'neighbor'
-  | 'contributor'
-  | 'community_builder'
-  | 'community_champion';
+export type ReputationTier = 'new_neighbor' | 'neighbor' | 'contributor' | 'community_builder' | 'community_champion';
 
 export interface ReputationEvent {
   id: string;
@@ -76,16 +66,7 @@ export interface ReputationEvent {
 }
 
 export type PostType =
-  | 'general'
-  | 'announcement'
-  | 'issue'
-  | 'help'
-  | 'event'
-  | 'poll'
-  | 'recommendation'
-  | 'lost_found'
-  | 'marketplace'
-  | 'alert';
+  'general' | 'announcement' | 'issue' | 'help' | 'event' | 'poll' | 'recommendation' | 'lost_found' | 'marketplace' | 'alert';
 
 export interface Reaction {
   userId: string;
@@ -121,23 +102,9 @@ export interface Comment {
 }
 
 export type IssueCategory =
-  | 'streetlight'
-  | 'road_damage'
-  | 'trash'
-  | 'water'
-  | 'electricity'
-  | 'flooding'
-  | 'abandoned_vehicle'
-  | 'safety'
-  | 'other';
+  'streetlight' | 'road_damage' | 'trash' | 'water' | 'electricity' | 'flooding' | 'abandoned_vehicle' | 'safety' | 'other';
 
-export type IssueStatus =
-  | 'reported'
-  | 'confirmed'
-  | 'submitted'
-  | 'under_review'
-  | 'in_progress'
-  | 'resolved';
+export type IssueStatus = 'reported' | 'confirmed' | 'submitted' | 'under_review' | 'in_progress' | 'resolved';
 
 export interface IssueUpdate {
   id: string;
@@ -163,13 +130,7 @@ export interface Issue {
   approxLng: number;
 }
 
-export type HelpCategory =
-  | 'car'
-  | 'borrow_item'
-  | 'moving'
-  | 'lost_pet'
-  | 'home'
-  | 'other';
+export type HelpCategory = 'car' | 'borrow_item' | 'moving' | 'lost_pet' | 'home' | 'other';
 
 export interface HelpRequest {
   id: string;
@@ -184,16 +145,7 @@ export interface HelpRequest {
   status: 'open' | 'in_progress' | 'resolved';
 }
 
-export type EventCategory =
-  | 'football'
-  | 'padel'
-  | 'walking'
-  | 'cleanup'
-  | 'coffee'
-  | 'iftar'
-  | 'kids'
-  | 'family'
-  | 'community';
+export type EventCategory = 'football' | 'padel' | 'walking' | 'cleanup' | 'coffee' | 'iftar' | 'kids' | 'family' | 'community';
 
 export type AttendeeStatus = 'not_joined' | 'going' | 'waitlisted' | 'interested' | 'cancelled';
 
@@ -342,14 +294,7 @@ export interface Message {
 }
 
 export type NotificationType =
-  | 'reply'
-  | 'thanks'
-  | 'event_reminder'
-  | 'issue_update'
-  | 'help_response'
-  | 'message'
-  | 'alert'
-  | 'marketplace_inquiry';
+  'reply' | 'thanks' | 'event_reminder' | 'issue_update' | 'help_response' | 'message' | 'alert' | 'marketplace_inquiry';
 
 export interface AppNotification {
   id: string;
@@ -378,14 +323,7 @@ export interface Institution {
 }
 
 export type ReportReason =
-  | 'spam'
-  | 'scam'
-  | 'harassment'
-  | 'privacy_violation'
-  | 'inappropriate'
-  | 'misinformation'
-  | 'impersonation'
-  | 'other';
+  'spam' | 'scam' | 'harassment' | 'privacy_violation' | 'inappropriate' | 'misinformation' | 'impersonation' | 'other';
 
 export type ReportTargetType = 'post' | 'comment' | 'user' | 'listing';
 

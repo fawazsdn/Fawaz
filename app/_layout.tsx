@@ -6,12 +6,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import {
-  Tajawal_400Regular,
-  Tajawal_500Medium,
-  Tajawal_700Bold,
-  Tajawal_800ExtraBold,
-} from '@expo-google-fonts/tajawal';
+import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, Tajawal_800ExtraBold } from '@expo-google-fonts/tajawal';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,

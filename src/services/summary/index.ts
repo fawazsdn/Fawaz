@@ -15,7 +15,9 @@ function computeSummary(neighborhoodId: string): string {
   const s = useStore.getState();
   const now = Date.now();
   const in24h = now + 24 * 3600 * 1000;
-  const events = s.events.filter((e) => e.neighborhoodId === neighborhoodId && +new Date(e.startsAt) <= in24h && +new Date(e.startsAt) >= now);
+  const events = s.events.filter(
+    (e) => e.neighborhoodId === neighborhoodId && +new Date(e.startsAt) <= in24h && +new Date(e.startsAt) >= now,
+  );
   const activeIssue = s.issues.find((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved');
   const foundPet = s.lostFound.find((l) => l.neighborhoodId === neighborhoodId && l.kind === 'pet' && l.status !== 'lost');
 

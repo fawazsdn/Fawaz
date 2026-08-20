@@ -15,7 +15,9 @@ export default function IssuesListScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+  const issues = useStore((s) =>
+    s.issues.filter((i) => i.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -32,7 +34,14 @@ export default function IssuesListScreen() {
         keyExtractor={(i) => i.id}
         contentContainerStyle={{ padding: theme.spacing.md, gap: 10 }}
         renderItem={({ item }) => <IssueCard issue={item} />}
-        ListEmptyComponent={<EmptyState icon={AlertTriangle} title={t.emptyStates.noIssues} actionLabel={t.create.issue} onAction={() => router.push('/issue/create')} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon={AlertTriangle}
+            title={t.emptyStates.noIssues}
+            actionLabel={t.create.issue}
+            onAction={() => router.push('/issue/create')}
+          />
+        }
       />
     </View>
   );

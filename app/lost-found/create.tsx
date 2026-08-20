@@ -38,13 +38,23 @@ export default function CreateLostFoundScreen() {
   const onSubmit = async () => {
     if (!neighborhoodId || !image) return;
     setSubmitting(true);
-    const post = await lostFoundService.create({ kind, title: title.trim(), description: description.trim(), image, neighborhoodId, status });
+    const post = await lostFoundService.create({
+      kind,
+      title: title.trim(),
+      description: description.trim(),
+      image,
+      neighborhoodId,
+      status,
+    });
     setSubmitting(false);
     router.replace(`/lost-found/${post.id}`);
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <AppHeader title={t.lostFound.report} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <Pressable onPress={pickImage} style={[styles.imagePicker, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
@@ -59,7 +69,12 @@ export default function CreateLostFoundScreen() {
         </View>
 
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.eventCreate.titleLabel}</Text>
-        <TextInput value={title} onChangeText={setTitle} style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]} placeholderTextColor={theme.colors.textMuted} />
+        <TextInput
+          value={title}
+          onChangeText={setTitle}
+          style={[theme.text('body'), styles.input, { borderColor: theme.colors.border }]}
+          placeholderTextColor={theme.colors.textMuted}
+        />
 
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.eventCreate.description}</Text>
         <TextInput

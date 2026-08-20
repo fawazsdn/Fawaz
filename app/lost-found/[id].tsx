@@ -42,7 +42,9 @@ export default function LostFoundDetailScreen() {
           <Badge label={t.lostFound[item.status]} tone={STATUS_TONE[item.status]} />
           <Text style={[theme.text('heading2'), { marginTop: 10 }]}>{item.title}</Text>
           <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 8 }]}>{item.description}</Text>
-          <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 10 }]}>{formatRelativeTime(item.createdAt, locale)}</Text>
+          <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 10 }]}>
+            {formatRelativeTime(item.createdAt, locale)}
+          </Text>
         </View>
 
         <View style={{ marginTop: 16 }}>

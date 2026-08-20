@@ -24,12 +24,7 @@ export function FilterBar({ options, selected, onSelect }: FilterBarProps) {
       contentContainerStyle={[styles.content, theme.row(), { paddingHorizontal: theme.spacing.md }]}
     >
       {options.map((opt) => (
-        <Chip
-          key={opt.key}
-          label={opt.label}
-          selected={opt.key === selected}
-          onPress={() => onSelect(opt.key)}
-        />
+        <Chip key={opt.key} label={opt.label} selected={opt.key === selected} onPress={() => onSelect(opt.key)} />
       ))}
     </ScrollView>
   );

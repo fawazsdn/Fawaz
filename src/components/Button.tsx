@@ -26,7 +26,20 @@ interface ButtonProps {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const Button = forwardRef<View, ButtonProps>(function Button(
-  { label, onPress, variant = 'primary', size = 'md', disabled, loading, icon, trailingIcon, fullWidth, haptic = true, testID, accessibilityLabel },
+  {
+    label,
+    onPress,
+    variant = 'primary',
+    size = 'md',
+    disabled,
+    loading,
+    icon,
+    trailingIcon,
+    fullWidth,
+    haptic = true,
+    testID,
+    accessibilityLabel,
+  },
   ref,
 ) {
   const theme = useTheme();
@@ -96,7 +109,10 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
       ) : (
         <>
           {icon}
-          <Text style={[theme.text('button', textColor), { fontSize }, icon || trailingIcon ? styles.withIconGap : undefined]} numberOfLines={1}>
+          <Text
+            style={[theme.text('button', textColor), { fontSize }, icon || trailingIcon ? styles.withIconGap : undefined]}
+            numberOfLines={1}
+          >
             {label}
           </Text>
           {trailingIcon}

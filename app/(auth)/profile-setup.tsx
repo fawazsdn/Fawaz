@@ -43,7 +43,13 @@ export default function ProfileSetupScreen() {
 
   const onSubmit = async () => {
     setSubmitting(true);
-    await profileService.updateProfile({ firstName: firstName.trim(), lastName: lastName.trim(), namePrivacy, bio: bio.trim() || undefined, avatarUrl });
+    await profileService.updateProfile({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      namePrivacy,
+      bio: bio.trim() || undefined,
+      avatarUrl,
+    });
     createProfile({ firstName: firstName.trim(), lastName: lastName.trim(), namePrivacy, bio: bio.trim() || undefined, avatarUrl });
     setSubmitting(false);
     router.replace('/(auth)/select-city');
@@ -66,10 +72,22 @@ export default function ProfileSetupScreen() {
       </Text>
 
       <Field label={t.profileSetup.firstName}>
-        <TextInput value={firstName} onChangeText={setFirstName} style={fieldInputStyle(theme)} placeholderTextColor={theme.colors.textMuted} accessibilityLabel={t.profileSetup.firstName} />
+        <TextInput
+          value={firstName}
+          onChangeText={setFirstName}
+          style={fieldInputStyle(theme)}
+          placeholderTextColor={theme.colors.textMuted}
+          accessibilityLabel={t.profileSetup.firstName}
+        />
       </Field>
       <Field label={t.profileSetup.lastNameOptional}>
-        <TextInput value={lastName} onChangeText={setLastName} style={fieldInputStyle(theme)} placeholderTextColor={theme.colors.textMuted} accessibilityLabel={t.profileSetup.lastName} />
+        <TextInput
+          value={lastName}
+          onChangeText={setLastName}
+          style={fieldInputStyle(theme)}
+          placeholderTextColor={theme.colors.textMuted}
+          accessibilityLabel={t.profileSetup.lastName}
+        />
       </Field>
       <Field label={t.profileSetup.bio}>
         <TextInput

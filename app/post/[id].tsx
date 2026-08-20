@@ -19,7 +19,9 @@ export default function PostDetailScreen() {
   const { t } = useI18n();
 
   const post = useStore((s) => s.posts.find((p) => p.id === id));
-  const comments = useStore((s) => s.comments.filter((c) => c.postId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)));
+  const comments = useStore((s) =>
+    s.comments.filter((c) => c.postId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+  );
   const addComment = useStore((s) => s.addComment);
   const getUser = useStore((s) => s.getUser);
 
@@ -40,7 +42,11 @@ export default function PostDetailScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={80}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={80}
+    >
       <AppHeader title={t.post.commentsTitle} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
         <PostCard post={post} onPress={() => {}} />
@@ -56,7 +62,11 @@ export default function PostDetailScreen() {
       <Composer
         placeholder={t.post.writeComment}
         onSend={onSend}
-        replyingTo={replyingTo ? `${t.post.reply} ${displayName(getUser(replyingTo.authorId) ?? { firstName: '', lastName: '', namePrivacy: 'first_only' })}` : undefined}
+        replyingTo={
+          replyingTo
+            ? `${t.post.reply} ${displayName(getUser(replyingTo.authorId) ?? { firstName: '', lastName: '', namePrivacy: 'first_only' })}`
+            : undefined
+        }
         onCancelReply={() => setReplyingTo(null)}
         cancelLabel={t.common.cancel}
       />

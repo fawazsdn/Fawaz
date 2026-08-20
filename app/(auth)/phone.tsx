@@ -59,6 +59,12 @@ export default function PhoneScreen() {
 
 const styles = StyleSheet.create({
   inputWrap: { alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, height: 56 },
-  prefix: { paddingHorizontal: 16, height: '100%', alignItems: 'center', justifyContent: 'center', borderRightWidth: StyleSheet.hairlineWidth },
+  prefix: {
+    paddingHorizontal: 16,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: StyleSheet.hairlineWidth,
+  },
   input: { flex: 1, paddingHorizontal: 14 },
 });
