@@ -8,11 +8,14 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import { formatClock, formatDay } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
+import { shareContent } from '@/utils/share';
+import { links } from '@/config/links';
 import { messageService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
+import { IconButton } from '@/components/IconButton';
 import { UserRow } from '@/components/UserRow';
 import { MapPlaceholder } from '@/components/MapPlaceholder';
 import { EmptyState } from '@/components/EmptyState';
@@ -64,6 +67,8 @@ export default function EventDetailScreen() {
     else await messageHost();
   };
 
+  const shareEvent = () => shareContent({ title: event.title, message: event.title, url: links.event(event.id) });
+
   const joinLabel = mine
     ? mine.status === 'waitlisted'
       ? t.events.waitlisted
@@ -74,7 +79,16 @@ export default function EventDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title="" transparent showBack right={<Share2 size={19} color={theme.colors.textPrimary} />} />
+      <AppHeader
+        title=""
+        transparent
+        showBack
+        right={
+          <IconButton accessibilityLabel={t.common.share} onPress={shareEvent}>
+            <Share2 size={19} color={theme.colors.textPrimary} />
+          </IconButton>
+        }
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Image source={{ uri: event.coverImage }} style={styles.hero} />
         <View style={{ padding: theme.spacing.md }}>
@@ -126,7 +140,7 @@ export default function EventDetailScreen() {
             <Badge label={t.common.cancel} tone="danger" />
           ) : isOwn ? (
             <View style={{ marginTop: 16, gap: 10 }}>
-              <Button label={t.common.share} variant="outline" fullWidth />
+              <Button label={t.common.share} onPress={shareEvent} variant="outline" fullWidth />
               <Button
                 label={t.events.discussion}
                 onPress={openDiscussion}

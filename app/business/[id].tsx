@@ -2,16 +2,19 @@ import { useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
-import { BadgeCheck, Clock, Phone } from 'lucide-react-native';
+import { BadgeCheck, Clock, Phone, Share2 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { displayName, formatRelativeTime } from '@/utils/format';
+import { shareContent } from '@/utils/share';
+import { links } from '@/config/links';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
+import { IconButton } from '@/components/IconButton';
 import { BottomSheet } from '@/components/BottomSheet';
 
 export default function BusinessDetailScreen() {
@@ -54,7 +57,18 @@ export default function BusinessDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title="" transparent />
+      <AppHeader
+        title=""
+        transparent
+        right={
+          <IconButton
+            accessibilityLabel={t.common.share}
+            onPress={() => shareContent({ title: business.name, message: business.name, url: links.business(business.id) })}
+          >
+            <Share2 size={19} color={theme.colors.textPrimary} />
+          </IconButton>
+        }
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
         <View style={{ padding: theme.spacing.md }}>

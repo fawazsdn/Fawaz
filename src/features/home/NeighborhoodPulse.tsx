@@ -42,8 +42,8 @@ export function NeighborhoodPulse({ neighborhoodId }: { neighborhoodId: string }
   );
 
   const stats = [
-    { key: 'events', value: events.length, icon: PartyPopper, tone: theme.colors.primary, route: '/(tabs)/events' as const },
-    { key: 'issues', value: issues.length, icon: AlertTriangle, tone: theme.colors.warning, route: '/(tabs)/community' as const },
+    { key: 'events', value: events.length, icon: PartyPopper, tone: theme.colors.primary, route: '/events' as const },
+    { key: 'issues', value: issues.length, icon: AlertTriangle, tone: theme.colors.warning, route: '/community' as const },
     { key: 'help', value: helpRequests.length, icon: HeartHandshake, tone: theme.colors.info, route: '/(tabs)/discover' as const },
     { key: 'listings', value: listings.length, icon: ShoppingBag, tone: theme.colors.secondary, route: '/marketplace' as const },
   ];

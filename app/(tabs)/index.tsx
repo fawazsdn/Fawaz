@@ -8,9 +8,11 @@ import { useStore } from '@/store/useStore';
 import { postService } from '@/services';
 import { useAsync } from '@/hooks/useAsync';
 import { HomeHeader } from '@/features/home/HomeHeader';
+import { QuickActions } from '@/features/home/QuickActions';
 import { NeighborhoodPulse } from '@/features/home/NeighborhoodPulse';
 import { HappeningNow } from '@/features/home/HappeningNow';
 import { DailySummaryCard } from '@/features/home/DailySummaryCard';
+import { InviteNeighborhoodCard } from '@/features/home/InviteNeighborhoodCard';
 import { PostCard } from '@/features/feed/PostCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -47,9 +49,14 @@ export default function HomeScreen() {
 
           {ramadanMode ? <RamadanBanner /> : null}
 
+          <View style={{ marginBottom: 14 }}>
+            <QuickActions />
+          </View>
+
           <View style={{ paddingHorizontal: theme.spacing.md, gap: 14, marginBottom: 18 }}>
             <NeighborhoodPulse neighborhoodId={neighborhoodId} />
             <DailySummaryCard neighborhoodId={neighborhoodId} />
+            <InviteNeighborhoodCard />
           </View>
 
           <View style={{ marginBottom: 20 }}>

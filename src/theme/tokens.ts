@@ -1,7 +1,20 @@
 // Haratna design tokens.
-// A restrained, warm palette: sand/off-white surfaces, deep green identity,
-// charcoal type. Dark mode is a deliberately designed equivalent, not an
-// inversion — deep warm charcoal-greens rather than pure black.
+//
+// The Haratna brand palette (from the logo direction): Saudi neighborhood,
+// palm tree, warm desert/sand, deep Saudi green — calm, premium, welcoming.
+// No purple, no neon, no pure black/white as a base surface.
+//
+//   Haratna Forest   #0D4939  — brand / navigation / primary actions
+//   Deep Forest      #07352A  — dark-mode base, pressed states
+//   Warm Ivory       #F4EFE3  — light-mode background
+//   Sand             #D2B078  — accent, used SPARINGLY (not a dominant UI color)
+//   Sage             #83977A  — secondary elements
+//   Soft Cream       #E7DDC8  — light-mode surfaces/cards
+//   Charcoal Green   #172D27  — primary text
+//
+// Both themes are the same brand, not an inversion of each other: light
+// mode is warm ivory/cream, dark mode is deep forest greens with warm
+// ivory text — never generic white-on-black or black-on-white.
 
 export type ColorTokens = {
   background: string;
@@ -13,6 +26,10 @@ export type ColorTokens = {
   onPrimary: string;
   secondary: string;
   onSecondary: string;
+  /** Sand — the brand's warm accent. Use sparingly: badges, highlights,
+   * milestones, selective emphasis. Never a dominant background/button color. */
+  accent: string;
+  onAccent: string;
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
@@ -32,59 +49,63 @@ export type ColorTokens = {
 };
 
 export const lightColors: ColorTokens = {
-  background: '#FAF6EE',
-  backgroundAlt: '#F3EDE0',
-  surface: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
-  primary: '#1F5D45',
-  primaryPressed: '#164533',
-  onPrimary: '#FFFFFF',
-  secondary: '#6E8F72',
-  onSecondary: '#FFFFFF',
-  textPrimary: '#241F18',
-  textSecondary: '#5B5346',
-  textMuted: '#8B8274',
-  textOnPrimary: '#FFFFFF',
-  border: '#E7DFCE',
-  divider: '#EFE8D9',
-  success: '#1F5D45',
-  successSurface: '#E4EFE6',
+  background: '#F4EFE3', // Warm Ivory
+  backgroundAlt: '#ECE2C9', // deeper ivory, for hero/section bands
+  surface: '#FBF7ED', // warm off-white — cards, never pure #FFFFFF
+  surfaceElevated: '#FFFDF7', // sheets/modals — a hair lighter, still warm
+  primary: '#0D4939', // Haratna Forest
+  primaryPressed: '#07352A', // Deep Forest
+  onPrimary: '#F4EFE3',
+  secondary: '#83977A', // Sage
+  onSecondary: '#172D27',
+  accent: '#D2B078', // Sand
+  onAccent: '#172D27',
+  textPrimary: '#172D27', // Charcoal Green
+  textSecondary: '#48584F',
+  textMuted: '#7C8A7F',
+  textOnPrimary: '#F4EFE3',
+  border: '#E2D5B7',
+  divider: '#EAE0C6',
+  success: '#0D4939',
+  successSurface: '#E2EBE1',
   warning: '#A9660B',
   warningSurface: '#FBEEDA',
   danger: '#B23B2E',
   dangerSurface: '#FBE7E3',
-  info: '#2F6E8C',
-  infoSurface: '#E4EFF4',
-  overlay: 'rgba(36, 31, 24, 0.55)',
-  shimmer: '#EFE8D9',
+  info: '#2E6B78',
+  infoSurface: '#E1EDEE',
+  overlay: 'rgba(23, 45, 39, 0.55)',
+  shimmer: '#EAE0C6',
 };
 
 export const darkColors: ColorTokens = {
-  background: '#14201B',
-  backgroundAlt: '#182620',
-  surface: '#1B2A23',
-  surfaceElevated: '#22342B',
-  primary: '#5FBF93',
-  primaryPressed: '#4CA57C',
-  onPrimary: '#0E1712',
-  secondary: '#8FAE8F',
-  onSecondary: '#0E1712',
-  textPrimary: '#F3EFE4',
-  textSecondary: '#C7C0AF',
-  textMuted: '#8E9A90',
-  textOnPrimary: '#0E1712',
-  border: '#2C3D34',
-  divider: '#26362D',
-  success: '#5FBF93',
-  successSurface: '#20362B',
+  background: '#081E18', // near-black forest — not generic #000000
+  backgroundAlt: '#0C271F',
+  surface: '#0F2E25', // slightly lighter green surface for cards
+  surfaceElevated: '#153A2F',
+  primary: '#3FA07A', // brightened Haratna Forest, legible on dark
+  primaryPressed: '#328565',
+  onPrimary: '#07231C',
+  secondary: '#8FAE8A', // Sage, brightened slightly for dark
+  onSecondary: '#07231C',
+  accent: '#D2B078', // Sand — stays consistent across themes
+  onAccent: '#172D27',
+  textPrimary: '#F4EFE3', // Warm Ivory, not harsh pure white
+  textSecondary: '#C9C2AC',
+  textMuted: '#8FA08F',
+  textOnPrimary: '#07231C',
+  border: '#1E4A3A',
+  divider: '#173C2F',
+  success: '#3FA07A',
+  successSurface: '#173C2F',
   warning: '#E3A75B',
   warningSurface: '#3A2E1B',
   danger: '#E38073',
   dangerSurface: '#3B211D',
-  info: '#7FBBDA',
-  infoSurface: '#1E3038',
+  info: '#7FBFC2',
+  infoSurface: '#123234',
   overlay: 'rgba(0, 0, 0, 0.65)',
-  shimmer: '#22342B',
+  shimmer: '#153A2F',
 };
 
 export const spacing = {

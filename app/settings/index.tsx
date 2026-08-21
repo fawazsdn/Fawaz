@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  Gift,
   Globe,
   Info,
   LogOut,
@@ -71,6 +72,7 @@ export default function SettingsScreen() {
           onPress={() => router.push('/(auth)/verification')}
           Chevron={Chevron}
         />
+        <Row icon={Gift} label={t.invite.title} onPress={() => router.push('/invite')} Chevron={Chevron} />
 
         <SectionLabel title={t.settings.preferences} />
         <Row

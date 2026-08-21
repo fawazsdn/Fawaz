@@ -6,6 +6,8 @@ import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import { formatDistance, formatRelativeTime, formatSAR } from '@/utils/format';
+import { shareContent } from '@/utils/share';
+import { links } from '@/config/links';
 import { messageService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';
 import { Badge } from '@/components/Badge';
@@ -61,7 +63,10 @@ export default function MarketplaceDetailScreen() {
                 fill={saved ? theme.colors.primary : 'transparent'}
               />
             </IconButton>
-            <IconButton accessibilityLabel={t.common.share}>
+            <IconButton
+              accessibilityLabel={t.common.share}
+              onPress={() => shareContent({ title: listing.title, message: listing.title, url: links.marketplaceListing(listing.id) })}
+            >
               <Share2 size={19} color={theme.colors.textPrimary} />
             </IconButton>
           </View>

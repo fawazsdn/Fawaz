@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Building2, Users } from 'lucide-react-native';
+import { Building2, ChevronLeft, ChevronRight, Users } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
@@ -49,6 +49,22 @@ export default function CommunityScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={[styles.hero, { backgroundColor: theme.colors.primary, paddingTop: insets.top + 20 }]}>
+          {/* Now a root-level route pushed from Explore/Home — needs its own back
+              control, unlike when this lived in the tab bar. Styled for the hero's
+              primary-colored background rather than the standard AppHeader. */}
+          <Pressable
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t.common.back}
+            hitSlop={10}
+            style={[styles.backButton, { backgroundColor: theme.colors.onPrimary + '22' }]}
+          >
+            {theme.isRTL ? (
+              <ChevronRight size={20} color={theme.colors.onPrimary} />
+            ) : (
+              <ChevronLeft size={20} color={theme.colors.onPrimary} />
+            )}
+          </Pressable>
           <Text style={theme.text('heading1', theme.colors.onPrimary)}>{locale === 'ar' ? neighborhood.nameAr : neighborhood.nameEn}</Text>
           <View style={[theme.row(), styles.statsRow]}>
             <HeroStat value={neighborhood.residentsCount} label={t.community.verifiedResidents} />
@@ -168,6 +184,7 @@ function HeroStat({ value, label }: { value: number; label: string }) {
 
 const styles = StyleSheet.create({
   hero: { paddingBottom: 20, paddingHorizontal: 20 },
+  backButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   statsRow: { marginTop: 18, gap: 6 },
   groupRow: { alignItems: 'center', gap: 12, padding: 12, borderWidth: StyleSheet.hairlineWidth },
   groupIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },

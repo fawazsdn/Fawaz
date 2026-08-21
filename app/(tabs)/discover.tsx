@@ -16,6 +16,7 @@ import { MarketplaceCard } from '@/features/marketplace/MarketplaceCard';
 import { HelpRequestCard } from '@/features/help/HelpRequestCard';
 import { PostCard } from '@/features/feed/PostCard';
 import { LostFoundCard } from '@/features/lostFound/LostFoundCard';
+import { ExploreCategoryGrid } from '@/features/explore/ExploreCategoryGrid';
 
 export default function DiscoverScreen() {
   const theme = useTheme();
@@ -119,7 +120,11 @@ export default function DiscoverScreen() {
         </Pressable>
       </View>
 
-      <Section title={t.discover.events} onSeeAll={() => router.push('/(tabs)/events')}>
+      <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 22 }}>
+        <ExploreCategoryGrid />
+      </View>
+
+      <Section title={t.discover.events} onSeeAll={() => router.push('/events')}>
         {events.length === 0 ? (
           <EmptyState title={t.emptyStates.noEvents} compact />
         ) : (
@@ -139,7 +144,7 @@ export default function DiscoverScreen() {
         )}
       </Section>
 
-      <Section title={t.discover.issuesAround} onSeeAll={() => router.push('/(tabs)/community')}>
+      <Section title={t.discover.issuesAround} onSeeAll={() => router.push('/community')}>
         {issues.length === 0 ? (
           <EmptyState title={t.emptyStates.noIssues} compact />
         ) : (

@@ -104,6 +104,7 @@ export default function MapScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={t.map.title}
+        showBack={false}
         right={
           <IconButton accessibilityLabel={t.map.filters} onPress={() => setFiltersOpen(true)}>
             <SlidersHorizontal size={19} color={theme.colors.textPrimary} />

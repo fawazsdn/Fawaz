@@ -27,6 +27,7 @@ import type {
   Post,
   PostType,
   Recommendation,
+  ReferralStats,
   ReportReason,
   ReportTargetType,
   ReputationEvent,
@@ -101,6 +102,8 @@ interface AppState {
   searchHistory: string[];
   /** Recently-selected city ids (most recent first), for onboarding shortcuts. */
   recentCityIds: string[];
+  /** Local-only WhatsApp/growth referral stats — see src/services/referral. */
+  referral: ReferralStats;
 
   // -- actions --
   setLocale: (locale: Locale) => void;
@@ -121,6 +124,7 @@ interface AppState {
   }) => void;
   selectCity: (params: { regionId: string; cityId: string }) => void;
   addRecentCity: (cityId: string) => void;
+  recordReferralInviteSent: () => void;
   selectNeighborhood: (neighborhoodId: string) => void;
   submitNeighborhoodSuggestion: (
     input: Omit<NeighborhoodSuggestion, 'id' | 'createdAt' | 'status'>,
@@ -244,6 +248,7 @@ function freshEntities() {
     reports: [] as AppState['reports'],
     searchHistory: [] as string[],
     recentCityIds: [] as string[],
+    referral: structuredClone(seed.REFERRAL_STATS) as ReferralStats,
   };
 }
 
@@ -278,6 +283,8 @@ export const useStore = create<AppState>()(
         set((s) => ({ session: { ...s.session, regionId, cityId, neighborhoodId: null } })),
       addRecentCity: (cityId) =>
         set((s) => ({ recentCityIds: [cityId, ...s.recentCityIds.filter((id) => id !== cityId)].slice(0, 5) })),
+      recordReferralInviteSent: () =>
+        set((s) => ({ referral: { ...s.referral, invitesSent: s.referral.invitesSent + 1 } })),
       selectNeighborhood: (neighborhoodId) =>
         set((s) => ({
           session: { ...s.session, neighborhoodId },

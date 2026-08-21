@@ -359,3 +359,19 @@ export interface AlertItem {
   followerIds: string[];
   helpfulBy: string[];
 }
+
+/**
+ * A resident's WhatsApp/neighborhood growth referral stats — entirely
+ * local/mock in this frontend-only build (see src/services/referral).
+ *
+ * `invitesSent` is the one number this device can honestly know: it only
+ * increments when the user actually taps a share action (see
+ * useStore.recordReferralInviteSent). `joinedCount` cannot be real without
+ * a backend that can verify someone actually joined via this link — it is
+ * seeded demo data here, clearly documented as such everywhere it's
+ * displayed, and never claimed to be secure or server-verified.
+ */
+export interface ReferralStats {
+  invitesSent: number;
+  joinedCount: number;
+}

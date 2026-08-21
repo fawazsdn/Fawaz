@@ -9,6 +9,8 @@ import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import type { Post } from '@/models';
 import { displayName, formatRelativeTime } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
+import { shareContent } from '@/utils/share';
+import { links } from '@/config/links';
 import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
@@ -63,7 +65,13 @@ export function PostCard({ post, onPress }: PostCardProps) {
     <>
       <Card onPress={goToDetail} accessibilityLabel={post.textAr}>
         <View style={[theme.row(), styles.header]}>
-          <Pressable onPress={() => router.push(`/profile/${author.id}`)} accessibilityRole="button">
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation?.();
+              router.push(`/profile/${author.id}`);
+            }}
+            accessibilityRole="button"
+          >
             <Avatar uri={author.avatarUrl} name={displayName(author)} size={42} />
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -76,7 +84,13 @@ export function PostCard({ post, onPress }: PostCardProps) {
               {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn} · {formatRelativeTime(post.createdAt, locale)}
             </Text>
           </View>
-          <IconButton accessibilityLabel="more" onPress={() => setMenuOpen(true)}>
+          <IconButton
+            accessibilityLabel="more"
+            onPress={(e) => {
+              e.stopPropagation?.();
+              setMenuOpen(true);
+            }}
+          >
             <MoreHorizontal size={19} color={theme.colors.textMuted} />
           </IconButton>
         </View>
@@ -151,7 +165,10 @@ export function PostCard({ post, onPress }: PostCardProps) {
           </Pressable>
 
           <Pressable
-            onPress={(e) => e.stopPropagation?.()}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              shareContent({ message: post.textAr, url: links.post(post.id) });
+            }}
             style={[theme.row(), styles.footerBtn, isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }]}
             accessibilityRole="button"
           >

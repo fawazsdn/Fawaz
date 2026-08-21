@@ -10,7 +10,9 @@ interface AvatarProps {
   ring?: boolean;
 }
 
-const PALETTE = ['#1F5D45', '#A9660B', '#2F6E8C', '#B23B2E', '#6E8F72', '#8B5CF6'];
+// Haratna-brand avatar fallback palette — forest/sage/sand/terracotta/teal
+// tones only, deliberately no purple (see src/theme/tokens.ts).
+const PALETTE = ['#0D4939', '#83977A', '#A9660B', '#2E6B78', '#B23B2E', '#5C7A63'];
 
 function colorFor(name: string) {
   let hash = 0;

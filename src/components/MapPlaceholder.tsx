@@ -37,7 +37,12 @@ export function MapPlaceholder({ centerLat, centerLng, pins = [], onPressPin, he
   };
 
   return (
-    <View style={[styles.wrap, { height, backgroundColor: theme.scheme === 'dark' ? '#1B2A23' : '#E7EFE3', borderRadius: theme.radii.lg }]}>
+    <View
+      style={[
+        styles.wrap,
+        { height, backgroundColor: theme.scheme === 'dark' ? theme.colors.surfaceElevated : theme.colors.backgroundAlt, borderRadius: theme.radii.lg },
+      ]}
+    >
       <View style={[styles.gridWrap, StyleSheet.absoluteFill]} pointerEvents="none">
         {Array.from({ length: 6 }).map((_, i) => (
           <View key={`h${i}`} style={[styles.gridLineH, { top: `${(i + 1) * (100 / 7)}%`, backgroundColor: theme.colors.border }]} />

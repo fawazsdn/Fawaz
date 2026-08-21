@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CalendarOff } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { eventService } from '@/services';
 import { useAsync } from '@/hooks/useAsync';
+import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { SectionHeader } from '@/components/SectionHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -31,7 +31,6 @@ export default function EventsScreen() {
     { key: 'kids', label: t.eventCreate.categories.kids },
   ];
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
   const [filter, setFilter] = useState<EventCategory | 'all'>('all');
 
@@ -60,9 +59,8 @@ export default function EventsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={{ paddingTop: insets.top + 10, paddingHorizontal: theme.spacing.md, paddingBottom: 12 }}>
-        <Text style={theme.text('heading1')}>{t.events.title}</Text>
-      </View>
+      {/* Now a root-level route pushed from Explore/Home (see app/(tabs)/_layout.tsx) — needs its own back control, unlike when this lived in the tab bar. */}
+      <AppHeader title={t.events.title} />
 
       <View style={{ marginBottom: 10 }}>
         <FilterBar options={categoryFilters} selected={filter} onSelect={(k) => setFilter(k as EventCategory | 'all')} />

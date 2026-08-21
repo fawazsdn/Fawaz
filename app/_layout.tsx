@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -29,18 +29,37 @@ function useStoreHydrated() {
   return hydrated;
 }
 
+// Haratna is a mobile app first (see docs/APP-STORE-READINESS.md); Expo
+// Web is a development/preview convenience, not the design authority. On a
+// wide browser window, cap the app at a phone-ish width instead of
+// stretching every card edge-to-edge across a 1500px viewport — the outer
+// band uses backgroundAlt so the centered app reads as a device frame, not
+// a broken layout. Native (iOS/Android) is completely unaffected.
 function RootStack() {
   const theme = useTheme();
+  const stack = (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="create" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+    </Stack>
+  );
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.backgroundAlt, alignItems: 'center' }}>
+        <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
+        <View style={{ flex: 1, width: '100%', maxWidth: 480, backgroundColor: theme.colors.background }}>{stack}</View>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="create" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      </Stack>
+      {stack}
     </View>
   );
 }

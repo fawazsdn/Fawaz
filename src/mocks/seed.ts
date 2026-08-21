@@ -18,6 +18,7 @@ import type {
   Poll,
   Post,
   Recommendation,
+  ReferralStats,
   ReputationEvent,
   User,
 } from '@/models';
@@ -1317,3 +1318,16 @@ export const REPUTATION_EVENTS: ReputationEvent[] = [
   { id: 're2', userId: 'u1', type: 'helped', reasonAr: 'ساعد جار في مشكلة السيارة', fromUserId: 'u9', createdAt: hoursAgo(200) },
   { id: 're3', userId: 'u1', type: 'hosted_event', reasonAr: 'استضاف جلسة قهوة الجيران', createdAt: hoursAgo(500) },
 ];
+
+// ---------------------------------------------------------------------------
+// Referral / WhatsApp growth loop
+//
+// Small, obviously-illustrative demo numbers — same honesty model as every
+// other seeded stat in this file (residentsCount, etc.). `invitesSent` is
+// overwritten by real taps once the app runs (see
+// useStore.recordReferralInviteSent); `joinedCount` has no way to become
+// real without a backend and is never presented as server-verified — see
+// src/services/referral/ReferralService.ts.
+// ---------------------------------------------------------------------------
+
+export const REFERRAL_STATS: ReferralStats = { invitesSent: 4, joinedCount: 2 };
