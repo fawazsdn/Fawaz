@@ -16,8 +16,15 @@ export default function NotificationsScreen() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const notifications = useStore((s) =>
-    s.notifications.filter((n) => n.userId === CURRENT_USER_ID).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allNotifications = useStore((s) => s.notifications);
+  const notifications = useMemo(
+    () =>
+      allNotifications
+        .filter((n) => n.userId === CURRENT_USER_ID)
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [allNotifications],
   );
   const markNotificationRead = useStore((s) => s.markNotificationRead);
   const markAllNotificationsRead = useStore((s) => s.markAllNotificationsRead);

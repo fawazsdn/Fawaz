@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Users } from 'lucide-react-native';
@@ -28,12 +28,17 @@ export default function IssueDetailScreen() {
   const { t, locale } = useI18n();
 
   const issue = useStore((s) => s.issues.find((i) => i.id === id));
-  const updates = useStore((s) =>
-    s.issueUpdates.filter((u) => u.issueId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // HomeHeader for why (getSnapshot must return a stable reference).
+  const allIssueUpdates = useStore((s) => s.issueUpdates);
+  const updates = useMemo(
+    () => allIssueUpdates.filter((u) => u.issueId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+    [allIssueUpdates, id],
   );
   const reporter = useStore((s) => s.getUser(issue?.reporterId ?? ''));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === issue?.neighborhoodId));
-  const comments = useStore((s) => s.comments.filter((c) => c.postId === id));
+  const allComments = useStore((s) => s.comments);
+  const comments = useMemo(() => allComments.filter((c) => c.postId === id), [allComments, id]);
   const demoRole = useStore((s) => s.settings.demoRole);
   const markIssueAffected = useStore((s) => s.markIssueAffected);
   const toggleFollowIssue = useStore((s) => s.toggleFollowIssue);

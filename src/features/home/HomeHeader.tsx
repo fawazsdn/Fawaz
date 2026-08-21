@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, ChevronDown, MessageSquare } from 'lucide-react-native';
@@ -20,7 +20,14 @@ export function HomeHeader() {
 
   const user = useStore((s) => s.getUser(CURRENT_USER_ID));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
-  const cityNeighborhoods = useStore((s) => s.neighborhoods.filter((n) => n.cityId === s.session.cityId));
+  // Select raw, stable state (the array + the id to filter by) and derive
+  // with useMemo, rather than returning a freshly-filtered array straight
+  // out of the selector — a new array reference on every getSnapshot call
+  // is what causes React's "getSnapshot should be cached" / infinite-loop
+  // crash with useSyncExternalStore (which Zustand's useStore is built on).
+  const neighborhoods = useStore((s) => s.neighborhoods);
+  const cityId = useStore((s) => s.session.cityId);
+  const cityNeighborhoods = useMemo(() => neighborhoods.filter((n) => n.cityId === cityId), [neighborhoods, cityId]);
   const selectNeighborhood = useStore((s) => s.selectNeighborhood);
   const unreadNotifications = useStore((s) => s.notifications.filter((n) => n.userId === CURRENT_USER_ID && !n.read).length);
   const unreadMessages = useStore((s) =>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
@@ -20,8 +20,15 @@ export default function BusinessDetailScreen() {
   const { t, locale } = useI18n();
 
   const business = useStore((s) => s.businesses.find((b) => b.id === id));
-  const recommendations = useStore((s) =>
-    s.recommendations.filter((r) => r.businessId === id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allRecommendations = useStore((s) => s.recommendations);
+  const recommendations = useMemo(
+    () =>
+      allRecommendations
+        .filter((r) => r.businessId === id)
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [allRecommendations, id],
   );
   const users = useStore((s) => s.users);
   const recommendBusiness = useStore((s) => s.recommendBusiness);

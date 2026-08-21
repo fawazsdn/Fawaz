@@ -20,10 +20,15 @@ export default function MarketplaceScreen() {
   const router = useRouter();
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const listings = useStore((s) =>
-    s.marketplaceListings
-      .filter((m) => m.neighborhoodId === neighborhoodId)
-      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allListings = useStore((s) => s.marketplaceListings);
+  const listings = useMemo(
+    () =>
+      allListings
+        .filter((m) => m.neighborhoodId === neighborhoodId)
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [allListings, neighborhoodId],
   );
 
   const [query, setQuery] = useState('');

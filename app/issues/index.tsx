@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AlertTriangle, Plus } from 'lucide-react-native';
@@ -15,8 +16,15 @@ export default function IssuesListScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const issues = useStore((s) =>
-    s.issues.filter((i) => i.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allIssues = useStore((s) => s.issues);
+  const issues = useMemo(
+    () =>
+      allIssues
+        .filter((i) => i.neighborhoodId === neighborhoodId)
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [allIssues, neighborhoodId],
   );
 
   return (

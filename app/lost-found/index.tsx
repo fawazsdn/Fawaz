@@ -18,8 +18,15 @@ export default function LostFoundScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const items = useStore((s) =>
-    s.lostFound.filter((l) => l.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allLostFound = useStore((s) => s.lostFound);
+  const items = useMemo(
+    () =>
+      allLostFound
+        .filter((l) => l.neighborhoodId === neighborhoodId)
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [allLostFound, neighborhoodId],
   );
 
   const [filter, setFilter] = useState<LostFoundStatus | 'all'>('all');

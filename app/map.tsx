@@ -19,10 +19,28 @@ export default function MapScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
-  const events = useStore((s) => s.events.filter((e) => e.neighborhoodId === neighborhood?.id && !e.cancelled));
-  const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhood?.id && i.status !== 'resolved'));
-  const businesses = useStore((s) => s.businesses.filter((b) => b.neighborhoodIds.includes(neighborhood?.id ?? '')));
-  const lostFound = useStore((s) => s.lostFound.filter((l) => l.neighborhoodId === neighborhood?.id && l.status !== 'reunited'));
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allEvents = useStore((s) => s.events);
+  const allIssues = useStore((s) => s.issues);
+  const allBusinesses = useStore((s) => s.businesses);
+  const allLostFound = useStore((s) => s.lostFound);
+  const events = useMemo(
+    () => allEvents.filter((e) => e.neighborhoodId === neighborhood?.id && !e.cancelled),
+    [allEvents, neighborhood?.id],
+  );
+  const issues = useMemo(
+    () => allIssues.filter((i) => i.neighborhoodId === neighborhood?.id && i.status !== 'resolved'),
+    [allIssues, neighborhood?.id],
+  );
+  const businesses = useMemo(
+    () => allBusinesses.filter((b) => b.neighborhoodIds.includes(neighborhood?.id ?? '')),
+    [allBusinesses, neighborhood?.id],
+  );
+  const lostFound = useMemo(
+    () => allLostFound.filter((l) => l.neighborhoodId === neighborhood?.id && l.status !== 'reunited'),
+    [allLostFound, neighborhood?.id],
+  );
 
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     events: true,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Building2, Users } from 'lucide-react-native';
@@ -19,10 +19,27 @@ export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
 
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
-  const members = useStore((s) => s.users.filter((u) => u.neighborhoodId === neighborhood?.id).slice(0, 4));
-  const alerts = useStore((s) => s.alerts.filter((a) => a.neighborhoodId === neighborhood?.id));
-  const groups = useStore((s) => s.communityGroups.filter((g) => g.neighborhoodId === neighborhood?.id));
-  const institutions = useStore((s) => s.institutions.filter((i) => i.neighborhoodId === neighborhood?.id));
+
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allUsers = useStore((s) => s.users);
+  const allAlerts = useStore((s) => s.alerts);
+  const allGroups = useStore((s) => s.communityGroups);
+  const allInstitutions = useStore((s) => s.institutions);
+
+  const members = useMemo(
+    () => allUsers.filter((u) => u.neighborhoodId === neighborhood?.id).slice(0, 4),
+    [allUsers, neighborhood?.id],
+  );
+  const alerts = useMemo(() => allAlerts.filter((a) => a.neighborhoodId === neighborhood?.id), [allAlerts, neighborhood?.id]);
+  const groups = useMemo(
+    () => allGroups.filter((g) => g.neighborhoodId === neighborhood?.id),
+    [allGroups, neighborhood?.id],
+  );
+  const institutions = useMemo(
+    () => allInstitutions.filter((i) => i.neighborhoodId === neighborhood?.id),
+    [allInstitutions, neighborhood?.id],
+  );
 
   const [selectedGroup, setSelectedGroup] = useState<(typeof groups)[number] | null>(null);
 

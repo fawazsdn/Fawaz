@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AlertTriangle, Calendar, HeartHandshake, PawPrint, TriangleAlert, type LucideIcon } from 'lucide-react-native';
@@ -21,11 +22,16 @@ export function HappeningNow({ neighborhoodId }: { neighborhoodId: string }) {
   const { t, locale } = useI18n();
   const router = useRouter();
 
-  const events = useStore((s) =>
-    s.events
-      .filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled && new Date(e.startsAt).getTime() > Date.now())
-      .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt))
-      .slice(0, 2),
+  // Raw state + useMemo, not filter()/sort()/slice() inside the selector —
+  // see src/features/home/HomeHeader.tsx for why.
+  const allEvents = useStore((s) => s.events);
+  const events = useMemo(
+    () =>
+      allEvents
+        .filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled && new Date(e.startsAt).getTime() > Date.now())
+        .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt))
+        .slice(0, 2),
+    [allEvents, neighborhoodId],
   );
   const issue = useStore((s) => s.issues.find((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved'));
   const help = useStore((s) => s.helpRequests.find((h) => h.neighborhoodId === neighborhoodId && h.status === 'open'));

@@ -30,10 +30,15 @@ export default function RecommendationsScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const businesses = useStore((s) =>
-    s.businesses
-      .filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? ''))
-      .sort((a, b) => b.recommendationCount - a.recommendationCount),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allBusinesses = useStore((s) => s.businesses);
+  const businesses = useMemo(
+    () =>
+      allBusinesses
+        .filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? ''))
+        .sort((a, b) => b.recommendationCount - a.recommendationCount),
+    [allBusinesses, neighborhoodId],
   );
 
   const [category, setCategory] = useState<ServiceCategory | 'all'>('all');

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -25,8 +25,12 @@ export default function ConversationScreen() {
   const listRef = useRef<FlatList>(null);
 
   const conversation = useStore((s) => s.conversations.find((c) => c.id === id));
-  const messages = useStore((s) =>
-    s.messages.filter((m) => m.conversationId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allMessages = useStore((s) => s.messages);
+  const messages = useMemo(
+    () => allMessages.filter((m) => m.conversationId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+    [allMessages, id],
   );
   const otherUserId = conversation?.participantIds.find((p) => p !== CURRENT_USER_ID);
   const otherUser = useStore((s) => s.getUser(otherUserId ?? ''));

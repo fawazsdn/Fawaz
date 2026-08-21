@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -19,8 +19,12 @@ export default function PostDetailScreen() {
   const { t } = useI18n();
 
   const post = useStore((s) => s.posts.find((p) => p.id === id));
-  const comments = useStore((s) =>
-    s.comments.filter((c) => c.postId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allComments = useStore((s) => s.comments);
+  const comments = useMemo(
+    () => allComments.filter((c) => c.postId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
+    [allComments, id],
   );
   const addComment = useStore((s) => s.addComment);
   const getUser = useStore((s) => s.getUser);

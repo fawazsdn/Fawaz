@@ -18,7 +18,10 @@ export default function DirectoryScreen() {
   const { t, locale } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const users = useStore((s) => s.users.filter((u) => u.neighborhoodId === neighborhoodId));
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allUsers = useStore((s) => s.users);
+  const users = useMemo(() => allUsers.filter((u) => u.neighborhoodId === neighborhoodId), [allUsers, neighborhoodId]);
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === neighborhoodId));
 
   const [query, setQuery] = useState('');

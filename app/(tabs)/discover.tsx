@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Map as MapIcon, Sparkles } from 'lucide-react-native';
@@ -23,24 +24,53 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
 
-  const events = useStore((s) => s.events.filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled).slice(0, 4));
-  const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3));
-  const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4));
-  const helpRequests = useStore((s) =>
-    s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3),
+  // Select raw state arrays and derive with useMemo — a selector that
+  // returns a freshly-filtered/sorted array every getSnapshot call is
+  // an unstable snapshot and crashes with "Maximum update depth exceeded"
+  // under useSyncExternalStore (which Zustand's useStore is built on).
+  const allEvents = useStore((s) => s.events);
+  const allIssues = useStore((s) => s.issues);
+  const allListings = useStore((s) => s.marketplaceListings);
+  const allHelpRequests = useStore((s) => s.helpRequests);
+  const allLostFound = useStore((s) => s.lostFound);
+  const allPosts = useStore((s) => s.posts);
+  const allBusinesses = useStore((s) => s.businesses);
+
+  const events = useMemo(
+    () => allEvents.filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled).slice(0, 4),
+    [allEvents, neighborhoodId],
   );
-  const lostFound = useStore((s) => s.lostFound.filter((l) => l.neighborhoodId === neighborhoodId && l.status !== 'reunited').slice(0, 3));
-  const trendingPosts = useStore((s) =>
-    [...s.posts]
-      .filter((p) => p.neighborhoodId === neighborhoodId)
-      .sort((a, b) => b.reactions.length + b.commentCount - (a.reactions.length + a.commentCount))
-      .slice(0, 3),
+  const issues = useMemo(
+    () => allIssues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3),
+    [allIssues, neighborhoodId],
   );
-  const businesses = useStore((s) =>
-    [...s.businesses]
-      .filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? ''))
-      .sort((a, b) => b.recommendationCount - a.recommendationCount)
-      .slice(0, 4),
+  const listings = useMemo(
+    () => allListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4),
+    [allListings, neighborhoodId],
+  );
+  const helpRequests = useMemo(
+    () => allHelpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3),
+    [allHelpRequests, neighborhoodId],
+  );
+  const lostFound = useMemo(
+    () => allLostFound.filter((l) => l.neighborhoodId === neighborhoodId && l.status !== 'reunited').slice(0, 3),
+    [allLostFound, neighborhoodId],
+  );
+  const trendingPosts = useMemo(
+    () =>
+      [...allPosts]
+        .filter((p) => p.neighborhoodId === neighborhoodId)
+        .sort((a, b) => b.reactions.length + b.commentCount - (a.reactions.length + a.commentCount))
+        .slice(0, 3),
+    [allPosts, neighborhoodId],
+  );
+  const businesses = useMemo(
+    () =>
+      [...allBusinesses]
+        .filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? ''))
+        .sort((a, b) => b.recommendationCount - a.recommendationCount)
+        .slice(0, 4),
+    [allBusinesses, neighborhoodId],
   );
 
   if (!neighborhoodId) return null;

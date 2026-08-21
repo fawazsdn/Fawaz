@@ -21,6 +21,7 @@ import {
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { IS_DEV_BUILD } from '@/config/devFeatures';
 import type { DemoRole, ThemeMode, VerificationStatus } from '@/models';
 import { AppHeader } from '@/components/AppHeader';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -114,18 +115,29 @@ export default function SettingsScreen() {
         <Row icon={Info} label={t.settings.terms} onPress={() => router.push('/settings/info/terms')} Chevron={Chevron} />
         <Row icon={Shield} label={t.settings.privacyPolicy} onPress={() => router.push('/settings/info/privacy')} Chevron={Chevron} />
 
-        <SectionLabel title={t.settings.demoModeTitle} />
-        <Row
-          icon={Shield}
-          label={t.settings.demoRole}
-          value={t.roles[settings.demoRole]}
-          onPress={() => setSheet('role')}
-          Chevron={Chevron}
-        />
+        {/* Developer-only: the role switcher and demo-data reset only make
+            sense against this frontend's mock data layer, and must never
+            reach a production build — see src/config/devFeatures.ts. The
+            moderator-gated row below (settings.demoRole === 'moderator')
+            is left in production-eligible code because moderation itself
+            is a real feature; only the ability to self-assign that role
+            from the client is dev-only. */}
+        {IS_DEV_BUILD ? (
+          <>
+            <SectionLabel title={t.settings.demoModeTitle} />
+            <Row
+              icon={Shield}
+              label={t.settings.demoRole}
+              value={t.roles[settings.demoRole]}
+              onPress={() => setSheet('role')}
+              Chevron={Chevron}
+            />
+            <Row icon={RotateCcw} label={t.settings.resetDemoData} onPress={() => setResetOpen(true)} Chevron={Chevron} />
+          </>
+        ) : null}
         {settings.demoRole === 'moderator' ? (
           <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} />
         ) : null}
-        <Row icon={RotateCcw} label={t.settings.resetDemoData} onPress={() => setResetOpen(true)} Chevron={Chevron} />
 
         <SectionLabel title={t.settings.accountActions} />
         <Row icon={LogOut} label={t.settings.signOut} onPress={() => setSignOutOpen(true)} Chevron={Chevron} />

@@ -29,6 +29,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "sa.haratna.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "حارتنا يستخدم الصور لمشاركة المنشورات والفعاليات مع جيرانك.",
         "NSCameraUsageDescription": "حارتنا يستخدم الكاميرا لالتقاط صور للمنشورات والبلاغات.",
@@ -37,6 +38,7 @@
     },
     "android": {
       "package": "sa.haratna.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

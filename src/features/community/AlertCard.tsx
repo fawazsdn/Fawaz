@@ -8,13 +8,18 @@ import type { AlertItem } from '@/models';
 
 const SEVERITY_COLOR = { info: 'info', warning: 'warning', critical: 'danger' } as const;
 
+// A stable shared reference for the "alert not found" fallback — `?? []`
+// would otherwise construct a brand-new array on every getSnapshot call,
+// which is exactly as unstable a selector result as `.filter()` would be.
+const EMPTY_ARRAY: readonly string[] = [];
+
 export function AlertCard({ alert }: { alert: AlertItem }) {
   const theme = useTheme();
   const { t } = useI18n();
   const tone = theme.colors[SEVERITY_COLOR[alert.severity]];
 
-  const followerIds = useStore((s) => s.alerts.find((a) => a.id === alert.id)?.followerIds ?? []);
-  const helpfulBy = useStore((s) => s.alerts.find((a) => a.id === alert.id)?.helpfulBy ?? []);
+  const followerIds = useStore((s) => s.alerts.find((a) => a.id === alert.id)?.followerIds ?? EMPTY_ARRAY);
+  const helpfulBy = useStore((s) => s.alerts.find((a) => a.id === alert.id)?.helpfulBy ?? EMPTY_ARRAY);
   const toggleAlertFollow = useStore((s) => s.toggleAlertFollow);
   const toggleAlertHelpful = useStore((s) => s.toggleAlertHelpful);
 

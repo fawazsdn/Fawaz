@@ -15,10 +15,15 @@ export default function MessagesScreen() {
   const theme = useTheme();
   const { t } = useI18n();
 
-  const conversations = useStore((s) =>
-    s.conversations
-      .filter((c) => c.participantIds.includes(CURRENT_USER_ID))
-      .sort((a, b) => +new Date(b.lastMessageAt) - +new Date(a.lastMessageAt)),
+  // Raw state + useMemo, not filter()/sort() inside the selector — see
+  // src/features/home/HomeHeader.tsx for why.
+  const allConversations = useStore((s) => s.conversations);
+  const conversations = useMemo(
+    () =>
+      allConversations
+        .filter((c) => c.participantIds.includes(CURRENT_USER_ID))
+        .sort((a, b) => +new Date(b.lastMessageAt) - +new Date(a.lastMessageAt)),
+    [allConversations],
   );
   const users = useStore((s) => s.users);
 

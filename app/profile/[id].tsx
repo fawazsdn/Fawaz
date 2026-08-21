@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BadgeCheck, Calendar, HandHeart, MessageCircle, Settings, Sparkles } from 'lucide-react-native';
@@ -27,10 +27,18 @@ export default function ProfileScreen() {
 
   const user = useStore((s) => s.getUser(id ?? ''));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === user?.neighborhoodId));
-  const posts = useStore((s) => s.posts.filter((p) => p.authorId === id));
-  const events = useStore((s) => s.events.filter((e) => e.hostId === id));
-  const recommendations = useStore((s) => s.recommendations.filter((r) => r.authorId === id));
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allPosts = useStore((s) => s.posts);
+  const allEvents = useStore((s) => s.events);
+  const allRecommendations = useStore((s) => s.recommendations);
   const businesses = useStore((s) => s.businesses);
+  const posts = useMemo(() => allPosts.filter((p) => p.authorId === id), [allPosts, id]);
+  const events = useMemo(() => allEvents.filter((e) => e.hostId === id), [allEvents, id]);
+  const recommendations = useMemo(
+    () => allRecommendations.filter((r) => r.authorId === id),
+    [allRecommendations, id],
+  );
 
   const [tab, setTab] = useState<'activity' | 'events' | 'recommendations'>('activity');
   const [thankOpen, setThankOpen] = useState(false);

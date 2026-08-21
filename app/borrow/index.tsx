@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -16,7 +17,13 @@ export default function BorrowScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const items = useStore((s) => s.borrowItems.filter((b) => b.neighborhoodId === neighborhoodId));
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allBorrowItems = useStore((s) => s.borrowItems);
+  const items = useMemo(
+    () => allBorrowItems.filter((b) => b.neighborhoodId === neighborhoodId),
+    [allBorrowItems, neighborhoodId],
+  );
   const users = useStore((s) => s.users);
 
   return (

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AlertTriangle, HeartHandshake, PartyPopper, ShoppingBag } from 'lucide-react-native';
@@ -13,15 +14,31 @@ export function NeighborhoodPulse({ neighborhoodId }: { neighborhoodId: string }
   const { t } = useI18n();
   const router = useRouter();
 
-  const events = useStore((s) =>
-    s.events.filter((e) => e.neighborhoodId === neighborhoodId && new Date(e.startsAt).getTime() > Date.now()),
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allEvents = useStore((s) => s.events);
+  const allIssues = useStore((s) => s.issues);
+  const allHelpRequests = useStore((s) => s.helpRequests);
+  const allListings = useStore((s) => s.marketplaceListings);
+
+  const events = useMemo(
+    () => allEvents.filter((e) => e.neighborhoodId === neighborhoodId && new Date(e.startsAt).getTime() > Date.now()),
+    [allEvents, neighborhoodId],
   );
-  const issues = useStore((s) => s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved'));
-  const helpRequests = useStore((s) => s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open'));
-  const listings = useStore((s) =>
-    s.marketplaceListings.filter(
-      (m) => m.neighborhoodId === neighborhoodId && Date.now() - new Date(m.createdAt).getTime() < 48 * 3600 * 1000,
-    ),
+  const issues = useMemo(
+    () => allIssues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved'),
+    [allIssues, neighborhoodId],
+  );
+  const helpRequests = useMemo(
+    () => allHelpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open'),
+    [allHelpRequests, neighborhoodId],
+  );
+  const listings = useMemo(
+    () =>
+      allListings.filter(
+        (m) => m.neighborhoodId === neighborhoodId && Date.now() - new Date(m.createdAt).getTime() < 48 * 3600 * 1000,
+      ),
+    [allListings, neighborhoodId],
   );
 
   const stats = [

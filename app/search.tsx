@@ -26,11 +26,25 @@ export default function SearchScreen() {
   const addSearchHistory = useStore((s) => s.addSearchHistory);
   const clearSearchHistory = useStore((s) => s.clearSearchHistory);
 
-  const posts = useStore((s) => s.posts.filter((p) => p.neighborhoodId === neighborhoodId));
-  const events = useStore((s) => s.events.filter((e) => e.neighborhoodId === neighborhoodId));
-  const users = useStore((s) => s.users.filter((u) => u.neighborhoodId === neighborhoodId));
-  const businesses = useStore((s) => s.businesses.filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? '')));
-  const listings = useStore((s) => s.marketplaceListings.filter((m) => m.neighborhoodId === neighborhoodId));
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allPosts = useStore((s) => s.posts);
+  const allEvents = useStore((s) => s.events);
+  const allUsers = useStore((s) => s.users);
+  const allBusinesses = useStore((s) => s.businesses);
+  const allListings = useStore((s) => s.marketplaceListings);
+
+  const posts = useMemo(() => allPosts.filter((p) => p.neighborhoodId === neighborhoodId), [allPosts, neighborhoodId]);
+  const events = useMemo(() => allEvents.filter((e) => e.neighborhoodId === neighborhoodId), [allEvents, neighborhoodId]);
+  const users = useMemo(() => allUsers.filter((u) => u.neighborhoodId === neighborhoodId), [allUsers, neighborhoodId]);
+  const businesses = useMemo(
+    () => allBusinesses.filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? '')),
+    [allBusinesses, neighborhoodId],
+  );
+  const listings = useMemo(
+    () => allListings.filter((m) => m.neighborhoodId === neighborhoodId),
+    [allListings, neighborhoodId],
+  );
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('all');

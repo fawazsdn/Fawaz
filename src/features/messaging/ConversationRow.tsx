@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Users } from 'lucide-react-native';
@@ -16,7 +17,13 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
 
   const otherUserId = conversation.participantIds.find((id) => id !== CURRENT_USER_ID);
   const otherUser = useStore((s) => s.getUser(otherUserId ?? ''));
-  const messages = useStore((s) => s.messages.filter((m) => m.conversationId === conversation.id));
+  // Raw state + useMemo, not filter() inside the selector — see HomeHeader
+  // for why (getSnapshot must return a stable reference across renders).
+  const allMessages = useStore((s) => s.messages);
+  const messages = useMemo(
+    () => allMessages.filter((m) => m.conversationId === conversation.id),
+    [allMessages, conversation.id],
+  );
   const lastMessage = messages[messages.length - 1];
   const unread = messages.some((m) => m.senderId !== CURRENT_USER_ID && !m.readBy.includes(CURRENT_USER_ID));
 
