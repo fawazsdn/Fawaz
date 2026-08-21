@@ -1,5 +1,5 @@
 export * from './auth';
-export * from './neighborhoods';
+export * from './geography';
 export * from './posts';
 export * from './events';
 export * from './issues';

@@ -61,7 +61,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "jest"
+    "test": "jest",
+    "validate:geography": "node scripts/validate-geography.mjs",
+    "import:geography": "node scripts/import-saudi-geography.mjs"
   },
   "private": true
 }

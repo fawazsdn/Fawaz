@@ -16,7 +16,7 @@ export default function SplashRedirect() {
         router.replace('/(auth)/phone');
       } else if (!session.profileCreated) {
         router.replace('/(auth)/profile-setup');
-      } else if (!session.citySlug) {
+      } else if (!session.cityId) {
         router.replace('/(auth)/select-city');
       } else if (!session.neighborhoodId) {
         router.replace('/(auth)/select-neighborhood');

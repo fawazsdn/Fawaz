@@ -20,7 +20,7 @@ export function HomeHeader() {
 
   const user = useStore((s) => s.getUser(CURRENT_USER_ID));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
-  const cityNeighborhoods = useStore((s) => s.neighborhoods.filter((n) => n.citySlug === s.session.citySlug));
+  const cityNeighborhoods = useStore((s) => s.neighborhoods.filter((n) => n.cityId === s.session.cityId));
   const selectNeighborhood = useStore((s) => s.selectNeighborhood);
   const unreadNotifications = useStore((s) => s.notifications.filter((n) => n.userId === CURRENT_USER_ID && !n.read).length);
   const unreadMessages = useStore((s) =>

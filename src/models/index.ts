@@ -10,18 +10,21 @@ export type DemoRole = 'resident' | 'moderator' | 'organizer' | 'business';
 
 export type NamePrivacy = 'full' | 'first_last_initial' | 'first_only';
 
-export interface City {
-  id: string;
-  slug: string;
-  nameAr: string;
-  nameEn: string;
-  popular?: boolean;
-}
-
+/**
+ * A curated "community profile" neighborhood — a small subset of the full
+ * Saudi geography dataset (see `@/types/geography` / `@/services/geography`)
+ * that this mock build seeds with engagement stats (residents, open issues,
+ * etc.) so the demo has real-feeling activity. `id` always equals the `id`
+ * of the corresponding `SaudiNeighborhood`, and `cityId`/`regionId`
+ * reference real `sa-city-*`/`sa-region-*` ids — so any neighborhood a user
+ * actually selects during onboarding (curated or not) resolves the same
+ * way. Residents of a non-curated neighborhood simply see zeroed stats
+ * until this mock data is extended or a real backend replaces it.
+ */
 export interface Neighborhood {
   id: string;
-  citySlug: string;
-  slug: string;
+  cityId: string;
+  regionId: string;
   nameAr: string;
   nameEn: string;
   residentsCount: number;

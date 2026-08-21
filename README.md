@@ -16,7 +16,8 @@ npm run start      # Expo dev server — press i / a / w, or scan the QR code
 npm run web        # web directly
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint
-npm run test       # jest (75 tests)
+npm run test       # jest (102 tests)
+npm run validate:geography  # structural checks on the Saudi geography dataset
 npm run format     # prettier --write
 ```
 
@@ -116,6 +117,65 @@ src/
   utils/        format/haptics/id helpers
 ```
 
+## Saudi Geography
+
+The onboarding location picker (Region → City → Neighborhood) is backed by
+a real, sourced national geography dataset — not a small hand-curated
+sample.
+
+**Source:** [`homaily/Saudi-Arabia-Regions-Cities-and-Districts`](https://github.com/homaily/Saudi-Arabia-Regions-Cities-and-Districts)
+(GPL-2.0 licensed), which republishes public data collected from
+[maps.address.gov.sa](https://maps.address.gov.sa/) — Saudi Arabia's
+official National Address / Saudi Post geospatial platform. The repo's own
+description claims full national coverage (13 regions, 4,581 cities, 3,732
+districts).
+
+> **License note:** the source repository is GPL-2.0. This project vendors
+> its data (not its code) into `src/data/saudi/*.json` via
+> `scripts/import-saudi-geography.mjs`, which is a normalizing transform,
+> not a derivative of the source's own code. If this project is ever
+> distributed commercially, this data dependency and its license should be
+> reviewed by whoever owns that decision — it is called out here rather
+> than silently assumed to be a non-issue.
+
+**Coverage as imported:** 13 regions, 4,581 cities/governorates, 3,732
+neighborhoods/districts — every one carrying `source`, `sourceId`, and a
+computed centroid for traceability (see `src/types/geography.ts`). 152 of
+the 4,581 cities have district-level (neighborhood) data on record; the
+rest are city-level only, which the onboarding flow handles via a
+"continue with city only" fallback rather than fabricating districts that
+aren't in the source. **Broad Saudi coverage is implemented; complete
+national coverage could not be independently verified** — the upstream
+repo claims completeness, but this project has not cross-checked it
+against a second authoritative source.
+
+**Re-importing:** `npm run import:geography` re-fetches and re-normalizes
+the three source files, validates referential integrity, strips district
+boundary polygons (kept as a computed centroid + a `hasBoundary` flag —
+see the script for why), and rewrites `src/data/saudi/*.json`. It aborts
+without writing anything if validation fails. `npm run validate:geography`
+re-checks the currently-committed data for duplicate ids, orphan
+references, and missing names at any time.
+
+**Architecture:** `src/services/geography/GeographyService.ts` is the one
+interface every screen reads location data through (`MockGeographyService`
+today, swappable for a real API later without touching a screen). See
+`src/types/geography.ts` for how the models map onto a future backend's
+`regions` / `cities` / `neighborhoods` / `neighborhood_boundaries` /
+`neighborhood_memberships` tables.
+
+**Search:** `src/utils/searchNormalize.ts` normalizes Arabic alef variants
+(أ/إ/آ → ا), taa marbuta/haa (ة/ه), alef maksura/yaa (ى/ي), diacritics,
+punctuation, and case/whitespace — for comparison only. Official names are
+always displayed exactly as sourced; normalization never touches what's
+rendered.
+
+**Performance:** `MockGeographyService` builds a flat, pre-normalized
+search index once, lazily, on first use (not at import time, not
+per-render) and reuses it for every subsequent `search()` call; results
+are capped by a `limit` (default 50). Region/city/neighborhood lookups use
+memoized `Map`-based indices rather than scanning the full arrays.
+
 **Backend integration point:** every domain has a `Service` interface in
 `src/services/<domain>/index.ts` (e.g. `PostService`, `EventService`,
 `IssueService`, `MessageService`). Each is currently backed by the local
@@ -127,19 +187,34 @@ domain data.
 
 ## Testing
 
-`npm run test` runs 75 tests across 7 suites:
+`npm run test` runs 102 tests across 10 suites:
 
 - `src/utils/__tests__/format.test.ts` — currency/distance/relative-time/
   display-name formatting.
 - `src/store/__tests__/useStore.test.ts` — core store logic: creating a
   post, event join/waitlist/leave-promotes-next, poll one-vote-per-user,
   block/unblock, thanking a neighbor, offering help.
+- `src/store/__tests__/geographySession.test.ts` — onboarding location
+  session state: switching cities clears a stale neighborhood selection
+  (invalid-state guard), recent-city tracking, neighborhood suggestions
+  are stored locally without becoming official locations.
 - `src/i18n/__tests__/useI18n.test.ts` — locale defaults to Arabic/RTL and
   switches correctly.
 - `src/components/__tests__/Button.test.tsx`,
   `StatusTimeline.test.tsx` — component rendering and press handling.
 - `src/features/polls/__tests__/PollBlock.test.tsx` — voting flow end to
   end through the store.
+- `src/services/geography/__tests__/geography.test.ts` — hierarchy
+  validity (no orphan cities/neighborhoods, no duplicate ids, every
+  neighborhood's region matches its city's region), Arabic/English/
+  spelling-variant search, city and region filtering, Eastern Province +
+  Khobar neighborhood coverage, popular-city resolution, and a search
+  performance sanity check (200 searches over the full ~8,300-record
+  dataset stays well under a second, proving the search index is
+  memoized rather than rebuilt or rescanned per call).
+- `src/__tests__/selectLocationFlow.test.tsx` — UI test of the Region →
+  City → Neighborhood → Continue onboarding flow, plus jumping straight
+  to a neighborhood from national search.
 - `src/__tests__/routes.test.ts` — walks every file under `app/` and
   asserts it exports a default component, as a lightweight substitute for
   mounting a full navigator (62 routes covered).

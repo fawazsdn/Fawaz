@@ -8,7 +8,6 @@ import type {
   AppNotification,
   Business,
   BorrowItem,
-  City,
   Comment,
   CommunityEvent,
   CommunityGroup,
@@ -35,6 +34,7 @@ import type {
   User,
   VerificationStatus,
 } from '@/models';
+import type { NeighborhoodSuggestion } from '@/types/geography';
 import { uid } from '@/utils/id';
 
 interface Settings {
@@ -52,7 +52,9 @@ interface SessionState {
   phone: string | null;
   otpVerified: boolean;
   profileCreated: boolean;
-  citySlug: string | null;
+  /** Real sa-region-* / sa-city-* ids from the Saudi geography dataset. */
+  regionId: string | null;
+  cityId: string | null;
   neighborhoodId: string | null;
   verification: VerificationStatus;
   isAuthenticated: boolean;
@@ -63,8 +65,8 @@ interface AppState {
   session: SessionState;
 
   // entities (mutable copies seeded from mocks)
-  cities: City[];
   neighborhoods: Neighborhood[];
+  neighborhoodSuggestions: NeighborhoodSuggestion[];
   users: User[];
   posts: Post[];
   comments: Comment[];
@@ -97,6 +99,8 @@ interface AppState {
     status: 'open' | 'reviewed' | 'dismissed' | 'actioned';
   }[];
   searchHistory: string[];
+  /** Recently-selected city ids (most recent first), for onboarding shortcuts. */
+  recentCityIds: string[];
 
   // -- actions --
   setLocale: (locale: Locale) => void;
@@ -115,8 +119,12 @@ interface AppState {
     bio?: string;
     avatarUrl?: string;
   }) => void;
-  selectCity: (citySlug: string) => void;
+  selectCity: (params: { regionId: string; cityId: string }) => void;
+  addRecentCity: (cityId: string) => void;
   selectNeighborhood: (neighborhoodId: string) => void;
+  submitNeighborhoodSuggestion: (
+    input: Omit<NeighborhoodSuggestion, 'id' | 'createdAt' | 'status'>,
+  ) => NeighborhoodSuggestion;
   setVerification: (status: VerificationStatus) => void;
   signOut: () => void;
   resetDemoData: () => void;
@@ -200,7 +208,8 @@ const initialSession: SessionState = {
   phone: null,
   otpVerified: false,
   profileCreated: false,
-  citySlug: null,
+  regionId: null,
+  cityId: null,
   neighborhoodId: null,
   verification: 'not_started',
   isAuthenticated: false,
@@ -208,8 +217,8 @@ const initialSession: SessionState = {
 
 function freshEntities() {
   return {
-    cities: seed.CITIES,
     neighborhoods: seed.NEIGHBORHOODS,
+    neighborhoodSuggestions: [] as NeighborhoodSuggestion[],
     users: structuredClone(seed.USERS) as User[],
     posts: structuredClone([...seed.POSTS, ...seed.POLL_POSTS]) as Post[],
     comments: structuredClone(seed.COMMENTS) as Comment[],
@@ -234,6 +243,7 @@ function freshEntities() {
     mutedUserIds: [] as string[],
     reports: [] as AppState['reports'],
     searchHistory: [] as string[],
+    recentCityIds: [] as string[],
   };
 }
 
@@ -264,12 +274,25 @@ export const useStore = create<AppState>()(
           session: { ...s.session, profileCreated: true },
           users: s.users.map((u) => (u.id === CURRENT_USER_ID ? { ...u, firstName, lastName, namePrivacy, bio, avatarUrl } : u)),
         })),
-      selectCity: (citySlug) => set((s) => ({ session: { ...s.session, citySlug, neighborhoodId: null } })),
+      selectCity: ({ regionId, cityId }) =>
+        set((s) => ({ session: { ...s.session, regionId, cityId, neighborhoodId: null } })),
+      addRecentCity: (cityId) =>
+        set((s) => ({ recentCityIds: [cityId, ...s.recentCityIds.filter((id) => id !== cityId)].slice(0, 5) })),
       selectNeighborhood: (neighborhoodId) =>
         set((s) => ({
           session: { ...s.session, neighborhoodId },
           users: s.users.map((u) => (u.id === CURRENT_USER_ID ? { ...u, neighborhoodId } : u)),
         })),
+      submitNeighborhoodSuggestion: (input) => {
+        const suggestion: NeighborhoodSuggestion = {
+          ...input,
+          id: uid('nsug'),
+          createdAt: new Date().toISOString(),
+          status: 'pending',
+        };
+        set((s) => ({ neighborhoodSuggestions: [suggestion, ...s.neighborhoodSuggestions] }));
+        return suggestion;
+      },
       setVerification: (status) => set((s) => ({ session: { ...s.session, verification: status } })),
 
       signOut: () => set({ session: initialSession }),
