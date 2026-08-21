@@ -16,7 +16,12 @@ export function Chip({ label, selected, onPress, icon }: ChipProps) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ selected: !!selected }}
+      // Chip's visual padding alone lands under the 44px minimum
+      // touch-target guideline — hitSlop pads the tappable area without
+      // changing how compact the chip looks.
+      hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
       onPress={() => {
         haptics.selection();
         onPress?.();

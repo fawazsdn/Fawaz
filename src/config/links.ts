@@ -26,6 +26,7 @@ function buildPath(path: string): string {
 export const links = {
   post: (id: string) => buildPath(`/post/${id}`),
   event: (id: string) => buildPath(`/event/${id}`),
+  issue: (id: string) => buildPath(`/issue/${id}`),
   business: (id: string) => buildPath(`/business/${id}`),
   marketplaceListing: (id: string) => buildPath(`/marketplace/${id}`),
   /**

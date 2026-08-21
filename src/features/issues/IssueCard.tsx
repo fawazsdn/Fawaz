@@ -33,10 +33,15 @@ export function IssueCard({ issue }: { issue: Issue }) {
   const following = issue.followerIds.includes(CURRENT_USER_ID);
 
   return (
+    // accessibilityRole="link", not "button" — react-native-web renders
+    // "button" as a real <button>, and this card contains two real
+    // buttons of its own below; nesting <button> inside <button> is
+    // invalid HTML and breaks the inner ones.
     <Pressable
       onPress={() => router.push(`/issue/${issue.id}`)}
       style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
-      accessibilityRole="button"
+      accessibilityRole="link"
+      accessibilityLabel={issue.title}
     >
       <View style={[theme.row(), { alignItems: 'center', gap: 8, marginBottom: 8 }]}>
         <View style={[styles.iconWrap, { backgroundColor: theme.colors.warningSurface }]}>
@@ -72,7 +77,8 @@ export function IssueCard({ issue }: { issue: Issue }) {
           size="sm"
           variant={affected ? 'outline' : 'primary'}
           disabled={affected}
-          onPress={() => {
+          onPress={(e) => {
+            e?.stopPropagation?.();
             haptics.medium();
             markIssueAffected(issue.id);
           }}
@@ -81,7 +87,10 @@ export function IssueCard({ issue }: { issue: Issue }) {
           label={following ? t.issue.following : t.common.follow}
           size="sm"
           variant="ghost"
-          onPress={() => toggleFollowIssue(issue.id)}
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            toggleFollowIssue(issue.id);
+          }}
         />
       </View>
     </Pressable>

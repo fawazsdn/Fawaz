@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { Users } from 'lucide-react-native';
+import { Share2, Users } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import { displayName, formatRelativeTime } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
+import { shareContent } from '@/utils/share';
+import { links } from '@/config/links';
 import type { IssueStatus } from '@/models';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
@@ -19,6 +21,7 @@ import { MapPlaceholder } from '@/components/MapPlaceholder';
 import { EmptyState } from '@/components/EmptyState';
 import { Composer } from '@/components/Composer';
 import { CommentRow } from '@/features/feed/CommentRow';
+import { IconButton } from '@/components/IconButton';
 
 const STATUS_ORDER: IssueStatus[] = ['reported', 'confirmed', 'submitted', 'under_review', 'in_progress', 'resolved'];
 
@@ -72,7 +75,17 @@ export default function IssueDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.issueCreate.categories[issue.category]} />
+      <AppHeader
+        title={t.issueCreate.categories[issue.category]}
+        right={
+          <IconButton
+            accessibilityLabel={t.common.share}
+            onPress={() => shareContent({ title: issue.title, message: issue.title, url: links.issue(issue.id) })}
+          >
+            <Share2 size={19} color={theme.colors.textPrimary} />
+          </IconButton>
+        }
+      />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 100 }}>
         {issue.images.length > 0 ? (
           <View style={{ marginBottom: 12 }}>

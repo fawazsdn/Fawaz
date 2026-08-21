@@ -25,10 +25,16 @@ export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
         : t.marketplace.wanted;
 
   return (
+    // accessibilityRole="link", not "button" — react-native-web renders
+    // "button" as a real <button>, and this card contains its own real
+    // button (the save toggle below); nesting <button> inside <button> is
+    // invalid HTML and breaks the inner one. "link" fits anyway: tapping
+    // the card navigates to its detail view.
     <Pressable
       onPress={() => router.push(`/marketplace/${listing.id}`)}
       style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
-      accessibilityRole="button"
+      accessibilityRole="link"
+      accessibilityLabel={listing.title}
     >
       <View>
         {listing.images[0] ? (
@@ -42,6 +48,8 @@ export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
             toggleSaveListing(listing.id);
           }}
           style={[styles.saveBtn, { backgroundColor: theme.colors.overlay }]}
+          accessibilityRole="button"
+          accessibilityLabel={t.common.save}
         >
           <Bookmark size={14} color="#fff" fill={saved ? '#fff' : 'transparent'} />
         </Pressable>

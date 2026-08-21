@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Star } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -29,6 +29,7 @@ export default function RecommendationsScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
+  const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
   // Raw state + useMemo, not filter()/sort() inside the selector — see
   // src/features/home/HomeHeader.tsx for why.
@@ -41,7 +42,9 @@ export default function RecommendationsScreen() {
     [allBusinesses, neighborhoodId],
   );
 
-  const [category, setCategory] = useState<ServiceCategory | 'all'>('all');
+  const [category, setCategory] = useState<ServiceCategory | 'all'>(
+    initialCategory && (CATEGORIES as string[]).includes(initialCategory) ? (initialCategory as ServiceCategory) : 'all',
+  );
   const filtered = useMemo(
     () => (category === 'all' ? businesses : businesses.filter((b) => b.category === category)),
     [businesses, category],

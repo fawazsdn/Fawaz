@@ -20,7 +20,7 @@ import { EventCard } from '@/features/events/EventCard';
 const TIER_ORDER = ['new_neighbor', 'neighbor', 'contributor', 'community_builder', 'community_champion'] as const;
 
 export default function ProfileScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab: initialTab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -40,7 +40,9 @@ export default function ProfileScreen() {
     [allRecommendations, id],
   );
 
-  const [tab, setTab] = useState<'activity' | 'events' | 'recommendations'>('activity');
+  const [tab, setTab] = useState<'activity' | 'events' | 'recommendations'>(
+    initialTab === 'events' || initialTab === 'recommendations' ? initialTab : 'activity',
+  );
   const [thankOpen, setThankOpen] = useState(false);
 
   if (!user) {

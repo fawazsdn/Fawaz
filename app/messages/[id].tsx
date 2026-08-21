@@ -19,7 +19,7 @@ const CANNED_REPLIES = ['تمام 👍', 'إن شاء الله', 'حياك ال�
 export default function ConversationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const { t, isRTL } = useI18n();
+  const { t, isRTL, locale } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList>(null);
@@ -34,6 +34,7 @@ export default function ConversationScreen() {
   );
   const otherUserId = conversation?.participantIds.find((p) => p !== CURRENT_USER_ID);
   const otherUser = useStore((s) => s.getUser(otherUserId ?? ''));
+  const otherUserNeighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === otherUser?.neighborhoodId));
   const event = useStore((s) => s.events.find((e) => e.id === conversation?.eventId));
   const sendMessage = useStore((s) => s.sendMessage);
   const simulateIncoming = useStore((s) => s.simulateIncomingMessage);
@@ -106,6 +107,12 @@ export default function ConversationScreen() {
           <Calendar size={14} color={theme.colors.primary} />
           <Text style={theme.text('caption', theme.colors.primary)}>{t.messages.backToEvent}</Text>
         </Pressable>
+      ) : !conversation.isGroup && otherUserNeighborhood ? (
+        <View style={{ paddingBottom: 8 }}>
+          <Text style={[theme.text('caption', theme.colors.textMuted), { textAlign: 'center' }]}>
+            {locale === 'ar' ? otherUserNeighborhood.nameAr : otherUserNeighborhood.nameEn}
+          </Text>
+        </View>
       ) : null}
 
       <FlatList
@@ -163,7 +170,7 @@ export default function ConversationScreen() {
             accessibilityRole="button"
             accessibilityLabel="send"
           >
-            <Send size={16} color="#fff" />
+            <Send size={16} color={text.trim() ? theme.colors.onPrimary : theme.colors.textMuted} />
           </Pressable>
         </View>
       </View>

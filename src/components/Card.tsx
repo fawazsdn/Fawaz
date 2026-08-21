@@ -9,9 +9,32 @@ interface CardProps {
   padded?: boolean;
   elevated?: boolean;
   accessibilityLabel?: string;
+  /**
+   * Set when `children` contains its own focusable buttons (e.g. a feed
+   * card with like/save/share actions nested inside a whole-card
+   * onPress). On web, react-native-web renders a Pressable with
+   * `accessibilityRole="button"` as a real `<button>` element — nesting
+   * another real `<button>` inside it is invalid HTML (React logs
+   * "cannot contain a nested <button>" and, worse, the browser closes
+   * the outer button early, breaking the inner ones). Passing true here
+   * switches the card's own role to "link" (RN-Web renders that as an
+   * `<a>`, not a `<button>`) — still announced as tappable to screen
+   * readers, but without claiming the literal button role, so its real
+   * button children stay valid and reachable. "link" fits semantically
+   * too: tapping the card navigates to its detail view.
+   */
+  interactiveChildren?: boolean;
 }
 
-export function Card({ children, onPress, style, padded = true, elevated = true, accessibilityLabel }: CardProps) {
+export function Card({
+  children,
+  onPress,
+  style,
+  padded = true,
+  elevated = true,
+  accessibilityLabel,
+  interactiveChildren = false,
+}: CardProps) {
   const theme = useTheme();
   const base = [
     styles.base,
@@ -29,7 +52,7 @@ export function Card({ children, onPress, style, padded = true, elevated = true,
   if (onPress) {
     return (
       <Pressable
-        accessibilityRole="button"
+        accessibilityRole={interactiveChildren ? 'link' : 'button'}
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
         style={({ pressed }) => [...base, { opacity: pressed ? 0.92 : 1 }]}

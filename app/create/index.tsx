@@ -1,7 +1,18 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AlertTriangle, BarChart3, Calendar, HandCoins, HeartHandshake, MessageSquarePlus, PawPrint, X } from 'lucide-react-native';
+import {
+  AlertTriangle,
+  BarChart3,
+  Calendar,
+  HandCoins,
+  HeartHandshake,
+  MessageCircleQuestion,
+  MessageSquarePlus,
+  PawPrint,
+  Star,
+  X,
+} from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
@@ -22,6 +33,16 @@ export default function CreateSheetScreen() {
       desc: t.create.postDesc,
       route: '/create/post',
     },
+    {
+      key: 'askNeighbors',
+      icon: MessageCircleQuestion,
+      tone: theme.colors.info,
+      title: t.create.askNeighbors,
+      desc: t.create.askNeighborsDesc,
+      // Same composer as "Post something" — a distinct entry point into
+      // the existing post flow, not a duplicate system.
+      route: '/create/post',
+    },
     { key: 'event', icon: Calendar, tone: theme.colors.secondary, title: t.create.event, desc: t.create.eventDesc, route: '/event/create' },
     {
       key: 'issue',
@@ -32,14 +53,17 @@ export default function CreateSheetScreen() {
       route: '/issue/create',
     },
     {
-      key: 'help',
-      icon: HeartHandshake,
-      tone: theme.colors.info,
-      title: t.create.help,
-      desc: t.create.helpDesc,
-      route: '/help-request/create',
+      key: 'recommend',
+      icon: Star,
+      tone: theme.colors.primary,
+      title: t.create.recommend,
+      desc: t.create.recommendDesc,
+      // Recommendations are tied to a specific business (see
+      // src/models Recommendation) — there's no standalone "create a
+      // recommendation" composer, only leaving one from a business's own
+      // page, so this opens the businesses browse screen to pick one.
+      route: '/recommendations',
     },
-    { key: 'poll', icon: BarChart3, tone: theme.colors.primary, title: t.create.poll, desc: t.create.pollDesc, route: '/create/poll' },
     {
       key: 'sell',
       icon: HandCoins,
@@ -56,6 +80,15 @@ export default function CreateSheetScreen() {
       desc: t.create.lostFoundDesc,
       route: '/lost-found/create',
     },
+    {
+      key: 'help',
+      icon: HeartHandshake,
+      tone: theme.colors.info,
+      title: t.create.help,
+      desc: t.create.helpDesc,
+      route: '/help-request/create',
+    },
+    { key: 'poll', icon: BarChart3, tone: theme.colors.primary, title: t.create.poll, desc: t.create.pollDesc, route: '/create/poll' },
   ] as const;
 
   return (

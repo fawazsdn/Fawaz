@@ -19,10 +19,15 @@ export function HelpRequestCard({ request }: { request: HelpRequest }) {
   const offered = request.offeredBy.includes(CURRENT_USER_ID);
 
   return (
+    // accessibilityRole="link", not "button" — react-native-web renders
+    // "button" as a real <button>, and this card contains two real
+    // buttons of its own below; nesting <button> inside <button> is
+    // invalid HTML and breaks the inner ones.
     <Pressable
       onPress={() => router.push(`/help-request/${request.id}`)}
       style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
-      accessibilityRole="button"
+      accessibilityRole="link"
+      accessibilityLabel={request.title}
     >
       <View style={[theme.row(), { justifyContent: 'space-between', marginBottom: 8 }]}>
         <Badge label={t.help.categories[request.category]} tone="info" />
@@ -42,12 +47,21 @@ export function HelpRequestCard({ request }: { request: HelpRequest }) {
           label={offered ? t.help.offered : t.help.iCanHelp}
           size="sm"
           disabled={offered || request.status === 'resolved'}
-          onPress={() => {
+          onPress={(e) => {
+            e?.stopPropagation?.();
             haptics.medium();
             offerHelp(request.id);
           }}
         />
-        <Button label={t.common.message} size="sm" variant="outline" onPress={() => router.push(`/help-request/${request.id}`)} />
+        <Button
+          label={t.common.message}
+          size="sm"
+          variant="outline"
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            router.push(`/help-request/${request.id}`);
+          }}
+        />
       </View>
     </Pressable>
   );

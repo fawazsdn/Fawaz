@@ -9,10 +9,11 @@ import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import type { Conversation } from '@/models';
 import { displayName, formatRelativeTime } from '@/utils/format';
 import { Avatar } from '@/components/Avatar';
+import { Badge } from '@/components/Badge';
 
 export function ConversationRow({ conversation }: { conversation: Conversation }) {
   const theme = useTheme();
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
 
   const otherUserId = conversation.participantIds.find((id) => id !== CURRENT_USER_ID);
@@ -28,6 +29,11 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
   const unread = messages.some((m) => m.senderId !== CURRENT_USER_ID && !m.readBy.includes(CURRENT_USER_ID));
 
   const title = conversation.isGroup ? (conversation.title ?? '') : otherUser ? displayName(otherUser) : '';
+  const contextLabel = !conversation.isGroup
+    ? t.messages.contextNeighbor
+    : conversation.eventId
+      ? t.messages.contextEvent
+      : t.messages.contextCommunity;
 
   return (
     <Pressable onPress={() => router.push(`/messages/${conversation.id}`)} style={[theme.row(), styles.row]} accessibilityRole="button">
@@ -39,15 +45,18 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
         <Avatar uri={otherUser?.avatarUrl} name={title} size={50} />
       )}
       <View style={{ flex: 1 }}>
-        <View style={[theme.row(), { justifyContent: 'space-between' }]}>
-          <Text style={theme.text('title')} numberOfLines={1}>
-            {title}
-          </Text>
+        <View style={[theme.row(), { justifyContent: 'space-between', alignItems: 'center' }]}>
+          <View style={[theme.row(), { alignItems: 'center', gap: 6, flexShrink: 1 }]}>
+            <Text style={theme.text('title')} numberOfLines={1}>
+              {title}
+            </Text>
+            <Badge label={contextLabel} tone={conversation.isGroup ? (conversation.eventId ? 'primary' : 'info') : 'neutral'} />
+          </View>
           {lastMessage ? (
             <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(lastMessage.createdAt, locale)}</Text>
           ) : null}
         </View>
-        <View style={[theme.row(), { justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }]}>
+        <View style={[theme.row(), { justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }]}>
           <Text style={theme.text('bodySmall', unread ? theme.colors.textPrimary : theme.colors.textMuted)} numberOfLines={1}>
             {lastMessage?.image ? '📷 صورة' : lastMessage?.text}
           </Text>

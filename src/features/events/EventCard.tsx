@@ -42,7 +42,8 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
     .map((a) => users.find((u) => u.id === a.userId))
     .filter(Boolean);
 
-  const onJoin = () => {
+  const onJoin = (e?: { stopPropagation?: () => void }) => {
+    e?.stopPropagation?.();
     haptics.medium();
     joinEvent(event.id);
   };
@@ -56,10 +57,16 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
       : t.events.join;
 
   return (
+    // accessibilityRole="link", not "button" — react-native-web renders
+    // "button" as a real <button>, and this card contains its own real
+    // button (the RSVP action below); nesting <button> inside <button> is
+    // invalid HTML and breaks the inner one. "link" fits anyway: tapping
+    // the card navigates to its detail view.
     <Pressable
       onPress={() => router.push(`/event/${event.id}`)}
       style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
-      accessibilityRole="button"
+      accessibilityRole="link"
+      accessibilityLabel={event.title}
     >
       <Image
         source={{ uri: event.coverImage }}

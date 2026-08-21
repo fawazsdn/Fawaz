@@ -8,6 +8,7 @@ import { useStore } from '@/store/useStore';
 import { postService } from '@/services';
 import { useAsync } from '@/hooks/useAsync';
 import { HomeHeader } from '@/features/home/HomeHeader';
+import { NeighborhoodIdentityCard } from '@/features/home/NeighborhoodIdentityCard';
 import { QuickActions } from '@/features/home/QuickActions';
 import { NeighborhoodPulse } from '@/features/home/NeighborhoodPulse';
 import { HappeningNow } from '@/features/home/HappeningNow';
@@ -46,6 +47,10 @@ export default function HomeScreen() {
       ListHeaderComponent={
         <View>
           <HomeHeader />
+
+          <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 14 }}>
+            <NeighborhoodIdentityCard neighborhoodId={neighborhoodId} />
+          </View>
 
           {ramadanMode ? <RamadanBanner /> : null}
 

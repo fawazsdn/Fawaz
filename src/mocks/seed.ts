@@ -1073,6 +1073,16 @@ export const CONVERSATIONS: Conversation[] = [
     title: 'مباراة كرة قدم مسائية',
     lastMessageAt: hoursAgo(2),
   },
+  // A plain community group chat with no linked event — distinct from
+  // conv4 (an event's own chat) so Inbox's "Groups" filter has real
+  // content instead of always being empty (isGroup && !eventId).
+  {
+    id: 'conv5',
+    participantIds: ['u1', 'u2', 'u3', 'u6'],
+    isGroup: true,
+    title: 'لجنة أهالي الحي',
+    lastMessageAt: hoursAgo(6),
+  },
 ];
 
 export const MESSAGES: Message[] = [
@@ -1126,6 +1136,14 @@ export const MESSAGES: Message[] = [
     readBy: ['u2', 'u8', 'u10'],
   },
   { id: 'msg8', conversationId: 'conv4', senderId: 'u8', text: 'تمام نشوفكم هناك', createdAt: hoursAgo(2), readBy: ['u8'] },
+  {
+    id: 'msg9',
+    conversationId: 'conv5',
+    senderId: 'u3',
+    text: 'تذكير: اجتماع لجنة الأهالي يوم الخميس بعد صلاة العشاء',
+    createdAt: hoursAgo(6),
+    readBy: ['u3'],
+  },
 ];
 
 // ---------------------------------------------------------------------------

@@ -63,7 +63,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
 
   return (
     <>
-      <Card onPress={goToDetail} accessibilityLabel={post.textAr}>
+      <Card onPress={goToDetail} accessibilityLabel={post.textAr} interactiveChildren>
         <View style={[theme.row(), styles.header]}>
           <Pressable
             onPress={(e) => {

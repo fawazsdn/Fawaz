@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MapPin as MapPinIcon } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -20,12 +21,27 @@ interface MapPlaceholderProps {
   spanDegrees?: number;
 }
 
+interface ProjectedPin {
+  pin: MapPin;
+  left: number;
+  top: number;
+}
+
+/** Distance (in projected-% space) under which two pins are grouped into
+ * one cluster marker, so a dense neighborhood doesn't render overlapping
+ * pins on top of each other. A real map SDK would cluster by real
+ * screen-pixel proximity as the user zooms; this is the same idea against
+ * this component's simplified projection. */
+const CLUSTER_THRESHOLD_PCT = 7;
+
 /**
  * A frontend-safe stand-in for a real map SDK (Apple/Google/Mapbox maps).
  * It renders a stylized grid with pins positioned by simple lat/lng ->
- * percentage projection around a center point. This keeps the whole app
- * runnable without map SDK credentials; swapping in a real MapView later
- * only touches this one component.
+ * percentage projection around a center point, with lightweight greedy
+ * clustering for pins that would otherwise overlap. This keeps the whole
+ * app runnable without map SDK credentials; swapping in a real MapView
+ * later only touches this one component — `MapPin`/`onPressPin` is the
+ * same shape a real provider's marker callback would use.
  */
 export function MapPlaceholder({ centerLat, centerLng, pins = [], onPressPin, height = 220, spanDegrees = 0.02 }: MapPlaceholderProps) {
   const theme = useTheme();
@@ -33,8 +49,30 @@ export function MapPlaceholder({ centerLat, centerLng, pins = [], onPressPin, he
   const project = (lat: number, lng: number) => {
     const x = 50 + ((lng - centerLng) / spanDegrees) * 50;
     const y = 50 - ((lat - centerLat) / spanDegrees) * 50;
-    return { left: `${Math.min(94, Math.max(6, x))}%` as const, top: `${Math.min(90, Math.max(10, y))}%` as const };
+    return { left: Math.min(94, Math.max(6, x)), top: Math.min(90, Math.max(10, y)) };
   };
+
+  // Greedy clustering: walk pins in order, and fold any pin within
+  // CLUSTER_THRESHOLD_PCT of an existing cluster's anchor point into it,
+  // rather than a proper spatial index — pin counts here are always small
+  // (a single neighborhood's worth), so this stays O(n²) on purpose.
+  const clusters = useMemo(() => {
+    const projected: ProjectedPin[] = pins.map((pin) => {
+      const { left, top } = project(pin.lat, pin.lng);
+      return { pin, left, top };
+    });
+    const groups: ProjectedPin[][] = [];
+    for (const p of projected) {
+      const target = groups.find((g) => {
+        const anchor = g[0]!;
+        return Math.hypot(anchor.left - p.left, anchor.top - p.top) < CLUSTER_THRESHOLD_PCT;
+      });
+      if (target) target.push(p);
+      else groups.push([p]);
+    }
+    return groups;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `project` is a pure function of centerLat/centerLng/spanDegrees, already in deps
+  }, [pins, centerLat, centerLng, spanDegrees]);
 
   return (
     <View
@@ -57,18 +95,26 @@ export function MapPlaceholder({ centerLat, centerLng, pins = [], onPressPin, he
         <View style={[styles.centerRing, { borderColor: theme.colors.primary }]} />
       </View>
 
-      {pins.map((pin) => {
-        const pos = project(pin.lat, pin.lng);
+      {clusters.map((group) => {
+        const anchor = group[0]!;
+        const isCluster = group.length > 1;
+        // A cluster mixes categories — fall back to the brand primary
+        // color rather than picking one member's color arbitrarily.
+        const color = isCluster ? theme.colors.primary : (anchor.pin.color ?? theme.colors.danger);
         return (
           <Pressable
-            key={pin.id}
-            onPress={() => onPressPin?.(pin.id)}
-            style={[styles.pin, { left: pos.left, top: pos.top }]}
+            key={anchor.pin.id}
+            onPress={() => onPressPin?.(anchor.pin.id)}
+            style={[styles.pin, { left: `${anchor.left}%` as const, top: `${anchor.top}%` as const }]}
             accessibilityRole="button"
-            accessibilityLabel={pin.label ?? 'map pin'}
+            accessibilityLabel={isCluster ? `${group.length} pins` : (anchor.pin.label ?? 'map pin')}
           >
-            <View style={[styles.pinBubble, { backgroundColor: pin.color ?? theme.colors.danger }]}>
-              <MapPinIcon size={12} color="#fff" fill={pin.color ?? theme.colors.danger} />
+            <View style={[styles.pinBubble, isCluster && styles.clusterBubble, { backgroundColor: color, borderColor: theme.colors.surfaceElevated }]}>
+              {isCluster ? (
+                <Text style={[theme.text('caption', '#fff'), styles.clusterLabel]}>{group.length}</Text>
+              ) : (
+                <MapPinIcon size={12} color="#fff" fill={color} />
+              )}
             </View>
           </Pressable>
         );
@@ -101,6 +147,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
   },
+  clusterBubble: { width: 28, height: 28, borderRadius: 14 },
+  clusterLabel: { fontSize: 11 },
 });

@@ -28,12 +28,13 @@ export default function MessagesScreen() {
   const users = useStore((s) => s.users);
 
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'neighbors' | 'events'>('all');
+  const [filter, setFilter] = useState<'all' | 'neighbors' | 'groups' | 'events'>('all');
 
   const filtered = useMemo(() => {
     let list = conversations;
-    if (filter === 'events') list = list.filter((c) => c.isGroup);
     if (filter === 'neighbors') list = list.filter((c) => !c.isGroup);
+    if (filter === 'groups') list = list.filter((c) => c.isGroup && !c.eventId);
+    if (filter === 'events') list = list.filter((c) => c.isGroup && !!c.eventId);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       list = list.filter((c) => {
@@ -56,6 +57,7 @@ export default function MessagesScreen() {
           options={[
             { key: 'all', label: t.messages.filters.all },
             { key: 'neighbors', label: t.messages.filters.neighbors },
+            { key: 'groups', label: t.messages.filters.groups },
             { key: 'events', label: t.messages.filters.events },
           ]}
           selected={filter}

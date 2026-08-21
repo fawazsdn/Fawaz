@@ -3,35 +3,48 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useRouter } from 'expo-router';
 import {
   BadgeCheck,
+  Bookmark,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
+  FileText,
   Gift,
   Globe,
+  HandCoins,
   Info,
   LogOut,
   MapPin,
   MessageCircle,
   Moon,
   RotateCcw,
+  Share2,
   Shield,
+  Sparkles,
   Trash2,
   User,
+  Users,
   UserX,
 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
+import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import { IS_DEV_BUILD } from '@/config/devFeatures';
 import type { DemoRole, ThemeMode, VerificationStatus } from '@/models';
+import { displayName } from '@/utils/format';
+import { referralService } from '@/services/referral';
+import { links } from '@/config/links';
+import { buildInviteMessage } from '@/utils/inviteMessage';
+import { shareContent } from '@/utils/share';
 import { AppHeader } from '@/components/AppHeader';
+import { Avatar } from '@/components/Avatar';
 import { BottomSheet } from '@/components/BottomSheet';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Chip } from '@/components/Chip';
 
 export default function SettingsScreen() {
   const theme = useTheme();
-  const { t, isRTL } = useI18n();
+  const { t, isRTL, locale } = useI18n();
   const router = useRouter();
 
   const settings = useStore((s) => s.settings);
@@ -43,6 +56,7 @@ export default function SettingsScreen() {
   const signOut = useStore((s) => s.signOut);
   const resetDemoData = useStore((s) => s.resetDemoData);
   const verification = useStore((s) => s.session.verification);
+  const user = useStore((s) => s.getUser(CURRENT_USER_ID));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
 
   const [sheet, setSheet] = useState<null | 'language' | 'theme' | 'message' | 'role'>(null);
@@ -52,19 +66,89 @@ export default function SettingsScreen() {
 
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
+  const shareHaratna = async () => {
+    referralService.recordInviteSent();
+    const code = await referralService.getReferralCode();
+    const neighborhoodName = neighborhood ? (locale === 'ar' ? neighborhood.nameAr : neighborhood.nameEn) : '';
+    const link = neighborhood ? links.neighborhoodInvite(neighborhood.id, code) : undefined;
+    const message = buildInviteMessage({ neighborhoodName, link: link ?? links.neighborhoodInvite('', code), locale });
+    await shareContent({ title: t.settings.shareHaratna, message, url: link });
+  };
+
+  if (!user) return null;
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title={t.settings.title} />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 60 }}>
-        <SectionLabel title={t.settings.account} />
-        <Row icon={User} label={t.settings.editProfile} onPress={() => router.push('/settings/edit-profile')} Chevron={Chevron} />
+        {/* Top profile card — the community-identity summary this screen is
+            named for. Real store data only: stats/reputationTier/memberSince
+            come straight off the User record, never fabricated. */}
+        <Pressable
+          onPress={() => router.push(`/profile/${user.id}`)}
+          style={[
+            styles.profileCard,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t.settings.viewProfile}
+        >
+          <View style={[theme.row(), { alignItems: 'center', gap: 12 }]}>
+            <Avatar uri={user.avatarUrl} name={displayName(user)} size={56} ring />
+            <View style={{ flex: 1 }}>
+              <View style={[theme.row(), { alignItems: 'center', gap: 5 }]}>
+                <Text style={theme.text('heading3')} numberOfLines={1}>
+                  {displayName(user)}
+                </Text>
+                {user.verification === 'verified' ? <BadgeCheck size={16} color={theme.colors.primary} /> : null}
+              </View>
+              <Text style={theme.text('bodySmall', theme.colors.textSecondary)} numberOfLines={1}>
+                {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
+              </Text>
+              <View style={[theme.row(), { alignItems: 'center', gap: 4, marginTop: 3 }]}>
+                <Sparkles size={12} color={theme.colors.primary} />
+                <Text style={theme.text('caption', theme.colors.textMuted)}>
+                  {t.reputation[user.reputationTier]} · {t.profile.memberSince} {new Date(user.memberSince).getFullYear()}
+                </Text>
+              </View>
+            </View>
+            <Chevron size={18} color={theme.colors.textMuted} />
+          </View>
+
+          <View style={[theme.row(), styles.statsRow, { borderTopColor: theme.colors.divider }]}>
+            <MiniStat value={user.stats.neighborsHelped} label={t.profile.neighborsHelped} />
+            <MiniStat value={user.stats.eventsHosted} label={t.profile.eventsHosted} />
+            <MiniStat value={user.stats.thanksReceived} label={t.profile.thanksReceived} />
+          </View>
+        </Pressable>
+
+        <SectionLabel title={t.settings.myHaratna} />
         <Row
           icon={MapPin}
-          label={t.settings.neighborhood}
-          value={neighborhood?.nameAr}
+          label={t.settings.myNeighborhood}
+          value={locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
           onPress={() => router.push('/(auth)/select-neighborhood')}
           Chevron={Chevron}
         />
+        <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${user.id}?tab=activity`)} Chevron={Chevron} />
+        <Row
+          icon={CalendarDays}
+          label={t.settings.myEvents}
+          onPress={() => router.push(`/profile/${user.id}?tab=events`)}
+          Chevron={Chevron}
+        />
+        <Row icon={Bookmark} label={t.settings.saved} onPress={() => router.push('/saved')} Chevron={Chevron} />
+        {/* CommunityGroup has no per-user membership list in this model
+            (only memberCount) — there's no real "groups I've joined" data
+            to filter by, so this honestly opens the same groups browse
+            screen everyone sees rather than fabricating a "my groups"
+            filter. See t.settings.myGroupsNote / final report. */}
+        <Row icon={Users} label={t.settings.myGroups} onPress={() => router.push('/community')} Chevron={Chevron} />
+        <Row icon={HandCoins} label={t.marketplace.title} onPress={() => router.push('/marketplace')} Chevron={Chevron} />
+        <Row icon={Gift} label={t.invite.title} onPress={() => router.push('/invite')} Chevron={Chevron} />
+
+        <SectionLabel title={t.settings.account} />
+        <Row icon={User} label={t.settings.editProfile} onPress={() => router.push('/settings/edit-profile')} Chevron={Chevron} />
         <Row
           icon={BadgeCheck}
           label={t.settings.verificationStatus}
@@ -72,29 +156,12 @@ export default function SettingsScreen() {
           onPress={() => router.push('/(auth)/verification')}
           Chevron={Chevron}
         />
-        <Row icon={Gift} label={t.invite.title} onPress={() => router.push('/invite')} Chevron={Chevron} />
 
-        <SectionLabel title={t.settings.preferences} />
-        <Row
-          icon={Globe}
-          label={t.settings.language}
-          value={settings.locale === 'ar' ? 'العربية' : 'English'}
-          onPress={() => setSheet('language')}
-          Chevron={Chevron}
-        />
-        <Row
-          icon={Moon}
-          label={t.settings.theme}
-          value={themeLabel(settings.themeMode, t)}
-          onPress={() => setSheet('theme')}
-          Chevron={Chevron}
-        />
         <SwitchRow
           label={t.settings.notifications}
           value={settings.notificationsEnabled}
           onChange={(v) => setSettings({ notificationsEnabled: v })}
         />
-        <SwitchRow label={t.settings.ramadanMode} value={settings.ramadanMode} onChange={setRamadanMode} />
 
         <SectionLabel title={t.settings.privacy} />
         <Row
@@ -111,11 +178,30 @@ export default function SettingsScreen() {
         />
         <Row icon={UserX} label={t.settings.blockedUsers} onPress={() => router.push('/settings/blocked-users')} Chevron={Chevron} />
 
-        <SectionLabel title={t.settings.app} />
-        <Row icon={Info} label={t.settings.about} onPress={() => router.push('/settings/info/about')} Chevron={Chevron} />
+        <Row
+          icon={Globe}
+          label={t.settings.language}
+          value={settings.locale === 'ar' ? 'العربية' : 'English'}
+          onPress={() => setSheet('language')}
+          Chevron={Chevron}
+        />
+
+        <SectionLabel title={t.settings.appearance} />
+        <Row
+          icon={Moon}
+          label={t.settings.theme}
+          value={themeLabel(settings.themeMode, t)}
+          onPress={() => setSheet('theme')}
+          Chevron={Chevron}
+        />
+        <SwitchRow label={t.settings.ramadanMode} value={settings.ramadanMode} onChange={setRamadanMode} />
+
+        <SectionLabel title={t.settings.helpSafety} />
         <Row icon={Info} label={t.settings.help} onPress={() => router.push('/settings/info/help')} Chevron={Chevron} />
         <Row icon={Info} label={t.settings.terms} onPress={() => router.push('/settings/info/terms')} Chevron={Chevron} />
         <Row icon={Shield} label={t.settings.privacyPolicy} onPress={() => router.push('/settings/info/privacy')} Chevron={Chevron} />
+
+        <Row icon={Info} label={t.settings.aboutHaratna} onPress={() => router.push('/settings/info/about')} Chevron={Chevron} />
 
         {/* Developer-only: the role switcher and demo-data reset only make
             sense against this frontend's mock data layer, and must never
@@ -142,6 +228,7 @@ export default function SettingsScreen() {
         ) : null}
 
         <SectionLabel title={t.settings.accountActions} />
+        <Row icon={Share2} label={t.settings.shareHaratna} onPress={shareHaratna} Chevron={Chevron} />
         <Row icon={LogOut} label={t.settings.signOut} onPress={() => setSignOutOpen(true)} Chevron={Chevron} />
         <Row icon={Trash2} label={t.settings.deleteAccount} destructive onPress={() => setDeleteOpen(true)} Chevron={Chevron} />
       </ScrollView>
@@ -282,6 +369,18 @@ function SectionLabel({ title }: { title: string }) {
   return <Text style={[theme.text('caption', theme.colors.textMuted), styles.sectionLabel]}>{title}</Text>;
 }
 
+function MiniStat({ value, label }: { value: number; label: string }) {
+  const theme = useTheme();
+  return (
+    <View style={{ flex: 1, alignItems: 'center' }}>
+      <Text style={theme.text('title')}>{value}</Text>
+      <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function Row({
   icon: Icon,
   label,
@@ -304,7 +403,11 @@ function Row({
         <Icon size={16} color={destructive ? theme.colors.danger : theme.colors.textSecondary} />
       </View>
       <Text style={[theme.text('body', destructive ? theme.colors.danger : theme.colors.textPrimary), { flex: 1 }]}>{label}</Text>
-      {value ? <Text style={theme.text('bodySmall', theme.colors.textMuted)}>{value}</Text> : null}
+      {value ? (
+        <Text style={theme.text('bodySmall', theme.colors.textMuted)} numberOfLines={1}>
+          {value}
+        </Text>
+      ) : null}
       <Chevron size={16} color={theme.colors.textMuted} />
     </Pressable>
   );
@@ -315,7 +418,13 @@ function SwitchRow({ label, value, onChange }: { label: string; value: boolean; 
   return (
     <View style={[theme.row(), styles.row, { borderBottomColor: theme.colors.divider }]}>
       <Text style={[theme.text('body'), { flex: 1 }]}>{label}</Text>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: theme.colors.primary }} />
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: theme.colors.primary }}
+        accessibilityRole="switch"
+        accessibilityLabel={label}
+      />
     </View>
   );
 }
@@ -340,6 +449,8 @@ function OptionList({
           key={opt.key}
           onPress={() => onSelect(opt.key)}
           style={[theme.row(), styles.optionRow, { borderColor: selected === opt.key ? theme.colors.primary : theme.colors.border }]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: selected === opt.key }}
         >
           <Text style={theme.text('body', selected === opt.key ? theme.colors.primary : theme.colors.textPrimary)}>{opt.label}</Text>
         </Pressable>
@@ -353,4 +464,6 @@ const styles = StyleSheet.create({
   row: { alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
   iconWrap: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   optionRow: { padding: 14, borderWidth: 1.5, borderRadius: 10, marginBottom: 8 },
+  profileCard: { padding: 14, borderWidth: StyleSheet.hairlineWidth, marginBottom: 8 },
+  statsRow: { marginTop: 12, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
 });

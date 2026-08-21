@@ -17,7 +17,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ title, onBack, showBack = true, right, transparent }: AppHeaderProps) {
   const theme = useTheme();
-  const { isRTL } = useI18n();
+  const { t, isRTL } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const BackIcon = isRTL ? ChevronRight : ChevronLeft;
@@ -38,7 +38,7 @@ export function AppHeader({ title, onBack, showBack = true, right, transparent }
     >
       <View style={styles.side}>
         {showBack ? (
-          <IconButton accessibilityLabel="back" onPress={onBack ?? (() => router.back())} variant="surface">
+          <IconButton accessibilityLabel={t.common.back} onPress={onBack ?? (() => router.back())} variant="surface">
             <BackIcon size={20} color={theme.colors.textPrimary} />
           </IconButton>
         ) : null}
