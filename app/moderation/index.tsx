@@ -36,7 +36,7 @@ export default function ModerationScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.moderation.title} />
+      <AppHeader title={t.moderation.title} fallbackRoute="/settings" />
       <View style={{ marginBottom: 10 }}>
         <FilterBar
           options={[

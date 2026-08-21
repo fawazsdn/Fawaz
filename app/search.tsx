@@ -70,7 +70,7 @@ export default function SearchScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.common.search} />
+      <AppHeader title={t.common.search} fallbackRoute="/" />
       <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 10 }}>
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.discover.searchPlaceholder} onSubmit={onSubmit} autoFocus />
       </View>

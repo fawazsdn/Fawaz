@@ -22,7 +22,7 @@ export default function InstitutionDetailScreen() {
   if (!institution) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/community" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -30,7 +30,7 @@ export default function InstitutionDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title="" transparent />
+      <AppHeader title="" transparent fallbackRoute="/community" />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <Image source={{ uri: institution.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
         <View style={{ padding: theme.spacing.md }}>

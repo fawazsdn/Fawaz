@@ -79,7 +79,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.settings.title} />
+      <AppHeader title={t.settings.title} fallbackRoute="/" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 60 }}>
         {/* Top profile card — the community-identity summary this screen is
             named for. Real store data only: stats/reputationTier/memberSince

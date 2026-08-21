@@ -40,7 +40,7 @@ export default function EventDetailScreen() {
   if (!event || !host) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/events" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -83,6 +83,7 @@ export default function EventDetailScreen() {
         title=""
         transparent
         showBack
+        fallbackRoute="/events"
         right={
           <IconButton accessibilityLabel={t.common.share} onPress={shareEvent}>
             <Share2 size={19} color={theme.colors.textPrimary} />

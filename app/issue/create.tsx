@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { issueService } from '@/services';
 import type { IssueCategory } from '@/models';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -32,6 +33,7 @@ export default function CreateIssueScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
+  const safeBack = useSafeBack('/issues');
 
   const [step, setStep] = useState(0);
   const [category, setCategory] = useState<IssueCategory | null>(null);
@@ -62,7 +64,7 @@ export default function CreateIssueScreen() {
   };
 
   const onNext = () => (step < STEPS.length - 1 ? setStep(step + 1) : onSubmit());
-  const onBack = () => (step > 0 ? setStep(step - 1) : router.back());
+  const onBack = () => (step > 0 ? setStep(step - 1) : safeBack());
 
   const onSubmit = async () => {
     if (!category || !neighborhood) return;

@@ -37,6 +37,7 @@ export default function LostFoundScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={t.lostFound.title}
+        fallbackRoute="/(tabs)/discover"
         right={
           <IconButton accessibilityLabel={t.lostFound.report} onPress={() => router.push('/lost-found/create')}>
             <Plus size={20} color={theme.colors.primary} />

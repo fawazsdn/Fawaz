@@ -48,7 +48,7 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -73,6 +73,7 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={displayName(user)}
+        fallbackRoute="/"
         right={
           isOwn ? (
             <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" hitSlop={8}>

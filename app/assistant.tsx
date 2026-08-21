@@ -51,7 +51,7 @@ export default function AssistantScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
-      <AppHeader title={t.assistant.title} />
+      <AppHeader title={t.assistant.title} fallbackRoute="/(tabs)/discover" />
       <FlatList
         ref={listRef}
         data={messages}

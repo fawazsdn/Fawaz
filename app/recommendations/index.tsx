@@ -52,7 +52,7 @@ export default function RecommendationsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.recommendations.title} />
+      <AppHeader title={t.recommendations.title} fallbackRoute="/(tabs)/discover" />
       <View style={{ marginBottom: 10 }}>
         <FilterBar
           options={[{ key: 'all', label: t.common.all }, ...CATEGORIES.map((c) => ({ key: c, label: categoryLabel(c) }))]}

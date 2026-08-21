@@ -50,7 +50,7 @@ export default function CreatePostScreen() {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <AppHeader title={t.create.post} />
+      <AppHeader title={t.create.post} fallbackRoute="/create" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <TextInput
           value={text}

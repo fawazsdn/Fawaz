@@ -33,7 +33,7 @@ export default function HelpRequestDetailScreen() {
   if (!request || !requester) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/(tabs)/discover" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -55,7 +55,7 @@ export default function HelpRequestDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.help.categories[request.category]} />
+      <AppHeader title={t.help.categories[request.category]} fallbackRoute="/(tabs)/discover" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
         <Badge label={t.help.categories[request.category]} tone="info" />
         <Text style={[theme.text('heading2'), { marginTop: 10 }]}>{request.title}</Text>

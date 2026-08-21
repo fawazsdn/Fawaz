@@ -68,7 +68,7 @@ export default function CreateListingScreen() {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <AppHeader title={t.marketplace.createListing} />
+      <AppHeader title={t.marketplace.createListing} fallbackRoute="/marketplace" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <View style={[theme.row(), { gap: 8, flexWrap: 'wrap' }]}>
           {images.map((uri, i) => (

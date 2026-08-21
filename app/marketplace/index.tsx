@@ -44,6 +44,7 @@ export default function MarketplaceScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={t.marketplace.title}
+        fallbackRoute="/"
         right={
           <IconButton accessibilityLabel={t.marketplace.createListing} onPress={() => router.push('/marketplace/create')}>
             <Plus size={20} color={theme.colors.primary} />

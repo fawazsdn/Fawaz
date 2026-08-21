@@ -81,7 +81,7 @@ export default function CreateEventScreen() {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <AppHeader title={t.eventCreate.title} />
+      <AppHeader title={t.eventCreate.title} fallbackRoute="/events" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <Pressable onPress={pickImage} style={[styles.imagePicker, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
           {image ? <Image source={{ uri: image }} style={styles.image} /> : <ImagePlus size={26} color={theme.colors.primary} />}

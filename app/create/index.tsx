@@ -16,6 +16,7 @@ import {
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { IconButton } from '@/components/IconButton';
 
 export default function CreateSheetScreen() {
@@ -23,6 +24,7 @@ export default function CreateSheetScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const safeBack = useSafeBack('/');
 
   const options = [
     {
@@ -95,7 +97,7 @@ export default function CreateSheetScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <View style={[theme.row(), styles.header, { paddingTop: insets.top + 12, paddingHorizontal: theme.spacing.md }]}>
         <Text style={theme.text('heading2')}>{t.create.sheetTitle}</Text>
-        <IconButton accessibilityLabel={t.common.close} variant="surface" onPress={() => router.back()}>
+        <IconButton accessibilityLabel={t.common.close} variant="surface" onPress={safeBack}>
           <X size={18} color={theme.colors.textPrimary} />
         </IconButton>
       </View>

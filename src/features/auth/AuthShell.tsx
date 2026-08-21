@@ -1,10 +1,11 @@
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { IconButton } from '@/components/IconButton';
 
 interface AuthShellProps {
@@ -13,14 +14,16 @@ interface AuthShellProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   showBack?: boolean;
+  /** See AppHeader's `fallbackRoute` — same "no history" safety net. */
+  fallbackRoute?: Href;
 }
 
-export function AuthShell({ title, body, children, footer, showBack = true }: AuthShellProps) {
+export function AuthShell({ title, body, children, footer, showBack = true, fallbackRoute = '/' }: AuthShellProps) {
   const theme = useTheme();
   const { isRTL } = useI18n();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const BackIcon = isRTL ? ChevronRight : ChevronLeft;
+  const safeBack = useSafeBack(fallbackRoute);
 
   return (
     <KeyboardAvoidingView
@@ -32,7 +35,7 @@ export function AuthShell({ title, body, children, footer, showBack = true }: Au
         keyboardShouldPersistTaps="handled"
       >
         {showBack ? (
-          <IconButton accessibilityLabel="back" onPress={() => router.back()} variant="surface">
+          <IconButton accessibilityLabel="back" onPress={safeBack} variant="surface">
             <BackIcon size={20} color={theme.colors.textPrimary} />
           </IconButton>
         ) : (

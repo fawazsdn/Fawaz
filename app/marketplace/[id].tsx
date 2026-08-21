@@ -31,7 +31,7 @@ export default function MarketplaceDetailScreen() {
   if (!listing || !seller) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/marketplace" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -54,6 +54,7 @@ export default function MarketplaceDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title=""
+        fallbackRoute="/marketplace"
         right={
           <View style={{ flexDirection: 'row', gap: 6 }}>
             <IconButton accessibilityLabel={t.common.save} onPress={() => toggleSaveListing(listing.id)}>

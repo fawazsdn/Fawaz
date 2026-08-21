@@ -34,7 +34,7 @@ export default function PostDetailScreen() {
   if (!post) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title={t.post.commentsTitle} />
+        <AppHeader title={t.post.commentsTitle} fallbackRoute="/" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -51,7 +51,7 @@ export default function PostDetailScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={80}
     >
-      <AppHeader title={t.post.commentsTitle} />
+      <AppHeader title={t.post.commentsTitle} fallbackRoute="/" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
         <PostCard post={post} onPress={() => {}} />
         <Text style={[theme.text('title'), { marginTop: 20, marginBottom: 4 }]}>

@@ -42,7 +42,7 @@ export default function BusinessDetailScreen() {
   if (!business) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/recommendations" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -60,6 +60,7 @@ export default function BusinessDetailScreen() {
       <AppHeader
         title=""
         transparent
+        fallbackRoute="/recommendations"
         right={
           <IconButton
             accessibilityLabel={t.common.share}

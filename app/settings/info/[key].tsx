@@ -51,7 +51,7 @@ export default function InfoScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={content.title} />
+      <AppHeader title={content.title} fallbackRoute="/settings" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
         <Text style={theme.text('body', theme.colors.textSecondary)}>{content.body}</Text>
       </ScrollView>

@@ -57,6 +57,7 @@ export default function NotificationsScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={t.notifications.title}
+        fallbackRoute="/"
         right={
           <Pressable onPress={markAllNotificationsRead} hitSlop={8}>
             <Text style={theme.text('caption', theme.colors.primary)}>{t.notifications.markAllRead}</Text>

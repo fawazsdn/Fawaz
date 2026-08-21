@@ -24,7 +24,7 @@ export default function BorrowDetailScreen() {
   if (!item || !owner) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/borrow" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -34,7 +34,7 @@ export default function BorrowDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={item.title} />
+      <AppHeader title={item.title} fallbackRoute="/borrow" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
         <Image source={{ uri: item.image }} style={{ width: '100%', height: 220, borderRadius: theme.radii.lg }} contentFit="cover" />
         <View style={{ marginTop: 14 }}>

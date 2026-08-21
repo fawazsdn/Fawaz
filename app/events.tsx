@@ -60,7 +60,7 @@ export default function EventsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {/* Now a root-level route pushed from Explore/Home (see app/(tabs)/_layout.tsx) — needs its own back control, unlike when this lived in the tab bar. */}
-      <AppHeader title={t.events.title} />
+      <AppHeader title={t.events.title} fallbackRoute="/" />
 
       <View style={{ marginBottom: 10 }}>
         <FilterBar options={categoryFilters} selected={filter} onSelect={(k) => setFilter(k as EventCategory | 'all')} />

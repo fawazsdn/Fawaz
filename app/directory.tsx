@@ -41,7 +41,7 @@ export default function DirectoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.directory.title} />
+      <AppHeader title={t.directory.title} fallbackRoute="/community" />
       <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 10 }}>
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.directory.searchPlaceholder} />
       </View>

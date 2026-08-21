@@ -31,6 +31,7 @@ export default function IssuesListScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={t.community.issues}
+        fallbackRoute="/"
         right={
           <IconButton accessibilityLabel={t.create.issue} onPress={() => router.push('/issue/create')}>
             <Plus size={20} color={theme.colors.primary} />

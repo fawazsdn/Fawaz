@@ -72,7 +72,7 @@ export default function InviteScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.invite.title} />
+      <AppHeader title={t.invite.title} fallbackRoute="/" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 40, gap: 16 }}>
         <View
           style={{

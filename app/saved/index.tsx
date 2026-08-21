@@ -45,7 +45,7 @@ export default function SavedScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.saved.title} />
+      <AppHeader title={t.saved.title} fallbackRoute="/settings" />
       <View style={{ marginBottom: 10 }}>
         <FilterBar
           options={[

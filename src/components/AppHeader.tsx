@@ -1,26 +1,35 @@
 import { StyleSheet, Text, View } from 'react-native';
+import type { Href } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { IconButton } from './IconButton';
 
 interface AppHeaderProps {
   title?: string;
   onBack?: () => void;
   showBack?: boolean;
+  /**
+   * Where to land if there's no navigation history to go back to (a
+   * direct URL open, a web refresh, or a deep link straight into this
+   * screen) — see `useSafeBack`. Pick the nearest logical parent screen,
+   * not a blanket default; only omit this for screens where `/` really
+   * is the right place to land in that situation.
+   */
+  fallbackRoute?: Href;
   right?: React.ReactNode;
   transparent?: boolean;
 }
 
-export function AppHeader({ title, onBack, showBack = true, right, transparent }: AppHeaderProps) {
+export function AppHeader({ title, onBack, showBack = true, fallbackRoute = '/', right, transparent }: AppHeaderProps) {
   const theme = useTheme();
   const { t, isRTL } = useI18n();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const BackIcon = isRTL ? ChevronRight : ChevronLeft;
+  const safeBack = useSafeBack(fallbackRoute);
 
   return (
     <View
@@ -38,7 +47,7 @@ export function AppHeader({ title, onBack, showBack = true, right, transparent }
     >
       <View style={styles.side}>
         {showBack ? (
-          <IconButton accessibilityLabel={t.common.back} onPress={onBack ?? (() => router.back())} variant="surface">
+          <IconButton accessibilityLabel={t.common.back} onPress={onBack ?? safeBack} variant="surface">
             <BackIcon size={20} color={theme.colors.textPrimary} />
           </IconButton>
         ) : null}

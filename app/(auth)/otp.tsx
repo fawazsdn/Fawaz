@@ -81,6 +81,7 @@ export default function OtpScreen() {
     <AuthShell
       title={t.auth.otpTitle}
       body={`${t.auth.otpBody} +966${phone?.replace('+966', '') ?? ''}`}
+      fallbackRoute="/(auth)/phone"
       footer={
         <Button
           label={verifying ? t.auth.verifying : t.common.confirm}

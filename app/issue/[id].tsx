@@ -53,7 +53,7 @@ export default function IssueDetailScreen() {
   if (!issue || !reporter) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/issues" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -77,6 +77,7 @@ export default function IssueDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
         title={t.issueCreate.categories[issue.category]}
+        fallbackRoute="/issues"
         right={
           <IconButton
             accessibilityLabel={t.common.share}

@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { SectionHeader } from '@/components/SectionHeader';
 import { UserRow } from '@/components/UserRow';
 import { BottomSheet } from '@/components/BottomSheet';
@@ -17,6 +18,7 @@ export default function CommunityScreen() {
   const { t, locale } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const safeBack = useSafeBack('/');
 
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
 
@@ -53,7 +55,7 @@ export default function CommunityScreen() {
               control, unlike when this lived in the tab bar. Styled for the hero's
               primary-colored background rather than the standard AppHeader. */}
           <Pressable
-            onPress={() => router.back()}
+            onPress={safeBack}
             accessibilityRole="button"
             accessibilityLabel={t.common.back}
             hitSlop={10}

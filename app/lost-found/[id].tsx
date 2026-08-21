@@ -27,7 +27,7 @@ export default function LostFoundDetailScreen() {
   if (!item || !author) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/lost-found" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -35,7 +35,7 @@ export default function LostFoundDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.lostFound.title} />
+      <AppHeader title={t.lostFound.title} fallbackRoute="/lost-found" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
         <Image source={{ uri: item.image }} style={{ width: '100%', height: 240, borderRadius: theme.radii.lg }} contentFit="cover" />
         <View style={{ marginTop: 14 }}>

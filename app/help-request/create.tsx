@@ -44,7 +44,7 @@ export default function CreateHelpRequestScreen() {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <AppHeader title={t.create.help} />
+      <AppHeader title={t.create.help} fallbackRoute="/(tabs)/discover" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.post.category}</Text>
         <View style={[theme.row(), styles.grid]}>

@@ -50,7 +50,7 @@ export default function CreatePollScreen() {
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <AppHeader title={t.create.poll} />
+      <AppHeader title={t.create.poll} fallbackRoute="/create" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
         <TextInput
           value={question}

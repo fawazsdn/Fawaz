@@ -28,7 +28,7 @@ export default function BorrowScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.borrow.title} />
+      <AppHeader title={t.borrow.title} fallbackRoute="/marketplace" />
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}

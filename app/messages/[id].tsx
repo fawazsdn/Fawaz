@@ -54,7 +54,7 @@ export default function ConversationScreen() {
   if (!conversation) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        <AppHeader title="" />
+        <AppHeader title="" fallbackRoute="/messages" />
         <EmptyState title={t.errors.genericTitle} />
       </View>
     );
@@ -90,6 +90,7 @@ export default function ConversationScreen() {
     >
       <AppHeader
         title={title}
+        fallbackRoute="/messages"
         right={
           conversation.isGroup ? (
             <Users size={19} color={theme.colors.textMuted} />

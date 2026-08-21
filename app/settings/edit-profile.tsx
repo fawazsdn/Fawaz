@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
@@ -12,6 +11,7 @@ import { useStore } from '@/store/useStore';
 import { profileService } from '@/services';
 import { profileSchema, type ProfileFormValues } from '@/models/schemas';
 import type { NamePrivacy } from '@/models';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { AppHeader } from '@/components/AppHeader';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
@@ -19,7 +19,7 @@ import { Button } from '@/components/Button';
 export default function EditProfileScreen() {
   const theme = useTheme();
   const { t } = useI18n();
-  const router = useRouter();
+  const safeBack = useSafeBack('/settings');
   const user = useStore((s) => s.currentUser());
   const createProfile = useStore((s) => s.createProfile);
 
@@ -65,12 +65,12 @@ export default function EditProfileScreen() {
     await profileService.updateProfile(input);
     createProfile(input);
     setSaving(false);
-    router.back();
+    safeBack();
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.profile.editProfile} />
+      <AppHeader title={t.profile.editProfile} fallbackRoute="/settings" />
       <View style={{ padding: theme.spacing.md }}>
         <Pressable onPress={pickImage} accessibilityRole="button" style={styles.avatarPicker}>
           <Avatar uri={avatarUrl} name={firstName} size={88} ring />

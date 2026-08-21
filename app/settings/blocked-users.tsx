@@ -20,7 +20,7 @@ export default function BlockedUsersScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.settings.blockedUsers} />
+      <AppHeader title={t.settings.blockedUsers} fallbackRoute="/settings" />
       <FlatList
         data={blocked}
         keyExtractor={(u) => u.id}
