@@ -51,6 +51,7 @@ const ar = {
   },
   errors: {
     couldNotLoadNeighborhood: 'تعذّر تحميل حيّك.',
+    noNeighborhoodBody: 'لم نتمكن من العثور على حي مرتبط بحسابك. اختر حيّك للمتابعة.',
     offlineTitle: 'أنت غير متصل بالإنترنت',
     offlineBody: 'نعرض لك آخر محتوى محفوظ. سيتم التحديث عند عودة الاتصال.',
     genericTitle: 'حدث خطأ ما',

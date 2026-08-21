@@ -14,6 +14,7 @@ import { MapPlaceholder, type MapPin } from '@/components/MapPlaceholder';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
 
 type FilterKey = 'all' | 'events' | 'issues' | 'services' | 'marketplace' | 'lostFound';
 
@@ -168,7 +169,10 @@ export default function MapScreen() {
     return list;
   }, [items, filter, query]);
 
-  if (!neighborhood) return null;
+  // Previously a bare `return null` — see the matching comment in
+  // app/(tabs)/index.tsx for why that left this tab permanently blank on
+  // a direct open/refresh or a stale persisted neighborhoodId.
+  if (!neighborhood) return <NoNeighborhoodState />;
 
   const pins: MapPin[] = filtered.map((i) => ({ id: i.id, lat: i.lat, lng: i.lng, color: i.color, label: i.title }));
   const selectedItem = filtered.find((i) => i.id === selectedId) ?? null;

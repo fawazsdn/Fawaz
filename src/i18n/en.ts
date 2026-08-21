@@ -53,6 +53,7 @@ const en: typeof ar = {
   },
   errors: {
     couldNotLoadNeighborhood: "Couldn't load your neighborhood.",
+    noNeighborhoodBody: "We couldn't find a neighborhood for your account. Choose one to continue.",
     offlineTitle: "You're offline",
     offlineBody: 'Showing your last saved content. It will refresh when you reconnect.',
     genericTitle: 'Something went wrong',

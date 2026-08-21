@@ -48,7 +48,7 @@ export default function MessagesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.messages.title} showBack={false} />
+      <AppHeader title={t.messages.title} fallbackRoute="/" />
       <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 10 }}>
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.messages.searchPlaceholder} />
       </View>

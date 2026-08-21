@@ -17,6 +17,7 @@ import { HelpRequestCard } from '@/features/help/HelpRequestCard';
 import { PostCard } from '@/features/feed/PostCard';
 import { LostFoundCard } from '@/features/lostFound/LostFoundCard';
 import { ExploreCategoryGrid } from '@/features/explore/ExploreCategoryGrid';
+import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
 
 export default function DiscoverScreen() {
   const theme = useTheme();
@@ -24,6 +25,9 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
+  // .find() returns a stable reference (the actual array element), safe
+  // directly in a selector — see src/features/home/HomeHeader.tsx.
+  const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
 
   // Select raw state arrays and derive with useMemo — a selector that
   // returns a freshly-filtered/sorted array every getSnapshot call is
@@ -74,7 +78,11 @@ export default function DiscoverScreen() {
     [allBusinesses, neighborhoodId],
   );
 
-  if (!neighborhoodId) return null;
+  // Previously `if (!neighborhoodId) return null` — see the matching
+  // comment in app/(tabs)/index.tsx for why a bare null render here left
+  // this whole tab permanently blank on a direct open/refresh or a stale
+  // persisted neighborhoodId.
+  if (!neighborhood) return <NoNeighborhoodState />;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ paddingBottom: 100 }}>

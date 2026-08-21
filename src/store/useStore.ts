@@ -254,6 +254,38 @@ function freshEntities() {
 
 const CURRENT_USER_ID = seed.CURRENT_USER_ID;
 
+/**
+ * The persist middleware's `merge` — pulled out to a named, exported
+ * function so it's directly unit-testable (see
+ * src/store/__tests__/persistMerge.test.ts) rather than only reachable
+ * through a full AsyncStorage-mocked hydration cycle.
+ *
+ * Runs on every load, regardless of whether the persisted version number
+ * matches (unlike zustand's `migrate`, which only fires on an explicit
+ * version mismatch) — the one place a persisted session referencing a
+ * neighborhood this build no longer has (an id from before the Saudi-
+ * geography migration, or one simply renamed or removed since) gets
+ * caught. Left unvalidated, Home/Explore/Map resolve nothing for it:
+ * Home/Explore rendered a hollow "0 of everything" screen, and Map
+ * (which guards on the resolved neighborhood object rather than the id
+ * string) went fully blank. Checked against currentState's freshly-
+ * seeded neighborhoods (not the persisted ones, which could be the
+ * stale part) so a wholesale-outdated persisted entity snapshot can't
+ * produce a false "still valid". Only the specific stale id is cleared
+ * — everything else in session/settings is preserved — and the new
+ * <NoNeighborhoodState /> those screens show now gives a working
+ * recovery action either way.
+ */
+export function mergePersistedState(persistedState: unknown, currentState: AppState): AppState {
+  const persisted = persistedState as Partial<AppState> | undefined;
+  const merged: AppState = { ...currentState, ...persisted };
+  const neighborhoodId = persisted?.session?.neighborhoodId;
+  if (neighborhoodId && !currentState.neighborhoods.some((n) => n.id === neighborhoodId)) {
+    merged.session = { ...merged.session, neighborhoodId: null };
+  }
+  return merged;
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -704,6 +736,14 @@ export const useStore = create<AppState>()(
       name: 'haratna-store',
       storage: createJSONStorage(() => AsyncStorage),
       version: 1,
+      merge: mergePersistedState,
+      // No breaking change to the persisted shape yet — this is
+      // scaffolding so a future one has a real place to land a real
+      // transform, instead of the zustand default of logging "couldn't
+      // be migrated" and silently discarding the entire persisted state
+      // (session, settings, referral stats, everything) the next time
+      // `version` is bumped.
+      migrate: (persistedState) => persistedState,
     },
   ),
 );
