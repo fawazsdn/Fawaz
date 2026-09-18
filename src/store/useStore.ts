@@ -59,6 +59,9 @@ interface SessionState {
   neighborhoodId: string | null;
   verification: VerificationStatus;
   isAuthenticated: boolean;
+  /** The real Supabase auth.uid() once signed in with Apple/Google — never a client-invented id. */
+  supabaseUserId: string | null;
+  authProvider: 'apple' | 'google' | 'phone' | null;
 }
 
 interface AppState {
@@ -115,6 +118,8 @@ interface AppState {
   completeOnboarding: () => void;
   setPhone: (phone: string) => void;
   verifyOtp: () => void;
+  /** Sets the real Supabase auth.uid() after a genuine Apple/Google sign-in. */
+  setSupabaseAuth: (userId: string, provider: 'apple' | 'google') => void;
   createProfile: (input: {
     firstName: string;
     lastName: string;
@@ -217,6 +222,8 @@ const initialSession: SessionState = {
   neighborhoodId: null,
   verification: 'not_started',
   isAuthenticated: false,
+  supabaseUserId: null,
+  authProvider: null,
 };
 
 function freshEntities() {
@@ -279,6 +286,12 @@ const CURRENT_USER_ID = seed.CURRENT_USER_ID;
 export function mergePersistedState(persistedState: unknown, currentState: AppState): AppState {
   const persisted = persistedState as Partial<AppState> | undefined;
   const merged: AppState = { ...currentState, ...persisted };
+  // session/settings are merged one level deep (not just overwritten) so a
+  // persisted blob from an older build that predates a new field (e.g.
+  // supabaseUserId/authProvider) still gets that field's current default
+  // instead of silently ending up undefined.
+  if (persisted?.session) merged.session = { ...currentState.session, ...persisted.session };
+  if (persisted?.settings) merged.settings = { ...currentState.settings, ...persisted.settings };
   const neighborhoodId = persisted?.session?.neighborhoodId;
   if (neighborhoodId && !currentState.neighborhoods.some((n) => n.id === neighborhoodId)) {
     merged.session = { ...merged.session, neighborhoodId: null };
@@ -306,6 +319,8 @@ export const useStore = create<AppState>()(
       completeOnboarding: () => set((s) => ({ session: { ...s.session, onboardingCompleted: true } })),
       setPhone: (phone) => set((s) => ({ session: { ...s.session, phone } })),
       verifyOtp: () => set((s) => ({ session: { ...s.session, otpVerified: true, isAuthenticated: true } })),
+      setSupabaseAuth: (userId, provider) =>
+        set((s) => ({ session: { ...s.session, supabaseUserId: userId, authProvider: provider, isAuthenticated: true } })),
       createProfile: ({ firstName, lastName, namePrivacy, bio, avatarUrl }) =>
         set((s) => ({
           session: { ...s.session, profileCreated: true },

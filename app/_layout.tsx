@@ -16,6 +16,7 @@ import {
 
 import { useStore } from '@/store/useStore';
 import { useTheme } from '@/theme/useTheme';
+import { useSupabaseSessionSync } from '@/features/auth/useSupabaseSessionSync';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -37,6 +38,7 @@ function useStoreHydrated() {
 // a broken layout. Native (iOS/Android) is completely unaffected.
 function RootStack() {
   const theme = useTheme();
+  useSupabaseSessionSync();
   const stack = (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
       <Stack.Screen name="index" />

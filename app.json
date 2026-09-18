@@ -14,6 +14,7 @@
       "expo-router",
       "expo-font",
       "expo-localization",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
@@ -30,10 +31,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "sa.haratna.app",
       "buildNumber": "1",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "حارتنا يستخدم الصور لمشاركة المنشورات والفعاليات مع جيرانك.",
         "NSCameraUsageDescription": "حارتنا يستخدم الكاميرا لالتقاط صور للمنشورات والبلاغات.",
-        "NSLocationWhenInUseUsageDescription": "حارتنا يستخدم موقعك التقريبي لعرض حيّك ومحتواه."
+        "NSLocationWhenInUseUsageDescription": "حارتنا يستخدم موقعك التقريبي لتأكيد أنك داخل حيّك عند طلبك ذلك — لا نتتبع موقعك باستمرار."
       }
     },
     "android": {

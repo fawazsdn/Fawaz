@@ -8,6 +8,7 @@ import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import { geographyService } from '@/services/geography';
+import { supabase } from '@/lib/supabase';
 import { normalizeForSearch } from '@/utils/searchNormalize';
 import { SearchBar } from '@/components/SearchBar';
 import { Chip } from '@/components/Chip';
@@ -69,6 +70,14 @@ export default function SelectNeighborhoodScreen() {
 
   const onSelect = (n: SaudiNeighborhood) => {
     selectNeighborhood(n.id);
+    // Creates/reactivates the real (server-side, pending) membership row that
+    // verify_neighborhood_location requires — best-effort here; verification.tsx
+    // also calls it defensively before verifying, so a transient failure here
+    // (e.g. offline) doesn't strand the user.
+    supabase.rpc('select_neighborhood', { target_neighborhood_id: n.id }).then(
+      () => {},
+      () => {},
+    );
     router.push('/(auth)/verification');
   };
 

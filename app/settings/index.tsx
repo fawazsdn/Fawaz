@@ -28,6 +28,7 @@ import {
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
+import { signOutSupabase } from '@/features/auth/supabaseAuth';
 import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import { IS_DEV_BUILD } from '@/config/devFeatures';
 import type { DemoRole, ThemeMode, VerificationStatus } from '@/models';
@@ -306,6 +307,7 @@ export default function SettingsScreen() {
         destructive
         onCancel={() => setSignOutOpen(false)}
         onConfirm={() => {
+          signOutSupabase().catch(() => {});
           signOut();
           setSignOutOpen(false);
           router.replace('/');
@@ -319,6 +321,7 @@ export default function SettingsScreen() {
         destructive
         onCancel={() => setDeleteOpen(false)}
         onConfirm={() => {
+          signOutSupabase().catch(() => {});
           resetDemoData();
           setDeleteOpen(false);
           router.replace('/');

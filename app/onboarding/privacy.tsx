@@ -23,7 +23,7 @@ export default function PrivacyScreen() {
       primaryLabel={t.onboarding.getStarted}
       onPrimary={() => {
         completeOnboarding();
-        router.replace('/(auth)/phone');
+        router.replace('/(auth)/sign-in');
       }}
     />
   );

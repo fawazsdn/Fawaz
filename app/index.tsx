@@ -13,7 +13,7 @@ export default function SplashRedirect() {
       if (!session.onboardingCompleted) {
         router.replace('/onboarding/welcome');
       } else if (!session.isAuthenticated) {
-        router.replace('/(auth)/phone');
+        router.replace('/(auth)/sign-in');
       } else if (!session.profileCreated) {
         router.replace('/(auth)/profile-setup');
       } else if (!session.cityId) {
