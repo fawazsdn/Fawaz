@@ -1,5 +1,93 @@
 import type { Locale } from '@/models';
 
+/**
+ * Haratna is a Saudi neighborhood app: every event/activity time is shown in
+ * the neighborhood's own time zone (Asia/Riyadh), never the phone's — a
+ * resident travelling abroad still sees "the match is at 8:00 PM" in local
+ * neighborhood time. Saudi Arabia observes no DST, so Asia/Riyadh is a fixed
+ * UTC+3 and can be computed exactly without depending on the device's Intl
+ * time-zone data (which varies across iOS/Hermes builds).
+ *
+ * Timestamps are always stored as UTC ISO strings in Supabase; these helpers
+ * only change how they're displayed, never the instant they represent.
+ */
+export const SAUDI_UTC_OFFSET_MINUTES = 180;
+
+const AR_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+export function localizeDigits(input: string | number, locale: Locale): string {
+  const s = String(input);
+  return locale === 'ar' ? s.replace(/[0-9]/g, (d) => AR_DIGITS[Number(d)]) : s;
+}
+
+/** Wall-clock parts of an instant in Asia/Riyadh. */
+export function saudiParts(iso: string | Date) {
+  const ms = (typeof iso === 'string' ? new Date(iso) : iso).getTime() + SAUDI_UTC_OFFSET_MINUTES * 60000;
+  const d = new Date(ms);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(),
+    day: d.getUTCDate(),
+    weekday: d.getUTCDay(),
+    hour: d.getUTCHours(),
+    minute: d.getUTCMinutes(),
+  };
+}
+
+/** Builds the UTC instant for a wall-clock time in Asia/Riyadh. */
+export function saudiWallTimeToDate(year: number, month: number, day: number, hour: number, minute: number): Date {
+  return new Date(Date.UTC(year, month, day, hour, minute) - SAUDI_UTC_OFFSET_MINUTES * 60000);
+}
+
+/** 12-hour clock: "4:00 PM" / "٤:٠٠ م". */
+export function formatClockParts(hour24: number, minute: number, locale: Locale): string {
+  const h12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  const mm = String(minute).padStart(2, '0');
+  if (locale === 'ar') return `${localizeDigits(`${h12}:${mm}`, 'ar')} ${hour24 < 12 ? 'ص' : 'م'}`;
+  return `${h12}:${mm} ${hour24 < 12 ? 'AM' : 'PM'}`;
+}
+
+export function formatClock(iso: string, locale: Locale): string {
+  const p = saudiParts(iso);
+  return formatClockParts(p.hour, p.minute, locale);
+}
+
+/** "4:00 – 5:30 PM" style range (both ends in Riyadh time). */
+export function formatTimeRange(startIso: string, endIso: string, locale: Locale): string {
+  return `${formatClock(startIso, locale)} – ${formatClock(endIso, locale)}`;
+}
+
+const EN_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const AR_WEEKDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const AR_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+export function weekdayName(weekday: number, locale: Locale, short = false): string {
+  const name = (locale === 'ar' ? AR_WEEKDAYS : EN_WEEKDAYS)[weekday] ?? '';
+  return short && locale === 'en' ? name.slice(0, 3) : name;
+}
+
+/** "Thursday, 12 October" / "الخميس، ١٢ أكتوبر" (Gregorian, Riyadh date). */
+export function formatDay(iso: string, locale: Locale): string {
+  const p = saudiParts(iso);
+  if (locale === 'ar') return `${AR_WEEKDAYS[p.weekday]}، ${localizeDigits(p.day, 'ar')} ${AR_MONTHS[p.month]}`;
+  return `${EN_WEEKDAYS[p.weekday]}, ${p.day} ${EN_MONTHS[p.month]}`;
+}
+
+/** "12 Oct" / "١٢ أكتوبر". */
+export function formatShortDate(iso: string, locale: Locale): string {
+  const p = saudiParts(iso);
+  if (locale === 'ar') return `${localizeDigits(p.day, 'ar')} ${AR_MONTHS[p.month]}`;
+  return `${p.day} ${EN_MONTHS[p.month].slice(0, 3)}`;
+}
+
+/** Same Riyadh calendar day? */
+export function isSameSaudiDay(a: string | Date, b: string | Date): boolean {
+  const pa = saudiParts(a);
+  const pb = saudiParts(b);
+  return pa.year === pb.year && pa.month === pb.month && pa.day === pb.day;
+}
+
 export function formatSAR(amount: number, locale: Locale): string {
   const num = locale === 'ar' ? amount.toLocaleString('ar-SA') : amount.toLocaleString('en-US');
   return locale === 'ar' ? `${num} ر.س` : `SAR ${num}`;
@@ -31,19 +119,12 @@ export function formatRelativeTime(iso: string, locale: Locale): string {
   return `قبل ${Math.floor(diffSec / 31536000)} سنة`;
 }
 
-export function formatClock(iso: string, locale: Locale): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString(locale === 'ar' ? 'ar-SA' : 'en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-export function formatDay(iso: string, locale: Locale): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
-}
-
-export function formatShortDate(iso: string, locale: Locale): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA' : 'en-US', { day: 'numeric', month: 'short' });
+/** Time remaining until a future instant, e.g. poll close: "3h" / "٣ س". */
+export function formatTimeUntil(iso: string, locale: Locale): string {
+  const sec = Math.max(0, (new Date(iso).getTime() - Date.now()) / 1000);
+  const [n, en, ar] =
+    sec < 3600 ? [Math.max(1, Math.floor(sec / 60)), 'm', 'د'] : sec < 86400 ? [Math.floor(sec / 3600), 'h', 'س'] : [Math.floor(sec / 86400), 'd', 'ي'];
+  return locale === 'ar' ? `${localizeDigits(n, 'ar')} ${ar}` : `${n}${en}`;
 }
 
 export function displayName(user: {

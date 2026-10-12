@@ -1,25 +1,19 @@
 // Core frontend data models for Haratna.
-// These types describe the shape a future backend (e.g. Supabase) should
-// fulfil. Every mock service returns data conforming to these models so the
-// UI layer never needs to change when a real API is wired in.
+// Every instance is mapped from a real Supabase row (see src/backend/mappers.ts);
+// nothing here is seeded or invented on the client.
 
 export type Locale = 'ar' | 'en';
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-export type DemoRole = 'resident' | 'moderator' | 'organizer' | 'business';
+/** profiles.app_role — set server-side only (protected by the profiles_protect_privileges trigger). */
+export type AppRole = 'resident' | 'moderator' | 'organizer' | 'business' | 'admin';
 
 export type NamePrivacy = 'full' | 'first_last_initial' | 'first_only';
 
 /**
- * A curated "community profile" neighborhood — a small subset of the full
- * Saudi geography dataset (see `@/types/geography` / `@/services/geography`)
- * that this mock build seeds with engagement stats (residents, open issues,
- * etc.) so the demo has real-feeling activity. `id` always equals the `id`
- * of the corresponding `SaudiNeighborhood`, and `cityId`/`regionId`
- * reference real `sa-city-*`/`sa-region-*` ids — so any neighborhood a user
- * actually selects during onboarding (curated or not) resolves the same
- * way. Residents of a non-curated neighborhood simply see zeroed stats
- * until this mock data is extended or a real backend replaces it.
+ * A neighborhood from the official Saudi geography dataset (address.gov.sa),
+ * plus aggregate counts from the `neighborhood_stats` RPC. Counts are
+ * `null` until loaded — never a placeholder number.
  */
 export interface Neighborhood {
   id: string;
@@ -27,12 +21,14 @@ export interface Neighborhood {
   regionId: string;
   nameAr: string;
   nameEn: string;
-  residentsCount: number;
-  eventsThisWeek: number;
-  openIssues: number;
-  helpfulActions: number;
+  residentsCount: number | null;
+  eventsThisWeek: number | null;
+  openIssues: number | null;
+  helpfulActions: number | null;
   centerLat: number;
   centerLng: number;
+  /** True when an authoritative boundary polygon exists (location verification possible). */
+  hasBoundary: boolean;
 }
 
 export type VerificationStatus = 'not_started' | 'checking' | 'pending' | 'verified' | 'failed';
@@ -46,8 +42,9 @@ export interface User {
   namePrivacy: NamePrivacy;
   neighborhoodId: string;
   verification: VerificationStatus;
-  role: DemoRole;
+  role: AppRole;
   memberSince: string; // ISO date
+  reputationPoints: number;
   reputationTier: ReputationTier;
   stats: {
     neighborsHelped: number;
@@ -91,6 +88,10 @@ export interface Post {
   linkedEntityId?: string; // event/issue/poll/marketplace id when relevant
   audience: 'neighborhood' | 'city';
   pinned?: boolean;
+  /** Opt-in, approximate geotag shown on the map. */
+  approxLat?: number;
+  approxLng?: number;
+  locationLabel?: string;
 }
 
 export interface Comment {
@@ -129,8 +130,8 @@ export interface Issue {
   affectedUserIds: string[];
   followerIds: string[];
   createdAt: string;
-  approxLat: number;
-  approxLng: number;
+  approxLat?: number;
+  approxLng?: number;
 }
 
 export type HelpCategory = 'car' | 'borrow_item' | 'moving' | 'lost_pet' | 'home' | 'other';
@@ -150,6 +151,12 @@ export interface HelpRequest {
 
 export type EventCategory = 'football' | 'padel' | 'walking' | 'cleanup' | 'coffee' | 'iftar' | 'kids' | 'family' | 'community';
 
+/** Activities are casual/recurring gatherings; events are one-off occasions. Same backend table. */
+export type EventKind = 'event' | 'activity';
+
+/** Saudi occasions an event/activity can be tagged with (e.g. a Ramadan football tournament). */
+export type EventOccasion = 'national_day' | 'founding_day' | 'ramadan' | 'eid' | 'festival';
+
 export type AttendeeStatus = 'not_joined' | 'going' | 'waitlisted' | 'interested' | 'cancelled';
 
 export interface EventAttendee {
@@ -160,17 +167,20 @@ export interface EventAttendee {
 
 export interface CommunityEvent {
   id: string;
+  kind: EventKind;
+  occasion?: EventOccasion;
   title: string;
   category: EventCategory;
-  coverImage: string;
+  /** Signed URL of the organizer's uploaded cover, if any — never a stock placeholder. */
+  coverImage?: string;
   description: string;
   hostId: string;
   neighborhoodId: string;
   startsAt: string;
   endsAt: string;
   locationLabel: string;
-  approxLat: number;
-  approxLng: number;
+  approxLat?: number;
+  approxLng?: number;
   capacity: number;
   audience: 'neighborhood' | 'city';
   recurring: boolean;
@@ -182,7 +192,8 @@ export interface CommunityEvent {
 export interface PollOption {
   id: string;
   textAr: string;
-  votes: string[]; // userIds
+  /** Aggregate count from get_poll_results — individual voters are private. */
+  votes: number;
 }
 
 export interface Poll {
@@ -192,6 +203,10 @@ export interface Poll {
   options: PollOption[];
   closesAt: string;
   neighborhoodId: string;
+  totalVotes: number;
+  /** The signed-in resident's current choice, if they voted. */
+  myOptionId?: string;
+  allowChange: boolean;
 }
 
 export type ListingType = 'sale' | 'free' | 'wanted';
@@ -218,7 +233,7 @@ export interface BorrowItem {
   id: string;
   title: string;
   category: string;
-  image: string;
+  image?: string;
   ownerId: string;
   neighborhoodId: string;
   available: boolean;
@@ -243,7 +258,7 @@ export interface Business {
   id: string;
   name: string;
   category: ServiceCategory;
-  coverImage: string;
+  coverImage?: string;
   logo?: string;
   description: string;
   neighborhoodIds: string[];
@@ -251,6 +266,9 @@ export interface Business {
   phoneMasked: string;
   communityVerified: boolean;
   recommendationCount: number;
+  approxLat?: number;
+  approxLng?: number;
+  locationLabel?: string;
 }
 
 export interface Recommendation {
@@ -269,7 +287,7 @@ export interface LostFoundPost {
   kind: 'pet' | 'item';
   title: string;
   description: string;
-  image: string;
+  image?: string;
   status: LostFoundStatus;
   neighborhoodId: string;
   authorId: string;
@@ -278,11 +296,14 @@ export interface LostFoundPost {
 
 export interface Conversation {
   id: string;
+  kind: 'direct' | 'neighborhood' | 'group' | 'event';
   participantIds: string[];
   eventId?: string;
   isGroup?: boolean;
   title?: string;
   lastMessageAt: string;
+  /** When the signed-in resident last read this conversation. */
+  lastReadAt?: string;
 }
 
 export interface Message {
@@ -297,14 +318,26 @@ export interface Message {
 }
 
 export type NotificationType =
-  'reply' | 'thanks' | 'event_reminder' | 'issue_update' | 'help_response' | 'message' | 'alert' | 'marketplace_inquiry';
+  | 'reply'
+  | 'thanks'
+  | 'event_reminder'
+  | 'issue_update'
+  | 'help_response'
+  | 'message'
+  | 'alert'
+  | 'marketplace_inquiry'
+  | 'group_activity'
+  | 'referral'
+  | 'moderation';
 
 export interface AppNotification {
   id: string;
   userId: string;
   type: NotificationType;
   titleAr: string;
+  titleEn?: string;
   bodyAr: string;
+  bodyEn?: string;
   createdAt: string;
   read: boolean;
   deepLink: string; // e.g. /post/123
@@ -318,7 +351,7 @@ export interface Institution {
   type: InstitutionType;
   name: string;
   neighborhoodId: string;
-  coverImage: string;
+  coverImage?: string;
   verified: boolean;
   announcements: { id: string; textAr: string; createdAt: string }[];
   classes: { id: string; titleAr: string; schedule: string }[];
@@ -356,22 +389,16 @@ export interface AlertItem {
   severity: 'info' | 'warning' | 'critical';
   neighborhoodId: string;
   createdAt: string;
-  followerIds: string[];
-  helpfulBy: string[];
+  expiresAt?: string;
 }
 
 /**
- * A resident's WhatsApp/neighborhood growth referral stats — entirely
- * local/mock in this frontend-only build (see src/services/referral).
- *
- * `invitesSent` is the one number this device can honestly know: it only
- * increments when the user actually taps a share action (see
- * useStore.recordReferralInviteSent). `joinedCount` cannot be real without
- * a backend that can verify someone actually joined via this link — it is
- * seeded demo data here, clearly documented as such everywhere it's
- * displayed, and never claimed to be secure or server-verified.
+ * A resident's referral stats. `invitesSent` counts share taps on this
+ * device; `joinedCount` is server-attributed (referral_events
+ * 'signup_attributed') and `null` until loaded — never a seeded number.
  */
 export interface ReferralStats {
   invitesSent: number;
-  joinedCount: number;
+  joinedCount: number | null;
+  code?: string;
 }
