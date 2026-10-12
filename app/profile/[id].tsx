@@ -5,9 +5,10 @@ import { BadgeCheck, Calendar, HandHeart, MessageCircle, Settings, Sparkles } fr
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useStore, useCurrentUserId } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { getOrCreateDirectConversation } from '@/backend/actions';
 import { displayName } from '@/utils/format';
-import { messageService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
@@ -25,6 +26,8 @@ export default function ProfileScreen() {
   const { t, locale } = useI18n();
   const router = useRouter();
 
+  const me = useCurrentUserId();
+  const { run } = useAction();
   const user = useStore((s) => s.getUser(id ?? ''));
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === user?.neighborhoodId));
   // Raw state + useMemo, not filter() inside the selector — see HomeHeader
@@ -54,13 +57,13 @@ export default function ProfileScreen() {
     );
   }
 
-  const isOwn = user.id === CURRENT_USER_ID;
+  const isOwn = user.id === me;
   const tierIndex = TIER_ORDER.indexOf(user.reputationTier);
   const progress = ((tierIndex + 1) / TIER_ORDER.length) * 100;
 
   const startConversation = async () => {
-    const convo = await messageService.getOrCreateConversation(user.id);
-    router.push(`/messages/${convo.id}`);
+    const res = await run(() => getOrCreateDirectConversation(user.id));
+    if (res.ok) router.push(`/messages/${res.value}`);
   };
 
   const tabs = [

@@ -643,3 +643,23 @@ export async function recordShare(channel: 'whatsapp' | 'native_share' | 'copy' 
   if (!uid) return;
   await supabase.from('referral_events').insert({ user_id: uid, event_type: 'share', channel });
 }
+
+// ----------------------------------------------------------------- account --
+
+/**
+ * Permanent account deletion via the delete-account Edge Function (verifies
+ * the caller's JWT, removes their storage objects, purges their rows and
+ * deletes the auth user). Never just a local reset.
+ */
+export async function deleteAccount() {
+  try {
+    me();
+    const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+    if (error) throw error;
+    if (!(data as { deleted?: boolean } | null)?.deleted) throw new ActionError('unknown', 'Account deletion did not complete');
+    await supabase.auth.signOut().catch(() => {});
+    useStore.getState().signOut();
+  } catch (err) {
+    throw toActionError(err);
+  }
+}

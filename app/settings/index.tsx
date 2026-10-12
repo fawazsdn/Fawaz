@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   BadgeCheck,
@@ -16,7 +16,6 @@ import {
   MapPin,
   MessageCircle,
   Moon,
-  RotateCcw,
   Share2,
   Shield,
   Sparkles,
@@ -29,11 +28,11 @@ import {
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { signOutSupabase } from '@/features/auth/supabaseAuth';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
-import { IS_DEV_BUILD } from '@/config/devFeatures';
-import type { DemoRole, ThemeMode, VerificationStatus } from '@/models';
-import { displayName } from '@/utils/format';
-import { referralService } from '@/services/referral';
+import { useStore, useCurrentUserId } from '@/store/useStore';
+import type { ThemeMode, VerificationStatus } from '@/models';
+import { useAction } from '@/hooks/useAction';
+import { deleteAccount, recordShare } from '@/backend/actions';
+import { displayName, localizeDigits } from '@/utils/format';
 import { links } from '@/config/links';
 import { buildInviteMessage } from '@/utils/inviteMessage';
 import { shareContent } from '@/utils/share';
@@ -41,7 +40,6 @@ import { AppHeader } from '@/components/AppHeader';
 import { Avatar } from '@/components/Avatar';
 import { BottomSheet } from '@/components/BottomSheet';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { Chip } from '@/components/Chip';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -52,31 +50,32 @@ export default function SettingsScreen() {
   const setSettings = useStore((s) => s.setSettings);
   const setLocale = useStore((s) => s.setLocale);
   const setThemeMode = useStore((s) => s.setThemeMode);
-  const setDemoRole = useStore((s) => s.setDemoRole);
   const setRamadanMode = useStore((s) => s.setRamadanMode);
   const signOut = useStore((s) => s.signOut);
-  const resetDemoData = useStore((s) => s.resetDemoData);
   const verification = useStore((s) => s.session.verification);
-  const user = useStore((s) => s.getUser(CURRENT_USER_ID));
+  const me = useCurrentUserId();
+  const email = useStore((s) => s.session.email);
+  const referralCode = useStore((s) => s.referral.code);
+  const user = useStore((s) => s.getUser(me));
+  const { run, pending } = useAction();
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
 
-  const [sheet, setSheet] = useState<null | 'language' | 'theme' | 'message' | 'role'>(null);
+  const [sheet, setSheet] = useState<null | 'language' | 'theme' | 'message'>(null);
   const [signOutOpen, setSignOutOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
 
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
   const shareHaratna = async () => {
-    referralService.recordInviteSent();
-    const code = await referralService.getReferralCode();
+    void recordShare('native_share').catch(() => {});
+    const code = referralCode ?? '';
     const neighborhoodName = neighborhood ? (locale === 'ar' ? neighborhood.nameAr : neighborhood.nameEn) : '';
     const link = neighborhood ? links.neighborhoodInvite(neighborhood.id, code) : undefined;
     const message = buildInviteMessage({ neighborhoodName, link: link ?? links.neighborhoodInvite('', code), locale });
     await shareContent({ title: t.settings.shareHaratna, message, url: link });
   };
 
-  if (!user) return null;
+  const isStaff = user?.role === 'moderator' || user?.role === 'admin';
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -85,6 +84,7 @@ export default function SettingsScreen() {
         {/* Top profile card — the community-identity summary this screen is
             named for. Real store data only: stats/reputationTier/memberSince
             come straight off the User record, never fabricated. */}
+        {user ? (
         <Pressable
           onPress={() => router.push(`/profile/${user.id}`)}
           style={[
@@ -122,20 +122,22 @@ export default function SettingsScreen() {
             <MiniStat value={user.stats.thanksReceived} label={t.profile.thanksReceived} />
           </View>
         </Pressable>
+        ) : null}
+        {email ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4, writingDirection: 'ltr' }]}>{email}</Text> : null}
 
         <SectionLabel title={t.settings.myHaratna} />
         <Row
           icon={MapPin}
           label={t.settings.myNeighborhood}
           value={locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
-          onPress={() => router.push('/(auth)/select-neighborhood')}
+          onPress={() => router.push('/(auth)/select-city')}
           Chevron={Chevron}
         />
-        <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${user.id}?tab=activity`)} Chevron={Chevron} />
+        <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${me}?tab=activity`)} Chevron={Chevron} />
         <Row
           icon={CalendarDays}
           label={t.settings.myEvents}
-          onPress={() => router.push(`/profile/${user.id}?tab=events`)}
+          onPress={() => router.push(`/profile/${me}?tab=events`)}
           Chevron={Chevron}
         />
         <Row icon={Bookmark} label={t.settings.saved} onPress={() => router.push('/saved')} Chevron={Chevron} />
@@ -204,34 +206,14 @@ export default function SettingsScreen() {
 
         <Row icon={Info} label={t.settings.aboutHaratna} onPress={() => router.push('/settings/info/about')} Chevron={Chevron} />
 
-        {/* Developer-only: the role switcher and demo-data reset only make
-            sense against this frontend's mock data layer, and must never
-            reach a production build — see src/config/devFeatures.ts. The
-            moderator-gated row below (settings.demoRole === 'moderator')
-            is left in production-eligible code because moderation itself
-            is a real feature; only the ability to self-assign that role
-            from the client is dev-only. */}
-        {IS_DEV_BUILD ? (
-          <>
-            <SectionLabel title={t.settings.demoModeTitle} />
-            <Row
-              icon={Shield}
-              label={t.settings.demoRole}
-              value={t.roles[settings.demoRole]}
-              onPress={() => setSheet('role')}
-              Chevron={Chevron}
-            />
-            <Row icon={RotateCcw} label={t.settings.resetDemoData} onPress={() => setResetOpen(true)} Chevron={Chevron} />
-          </>
-        ) : null}
-        {settings.demoRole === 'moderator' ? (
+        {isStaff ? (
           <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} />
         ) : null}
 
         <SectionLabel title={t.settings.accountActions} />
         <Row icon={Share2} label={t.settings.shareHaratna} onPress={shareHaratna} Chevron={Chevron} />
         <Row icon={LogOut} label={t.settings.signOut} onPress={() => setSignOutOpen(true)} Chevron={Chevron} />
-        <Row icon={Trash2} label={t.settings.deleteAccount} destructive onPress={() => setDeleteOpen(true)} Chevron={Chevron} />
+        <Row icon={Trash2} label={pending ? t.common.loading : t.settings.deleteAccount} destructive onPress={() => !pending && setDeleteOpen(true)} Chevron={Chevron} />
       </ScrollView>
 
       <BottomSheet visible={sheet === 'language'} onClose={() => setSheet(null)}>
@@ -281,24 +263,6 @@ export default function SettingsScreen() {
         />
       </BottomSheet>
 
-      <BottomSheet visible={sheet === 'role'} onClose={() => setSheet(null)}>
-        <View style={{ paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.md }}>
-          <Text style={[theme.text('heading3'), { marginBottom: 12 }]}>{t.settings.demoRole}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {(['resident', 'moderator', 'organizer', 'business'] as DemoRole[]).map((r) => (
-              <Chip
-                key={r}
-                label={t.roles[r]}
-                selected={settings.demoRole === r}
-                onPress={() => {
-                  setDemoRole(r);
-                  setSheet(null);
-                }}
-              />
-            ))}
-          </View>
-        </View>
-      </BottomSheet>
 
       <ConfirmationModal
         visible={signOutOpen}
@@ -306,11 +270,11 @@ export default function SettingsScreen() {
         body={t.settings.signOutConfirm}
         destructive
         onCancel={() => setSignOutOpen(false)}
-        onConfirm={() => {
-          signOutSupabase().catch(() => {});
-          signOut();
+        onConfirm={async () => {
           setSignOutOpen(false);
-          router.replace('/');
+          await signOutSupabase().catch(() => {});
+          signOut();
+          router.replace('/(auth)/sign-in');
         }}
       />
 
@@ -320,26 +284,13 @@ export default function SettingsScreen() {
         body={t.settings.deleteAccountConfirm}
         destructive
         onCancel={() => setDeleteOpen(false)}
-        onConfirm={() => {
-          signOutSupabase().catch(() => {});
-          resetDemoData();
+        onConfirm={async () => {
           setDeleteOpen(false);
-          router.replace('/');
+          const res = await run(() => deleteAccount());
+          if (res.ok) router.replace('/');
         }}
       />
 
-      <ConfirmationModal
-        visible={resetOpen}
-        title={t.settings.resetDemoData}
-        body={t.settings.resetDemoDataConfirm}
-        onCancel={() => setResetOpen(false)}
-        onConfirm={() => {
-          resetDemoData();
-          setResetOpen(false);
-          Alert.alert(t.common.done);
-          router.replace('/');
-        }}
-      />
     </View>
   );
 }
@@ -374,9 +325,10 @@ function SectionLabel({ title }: { title: string }) {
 
 function MiniStat({ value, label }: { value: number; label: string }) {
   const theme = useTheme();
+  const { locale } = useI18n();
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={theme.text('title')}>{value}</Text>
+      <Text style={theme.text('title')}>{localizeDigits(value, locale)}</Text>
       <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
         {label}
       </Text>

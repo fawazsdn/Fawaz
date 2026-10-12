@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
+import { localizeDigits } from '@/utils/format';
 import { useStore } from '@/store/useStore';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -172,11 +173,12 @@ export default function CommunityScreen() {
   );
 }
 
-function HeroStat({ value, label }: { value: number; label: string }) {
+function HeroStat({ value, label }: { value: number | null; label: string }) {
   const theme = useTheme();
+  const { locale } = useI18n();
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={theme.text('heading2', theme.colors.onPrimary)}>{value.toLocaleString()}</Text>
+      <Text style={theme.text('heading2', theme.colors.onPrimary)}>{value == null ? '—' : localizeDigits(value, locale)}</Text>
       <Text style={[theme.text('caption', theme.colors.onPrimary), { opacity: 0.85, textAlign: 'center' }]} numberOfLines={2}>
         {label}
       </Text>

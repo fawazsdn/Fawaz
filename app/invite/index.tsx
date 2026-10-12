@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { CheckCircle2, Copy, MessageCircle, Share2, Users } from 'lucide-react-native';
@@ -7,7 +7,9 @@ import QRCode from 'react-native-qrcode-svg';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
-import { referralService, type ReferralMilestone } from '@/services/referral';
+import { REFERRAL_MILESTONES as milestones } from '@/features/invite/milestones';
+import { recordShare as recordShareEvent } from '@/backend/actions';
+import { localizeDigits } from '@/utils/format';
 import { links } from '@/config/links';
 import { buildInviteMessage } from '@/utils/inviteMessage';
 import { openWhatsApp, shareContent } from '@/utils/share';
@@ -16,12 +18,10 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 
 /**
- * "Invites & Rewards" — Haratna's primary growth surface. Every number
- * shown here is either a real on-device count (invitesSent, incremented
- * only when the user actually taps a share action) or explicitly
- * disclaimed as local demo data (joinedCount) — see
- * src/services/referral/ReferralService.ts and docs/PRIVACY-DATA-MAP.md.
- * Nothing here claims to be a secure or server-verified count.
+ * "Invites & Rewards". The referral code is issued server-side (referrals
+ * table, created at sign-up); "joined" counts only server-attributed
+ * sign-ups (referral_events 'signup_attributed'); "invites sent" counts
+ * share taps on this device. Nothing is seeded.
  */
 export default function InviteScreen() {
   const theme = useTheme();
@@ -30,14 +30,9 @@ export default function InviteScreen() {
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
   const referral = useStore((s) => s.referral);
 
-  const [code, setCode] = useState<string | null>(null);
-  const [milestones, setMilestones] = useState<ReferralMilestone[]>([]);
+  const code = referral.code ?? null;
+  const joined = referral.joinedCount ?? 0;
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    referralService.getReferralCode().then(setCode);
-    referralService.getMilestones().then(setMilestones);
-  }, []);
 
   const neighborhoodName = neighborhood ? (locale === 'ar' ? neighborhood.nameAr : neighborhood.nameEn) : '';
   const inviteLink = neighborhood && code ? links.neighborhoodInvite(neighborhood.id, code) : null;
@@ -46,27 +41,28 @@ export default function InviteScreen() {
     ? buildInviteMessage({ neighborhoodName, link: inviteLink, locale })
     : buildInviteMessage({ neighborhoodName, link: links.neighborhoodInvite('', ''), locale });
 
-  const recordShare = () => referralService.recordInviteSent();
+  const recordShare = (channel: 'whatsapp' | 'native_share' | 'copy') => void recordShareEvent(channel).catch(() => {});
 
   const shareToWhatsApp = async () => {
-    recordShare();
+    recordShare('whatsapp');
     const opened = await openWhatsApp(shareMessage);
     if (!opened) await shareContent({ title: t.invite.title, message: shareMessage });
   };
 
   const shareNative = () => {
-    recordShare();
+    recordShare('native_share');
     shareContent({ title: t.invite.title, message: shareMessage, url: inviteLink ?? undefined });
   };
 
   const copyLink = async () => {
     if (!inviteLink) return;
     await Clipboard.setStringAsync(inviteLink);
+    recordShare('copy');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const nextMilestone = milestones.find((m) => referral.joinedCount < m.threshold);
+  const nextMilestone = milestones.find((m) => joined < m.threshold);
 
   const steps = [t.invite.step1, t.invite.step2, t.invite.step3, t.invite.step4];
 
@@ -144,7 +140,7 @@ export default function InviteScreen() {
 
         <Card style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: 12 }}>
           <Stat value={referral.invitesSent} label={t.invite.invitesSent} />
-          <Stat value={referral.joinedCount} label={t.invite.joined} />
+          <Stat value={referral.joinedCount ?? '—'} label={t.invite.joined} />
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={[theme.text('heading3', theme.colors.primary), { textAlign: 'center' }]} numberOfLines={1}>
               {nextMilestone ? (locale === 'ar' ? nextMilestone.titleAr : nextMilestone.titleEn) : '🏆'}
@@ -209,7 +205,7 @@ export default function InviteScreen() {
           <Text style={[theme.text('heading3'), { marginBottom: 10 }]}>{t.invite.milestonesTitle}</Text>
           <Card style={{ gap: 0 }}>
             {milestones.map((m, i) => {
-              const reached = referral.joinedCount >= m.threshold;
+              const reached = joined >= m.threshold;
               return (
                 <View
                   key={m.key}
@@ -247,7 +243,7 @@ export default function InviteScreen() {
                     <Text style={theme.text('caption', theme.colors.textMuted)}>
                       {reached
                         ? `${m.threshold} ${t.invite.joined.toLowerCase()}`
-                        : `${m.threshold - referral.joinedCount} ${t.invite.milestoneProgress}`}
+                        : `${localizeDigits(m.threshold - joined, locale)} ${t.invite.milestoneProgress}`}
                     </Text>
                   </View>
                 </View>
@@ -260,7 +256,7 @@ export default function InviteScreen() {
           <Card>
             <Text style={theme.text('heading3')}>{t.invite.growthTitle}</Text>
             <View style={[theme.row(), { alignItems: 'baseline', gap: 6, marginTop: 8 }]}>
-              <Text style={theme.text('heading1', theme.colors.primary)}>{neighborhood.residentsCount.toLocaleString()}</Text>
+              <Text style={theme.text('heading1', theme.colors.primary)}>{neighborhood.residentsCount == null ? '—' : localizeDigits(neighborhood.residentsCount, locale)}</Text>
               <Text style={theme.text('bodySmall', theme.colors.textMuted)}>{t.invite.growthCurrentMembers}</Text>
             </View>
             <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginTop: 8 }]}>{t.invite.growthBody}</Text>
@@ -271,11 +267,12 @@ export default function InviteScreen() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label }: { value: number | string; label: string }) {
   const theme = useTheme();
+  const { locale } = useI18n();
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={theme.text('heading1', theme.colors.primary)}>{value}</Text>
+      <Text style={theme.text('heading1', theme.colors.primary)}>{localizeDigits(value, locale)}</Text>
       <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
         {label}
       </Text>

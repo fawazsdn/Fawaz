@@ -20,6 +20,22 @@ function randomName() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}.jpg`;
 }
 
+/**
+ * Every uploaded object is recorded in media_attachments (RLS: owner only),
+ * which is what the delete-account Edge Function uses to remove a resident's
+ * files when they delete their account.
+ */
+async function recordAttachment(ownerId: string, bucket: string, path: string, size: number, neighborhoodId: string | null) {
+  await supabase.from('media_attachments').insert({
+    owner_id: ownerId,
+    neighborhood_id: neighborhoodId,
+    bucket_id: bucket,
+    object_path: path,
+    mime_type: 'image/jpeg',
+    size_bytes: size,
+  });
+}
+
 async function readFileAsArrayBuffer(localUri: string): Promise<ArrayBuffer> {
   const res = await fetch(localUri);
   if (!res.ok && res.status !== 0) throw new Error(`Could not read image (${res.status})`);
@@ -32,6 +48,7 @@ export async function uploadCommunityImage(localUri: string, neighborhoodId: str
   const body = await readFileAsArrayBuffer(localUri);
   const { error } = await supabase.storage.from(COMMUNITY_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
   if (error) throw error;
+  await recordAttachment(userId, COMMUNITY_BUCKET, path, body.byteLength, neighborhoodId);
   return path;
 }
 
@@ -47,6 +64,7 @@ export async function uploadAvatar(localUri: string, userId: string): Promise<st
   const body = await readFileAsArrayBuffer(localUri);
   const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
   if (error) throw error;
+  await recordAttachment(userId, AVATAR_BUCKET, path, body.byteLength, null);
   return supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 

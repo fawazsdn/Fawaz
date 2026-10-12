@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Camera } from 'lucide-react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
-import { profileService } from '@/services';
+import { useStore, useCurrentUserId } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { saveProfile } from '@/backend/actions';
+import { useImagePicker } from '@/components/imageEditor/useImagePicker';
+import { SkeletonCardRow } from '@/components/Skeleton';
+import type { User } from '@/models';
 import { profileSchema, type ProfileFormValues } from '@/models/schemas';
 import type { NamePrivacy } from '@/models';
 import { useSafeBack } from '@/hooks/useSafeBack';
@@ -19,12 +22,29 @@ import { Button } from '@/components/Button';
 export default function EditProfileScreen() {
   const theme = useTheme();
   const { t } = useI18n();
+  const me = useCurrentUserId();
+  const user = useStore((s) => s.getUser(me));
+  if (!user) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.profile.editProfile} fallbackRoute="/settings" />
+        <View style={{ padding: theme.spacing.md }}>
+          <SkeletonCardRow count={2} />
+        </View>
+      </View>
+    );
+  }
+  return <EditProfileForm user={user} />;
+}
+
+function EditProfileForm({ user }: { user: User }) {
+  const theme = useTheme();
+  const { t, locale } = useI18n();
   const safeBack = useSafeBack('/settings');
-  const user = useStore((s) => s.currentUser());
-  const createProfile = useStore((s) => s.createProfile);
+  const { run, pending: saving } = useAction();
+  const { pickImage: pickAvatar, editor } = useImagePicker({ aspects: ['square'], previewShape: 'circle' });
 
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
-  const [saving, setSaving] = useState(false);
 
   const {
     control,
@@ -47,31 +67,28 @@ export default function EditProfileScreen() {
   ];
 
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled && result.assets[0]) setAvatarUrl(result.assets[0].uri);
+    const uri = await pickAvatar();
+    if (uri) setAvatarUrl(uri);
   };
 
   const onSave = async (values: ProfileFormValues) => {
-    setSaving(true);
-    const input = {
-      firstName: values.firstName.trim(),
-      lastName: (values.lastName ?? '').trim(),
-      namePrivacy: values.namePrivacy,
-      bio: values.bio?.trim() || undefined,
-      avatarUrl,
-    };
-    await profileService.updateProfile(input);
-    createProfile(input);
-    setSaving(false);
-    safeBack();
+    const res = await run(() =>
+      saveProfile({
+        firstName: values.firstName.trim(),
+        lastName: (values.lastName ?? '').trim(),
+        namePrivacy: values.namePrivacy,
+        bio: values.bio?.trim() || undefined,
+        localAvatarUri: avatarUrl !== user.avatarUrl ? avatarUrl : undefined,
+        locale,
+      }),
+    );
+    if (res.ok) safeBack();
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <AppHeader title={t.profile.editProfile} fallbackRoute="/settings" />
-      <View style={{ padding: theme.spacing.md }}>
+      <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <Pressable onPress={pickImage} accessibilityRole="button" style={styles.avatarPicker}>
           <Avatar uri={avatarUrl} name={firstName} size={88} ring />
           <View style={[styles.cameraBadge, { backgroundColor: theme.colors.primary, borderColor: theme.colors.background }]}>
@@ -141,8 +158,9 @@ export default function EditProfileScreen() {
 
         <View style={{ height: 24 }} />
         <Button label={t.common.save} onPress={handleSubmit(onSave)} disabled={!isValid} loading={saving} fullWidth size="lg" />
-      </View>
-    </View>
+      </ScrollView>
+      {editor}
+    </KeyboardAvoidingView>
   );
 }
 
