@@ -1,6 +1,8 @@
 export type ReplyLanguage = 'ar' | 'en';
 
-const ARABIC_LETTER = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/g;
+// Arabic LETTERS only — not Arabic punctuation (، ؛ ؟), Arabic-Indic digits
+// or diacritics, so "؟؟ 👍" or "٧" count as letterless.
+const ARABIC_LETTER = /[\u0621-\u063A\u0641-\u064A\u0671-\u06D3\u06D5\u06EE\u06EF\u06FA-\u06FC\u06FF\u0750-\u077F\u08A0-\u08C9\uFB50-\uFDFB\uFE70-\uFEFC]/g;
 const LATIN_LETTER = /[A-Za-z]/g;
 
 /**

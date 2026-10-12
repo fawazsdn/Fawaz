@@ -6,20 +6,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
-import { assistantService } from '@/services';
+import { assistant } from '@/services';
+import type { ReplyLanguage } from '@/services/assistant';
+import { useCurrentNeighborhood, useIsVerified } from '@/hooks/useNeighborhood';
 import { AppHeader } from '@/components/AppHeader';
 
 interface ChatMessage {
   id: string;
   fromUser: boolean;
   text: string;
+  /** Language of this bubble — drives its own text direction, independent of the UI language. */
+  lang: ReplyLanguage;
 }
 
 export default function AssistantScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
+  const neighborhood = useCurrentNeighborhood();
+  const verified = useIsVerified();
   const listRef = useRef<FlatList>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -35,21 +41,44 @@ export default function AssistantScreen() {
   ];
 
   const ask = async (query: string) => {
-    if (!query.trim() || !neighborhoodId) return;
-    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, fromUser: true, text: query }]);
+    const q = query.trim();
+    if (!q || thinking) return;
+    const previousLanguage = [...messages].reverse().find((m) => !m.fromUser)?.lang;
+    const userLang = assistant.detectReplyLanguage(q, previousLanguage ?? locale);
+    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, fromUser: true, text: q, lang: userLang }]);
     setInput('');
     setThinking(true);
-    const answer = await assistantService.ask(query, neighborhoodId);
-    setThinking(false);
-    setMessages((prev) => [...prev, { id: `a-${Date.now()}`, fromUser: false, text: answer }]);
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+    try {
+      const answer = await assistant.ask(q, {
+        neighborhoodId,
+        neighborhoodName: { ar: neighborhood?.nameAr ?? 'حيّك', en: neighborhood?.nameEn ?? 'your neighborhood' },
+        verified,
+        previousLanguage,
+        uiLocale: locale,
+      });
+      setMessages((prev) => [...prev, { id: `a-${Date.now()}`, fromUser: false, text: answer.text, lang: answer.lang }]);
+    } catch {
+      const lang = userLang;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `a-${Date.now()}`,
+          fromUser: false,
+          lang,
+          text: lang === 'ar' ? 'صار خطأ وما قدرت أجاوب الحين. جرّب مرة ثانية.' : "Something went wrong and I couldn't answer. Please try again.",
+        },
+      ]);
+    } finally {
+      setThinking(false);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+    }
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
+      keyboardVerticalOffset={0}
     >
       <AppHeader title={t.assistant.title} fallbackRoute="/(tabs)/discover" />
       <FlatList
@@ -57,8 +86,10 @@ export default function AssistantScreen() {
         data={messages}
         keyExtractor={(m) => m.id}
         contentContainerStyle={{ padding: theme.spacing.md, flexGrow: 1 }}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => (
-          <View style={{ alignSelf: item.fromUser ? 'flex-end' : 'flex-start', maxWidth: '82%', marginBottom: 10 }}>
+          <View style={{ alignSelf: item.fromUser ? 'flex-end' : 'flex-start', maxWidth: '82%', marginBottom: 10 }} accessibilityLanguage={item.lang}>
             <View
               style={[
                 styles.bubble,
@@ -69,7 +100,14 @@ export default function AssistantScreen() {
                 },
               ]}
             >
-              <Text style={theme.text('body', item.fromUser ? theme.colors.onPrimary : theme.colors.textPrimary)}>{item.text}</Text>
+              <Text
+                style={[
+                  theme.text('body', item.fromUser ? theme.colors.onPrimary : theme.colors.textPrimary),
+                  { writingDirection: item.lang === 'ar' ? 'rtl' : 'ltr', textAlign: item.lang === 'ar' ? 'right' : 'left' },
+                ]}
+              >
+                {item.text}
+              </Text>
             </View>
           </View>
         )}
@@ -124,6 +162,8 @@ export default function AssistantScreen() {
           placeholder={t.assistant.placeholder}
           placeholderTextColor={theme.colors.textMuted}
           onSubmitEditing={() => ask(input)}
+          returnKeyType="send"
+          editable={!thinking}
           style={[theme.text('body'), styles.input, { backgroundColor: theme.colors.backgroundAlt, borderRadius: theme.radii.pill }]}
         />
       </View>
