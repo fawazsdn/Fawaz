@@ -1,63 +1,135 @@
-import { useStore } from '@/store/useStore';
-import { mockDelay } from '../shared';
+import * as Network from 'expo-network';
+
+import { supabase } from '@/lib/supabase';
+import { assistantMessages, composeAnswer, type AssistantDataSource } from './engine';
+import { parseQuestion } from './intent';
+import { detectReplyLanguage, type ReplyLanguage } from './language';
+
+export { detectReplyLanguage } from './language';
+export { parseQuestion } from './intent';
+export { composeAnswer } from './engine';
+export type { ReplyLanguage } from './language';
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- PostgREST rows */
+
+function rows<T>(res: { data: T[] | null; error: { message: string } | null }): T[] {
+  if (res.error) throw new Error(res.error.message);
+  return res.data ?? [];
+}
+
+/** Reads straight from Supabase as the signed-in resident — RLS limits it to their neighborhood. */
+export function supabaseAssistantSource(neighborhoodId: string): AssistantDataSource {
+  return {
+    async events(fromIso, toIso) {
+      const data = rows<any>(
+        await supabase
+          .from('events')
+          .select('title, kind, category, starts_at, location_label, capacity, cancelled_at, event_attendees(status)')
+          .eq('neighborhood_id', neighborhoodId)
+          .is('deleted_at', null)
+          .gte('starts_at', fromIso)
+          .lt('starts_at', toIso)
+          .order('starts_at', { ascending: true })
+          .limit(50),
+      );
+      return data.map((e) => ({
+        title: e.title,
+        kind: e.kind,
+        category: e.category,
+        startsAt: e.starts_at,
+        locationLabel: e.location_label,
+        capacity: e.capacity,
+        cancelled: !!e.cancelled_at,
+        going: ((e.event_attendees ?? []) as { status: string }[]).filter((a) => a.status === 'going').length,
+      }));
+    },
+    async openIssues() {
+      const data = rows<any>(
+        await supabase.from('issues').select('title, category, status, created_at').eq('neighborhood_id', neighborhoodId).neq('status', 'resolved').order('created_at', { ascending: false }).limit(50),
+      );
+      return data.map((i) => ({ title: i.title, category: i.category, status: i.status, createdAt: i.created_at }));
+    },
+    async businesses() {
+      const data = rows<any>(
+        await supabase
+          .from('businesses')
+          .select('name, category, business_neighborhoods!inner(neighborhood_id), business_recommendations(id, deleted_at)')
+          .eq('business_neighborhoods.neighborhood_id', neighborhoodId)
+          .limit(100),
+      );
+      return data.map((b) => ({
+        name: b.name,
+        category: b.category,
+        recommendations: ((b.business_recommendations ?? []) as { deleted_at: string | null }[]).filter((r) => !r.deleted_at).length,
+      }));
+    },
+    async listings() {
+      const data = rows<any>(
+        await supabase.from('marketplace_listings').select('title, listing_type, price').eq('neighborhood_id', neighborhoodId).eq('status', 'available').order('created_at', { ascending: false }).limit(50),
+      );
+      return data.map((l) => ({ title: l.title, listingType: l.listing_type, price: l.price ?? undefined }));
+    },
+    async openHelpRequests() {
+      const data = rows<any>(
+        await supabase.from('help_requests').select('title').eq('neighborhood_id', neighborhoodId).eq('status', 'open').order('created_at', { ascending: false }).limit(50),
+      );
+      return data.map((h) => ({ title: h.title }));
+    },
+    async openPolls() {
+      const data = rows<any>(
+        await supabase.from('polls').select('question, total_votes, closes_at').eq('neighborhood_id', neighborhoodId).gt('closes_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(20),
+      );
+      return data.map((p) => ({ question: p.question, totalVotes: p.total_votes ?? 0, closesAt: p.closes_at }));
+    },
+    async lostFound() {
+      const data = rows<any>(
+        await supabase.from('lost_found_posts').select('title, status, kind').eq('neighborhood_id', neighborhoodId).order('created_at', { ascending: false }).limit(50),
+      );
+      return data.map((l) => ({ title: l.title, status: l.status, kind: l.kind }));
+    },
+  };
+}
+
+export interface AskContext {
+  neighborhoodId: string | null;
+  neighborhoodName: { ar: string; en: string };
+  verified: boolean;
+  /** Language of the previous assistant reply (used only when the new message has no letters / an exact tie). */
+  previousLanguage?: ReplyLanguage;
+  uiLocale: ReplyLanguage;
+  /** Injected in tests; defaults to live Supabase. */
+  source?: AssistantDataSource;
+  now?: Date;
+  checkOnline?: () => Promise<boolean>;
+}
+
+async function defaultOnline() {
+  try {
+    const s = await Network.getNetworkStateAsync();
+    return s.isConnected !== false && s.isInternetReachable !== false;
+  } catch {
+    return true;
+  }
+}
 
 /**
- * NeighborhoodAssistantService — deterministic, rule-based responses built
- * from current mock data. A future backend can replace this with a real
- * model while keeping the same `ask()` contract.
+ * The Neighborhood Assistant. Replies in the language of the user's latest
+ * message (not the UI language, not the neighborhood's country) and only
+ * from data it actually retrieved for this question.
  */
-export interface AssistantService {
-  ask(query: string, neighborhoodId: string): Promise<string>;
+export async function ask(query: string, ctx: AskContext): Promise<{ text: string; lang: ReplyLanguage }> {
+  const lang = detectReplyLanguage(query, ctx.previousLanguage ?? ctx.uiLocale);
+  if (!ctx.neighborhoodId) return { text: assistantMessages.noNeighborhood[lang], lang };
+  if (!(await (ctx.checkOnline ?? defaultOnline)())) return { text: assistantMessages.offline[lang], lang };
+  const question = parseQuestion(query);
+  if (!ctx.verified && question.topic !== 'greeting' && question.topic !== 'capabilities') {
+    return { text: assistantMessages.notVerified[lang], lang };
+  }
+  const text = await composeAnswer(question, {
+    lang,
+    neighborhoodName: ctx.neighborhoodName,
+    now: ctx.now ?? new Date(),
+    source: ctx.source ?? supabaseAssistantSource(ctx.neighborhoodId),
+  });
+  return { text, lang };
 }
-
-function todayEvents(neighborhoodId: string) {
-  const s = useStore.getState();
-  const now = Date.now();
-  const in24h = now + 24 * 3600 * 1000;
-  return s.events.filter((e) => e.neighborhoodId === neighborhoodId && +new Date(e.startsAt) <= in24h && +new Date(e.startsAt) >= now);
-}
-
-function computeAnswer(query: string, neighborhoodId: string): string {
-  const s = useStore.getState();
-  const q = query.trim();
-
-  if (/مباراة|كرة|رياض|football/.test(q)) {
-    const matches = todayEvents(neighborhoodId).filter((e) => e.category === 'football' || e.category === 'padel');
-    if (matches.length === 0) return 'ما فيه مباريات مجدولة خلال الـ24 ساعة القادمة في حيّك حاليًا.';
-    return `فيه ${matches.length} مباراة قريبة: ${matches.map((m) => `"${m.title}" الساعة ${new Date(m.startsAt).toLocaleTimeString('ar-SA', { hour: 'numeric', minute: '2-digit' })}`).join('، ')}.`;
-  }
-
-  if (/مياه|تسرب|انقطاع/.test(q)) {
-    const waterIssues = s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.category === 'water' && i.status !== 'resolved');
-    if (waterIssues.length === 0) return 'ما فيه بلاغات مياه نشطة حاليًا في حيّك، الحمدلله.';
-    return `فيه ${waterIssues.length} بلاغ مياه نشط، آخره: "${waterIssues[0]?.title}" — الحالة: ${waterIssues[0]?.status}.`;
-  }
-
-  if (/تكييف|ac|كهرباء|كهربائي/.test(q)) {
-    const businesses = s.businesses.filter(
-      (b) => b.neighborhoodIds.includes(neighborhoodId) && (b.category === 'ac_repair' || b.category === 'electrician'),
-    );
-    const top = businesses[0];
-    if (!top) return 'ما لقيت توصية مناسبة حاليًا، جرب تسأل في قسم التوصيات.';
-    return `أعلى توصية: "${top.name}" — أوصى فيه ${top.recommendationCount} جار.`;
-  }
-
-  if (/عائل|أطفال|family|kids/.test(q)) {
-    const events = s.events.filter((e) => e.neighborhoodId === neighborhoodId && (e.category === 'kids' || e.category === 'family'));
-    const first = events[0];
-    if (!first) return 'ما فيه فعاليات عائلية مجدولة حاليًا هذا الأسبوع.';
-    return `فيه فعالية عائلية: "${first.title}" يوم ${new Date(first.startsAt).toLocaleDateString('ar-SA', { weekday: 'long' })}.`;
-  }
-
-  // default: general "what's happening today" summary
-  const evts = todayEvents(neighborhoodId);
-  const openIssues = s.issues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved');
-  const helpOpen = s.helpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open');
-  return `اليوم في حيّك: ${evts.length} فعالية، ${openIssues.length} بلاغ مفتوح، و${helpOpen.length} طلب مساعدة من الجيران.`;
-}
-
-export const assistantService: AssistantService = {
-  async ask(query, neighborhoodId) {
-    return mockDelay(computeAnswer(query, neighborhoodId), 600);
-  },
-};

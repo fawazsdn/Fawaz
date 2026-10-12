@@ -31,3 +31,19 @@ export function searchMatches(haystack: string, needle: string): boolean {
   if (!n) return false;
   return normalizeForSearch(haystack).includes(n);
 }
+
+/**
+ * Query-only normalization: also drops generic place words a resident may
+ * type around the actual name — "حي أجيال", "Ajyal District",
+ * "Ajyal neighborhood" all search for "أجيال"/"Ajyal". Never applied to the
+ * dataset names themselves (some official names legitimately contain them).
+ */
+export function normalizeSearchQuery(input: string): string {
+  const base = normalizeForSearch(input);
+  const stripped = base
+    .replace(/^(حي|حى|الحي|منطقه|مخطط)\s+/, '')
+    .replace(/^(district|dist|neighborhood|neighbourhood|hay|hai|hayy)\s+/, '')
+    .replace(/\s+(district|dist|neighborhood|neighbourhood)$/, '')
+    .trim();
+  return stripped || base;
+}

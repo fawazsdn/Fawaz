@@ -1,2 +1,2 @@
 export type { GeographyService } from './GeographyService';
-export { mockGeographyService as geographyService } from './MockGeographyService';
+export { staticGeographyService as geographyService } from './StaticGeographyService';

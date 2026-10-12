@@ -2,8 +2,8 @@ import regionsData from '@/data/saudi/regions.json';
 import citiesData from '@/data/saudi/cities.json';
 import neighborhoodsData from '@/data/saudi/neighborhoods.json';
 import type { GeographySearchResult, SaudiCity, SaudiNeighborhood, SaudiRegion } from '@/types/geography';
-import { normalizeForSearch } from '@/utils/searchNormalize';
-import { useStore } from '@/store/useStore';
+import { normalizeForSearch, normalizeSearchQuery } from '@/utils/searchNormalize';
+import { supabase } from '@/lib/supabase';
 import type { GeographyService } from './GeographyService';
 
 const regions = regionsData as SaudiRegion[];
@@ -117,7 +117,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export const mockGeographyService: GeographyService = {
+export const staticGeographyService: GeographyService = {
   async getRegions() {
     return [...regions].sort((a, b) => a.nameEn.localeCompare(b.nameEn));
   },
@@ -159,7 +159,7 @@ export const mockGeographyService: GeographyService = {
 
   async search(query, opts) {
     const limit = opts?.limit ?? 50;
-    const q = normalizeForSearch(query);
+    const q = normalizeSearchQuery(query);
     if (!q) return [];
 
     const index = ensureSearchIndex();
@@ -235,10 +235,44 @@ export const mockGeographyService: GeographyService = {
   },
 
   async submitNeighborhoodSuggestion(input) {
-    return useStore.getState().submitNeighborhoodSuggestion(input);
+    const { data, error } = await supabase
+      .from('neighborhood_suggestions')
+      .insert({
+        region_id: input.regionId,
+        city_id: input.cityId,
+        name_ar: input.neighborhoodNameAr,
+        name_en: input.neighborhoodNameEn ?? null,
+        note: input.note ?? null,
+      })
+      .select('*')
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      regionId: data.region_id,
+      cityId: data.city_id,
+      neighborhoodNameAr: data.name_ar,
+      neighborhoodNameEn: data.name_en ?? undefined,
+      note: data.note ?? undefined,
+      submittedByUserId: data.user_id,
+      createdAt: data.created_at,
+      status: data.status === 'duplicate' ? 'rejected' : data.status,
+    };
   },
 
   async getNeighborhoodSuggestions() {
-    return useStore.getState().neighborhoodSuggestions;
+    const { data, error } = await supabase.from('neighborhood_suggestions').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((d) => ({
+      id: d.id,
+      regionId: d.region_id,
+      cityId: d.city_id,
+      neighborhoodNameAr: d.name_ar,
+      neighborhoodNameEn: d.name_en ?? undefined,
+      note: d.note ?? undefined,
+      submittedByUserId: d.user_id,
+      createdAt: d.created_at,
+      status: d.status === 'duplicate' ? 'rejected' : d.status,
+    }));
   },
 };
