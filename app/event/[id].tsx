@@ -1,81 +1,85 @@
 import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, MapPin, MessageCircle, Share2, Users } from 'lucide-react-native';
+import { Image } from 'expo-image';
+import { Calendar, Clock, Map as MapIcon, MapPin, MessageCircle, Share2, Users } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
-import { formatClock, formatDay } from '@/utils/format';
+import { useStore, useCurrentUserId } from '@/store/useStore';
+import { useUser } from '@/hooks/useNeighborhood';
+import { useAction } from '@/hooks/useAction';
+import { cancelEvent, getOrCreateDirectConversation, joinEvent, leaveEvent } from '@/backend/actions';
+import { formatDay, formatTimeRange, localizeDigits } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 import { shareContent } from '@/utils/share';
 import { links } from '@/config/links';
-import { messageService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { IconButton } from '@/components/IconButton';
 import { UserRow } from '@/components/UserRow';
-import { MapPlaceholder } from '@/components/MapPlaceholder';
 import { EmptyState } from '@/components/EmptyState';
+import { SkeletonCardRow } from '@/components/Skeleton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { CATEGORY_ICON, eventState } from '@/features/events/EventCard';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
+  const me = useCurrentUserId();
+  const { run, pending } = useAction();
 
   const event = useStore((s) => s.events.find((e) => e.id === id));
-  const host = useStore((s) => s.getUser(event?.hostId ?? ''));
+  const syncStatus = useStore((s) => s.sync.status);
+  const conversations = useStore((s) => s.conversations);
   const users = useStore((s) => s.users);
-  const joinEvent = useStore((s) => s.joinEvent);
-  const leaveEvent = useStore((s) => s.leaveEvent);
-  const cancelEvent = useStore((s) => s.cancelEvent);
-  const isOwn = event?.hostId === CURRENT_USER_ID;
-
+  const host = useUser(event?.hostId);
   const [cancelOpen, setCancelOpen] = useState(false);
 
-  if (!event || !host) {
+  if (!event) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader title="" fallbackRoute="/events" />
-        <EmptyState title={t.errors.genericTitle} />
+        {syncStatus === 'loading' ? (
+          <View style={{ padding: theme.spacing.md }}>
+            <SkeletonCardRow count={2} />
+          </View>
+        ) : (
+          <EmptyState title={t.errors.genericTitle} body={t.errors.genericBody} />
+        )}
       </View>
     );
   }
 
-  const going = event.attendees.filter((a) => a.status === 'going');
+  const isOwn = event.hostId === me;
+  const { going, spotsLeft, isFull, ended, started } = eventState(event);
   const waitlisted = event.attendees.filter((a) => a.status === 'waitlisted');
-  const mine = event.attendees.find((a) => a.userId === CURRENT_USER_ID);
-  const isFull = going.length >= event.capacity;
+  const mine = event.attendees.find((a) => a.userId === me && (a.status === 'going' || a.status === 'waitlisted'));
+  const myWaitlistPos = mine?.status === 'waitlisted' ? waitlisted.findIndex((a) => a.userId === me) + 1 : 0;
+  const discussion = conversations.find((c) => c.eventId === event.id);
+  const categoryLabel = (t.eventCreate.categories as Record<string, string>)[event.category] ?? event.category;
+  const occasionLabel = event.occasion ? (t.occasions as Record<string, string>)[event.occasion] : null;
+  const canRsvp = !event.cancelled && !started;
 
   const onJoin = () => {
     haptics.medium();
-    joinEvent(event.id);
+    run(() => joinEvent(event.id));
   };
 
   const messageHost = async () => {
-    const convo = await messageService.getOrCreateConversation(host.id);
-    router.push(`/messages/${convo.id}`);
+    const res = await run(() => getOrCreateDirectConversation(event.hostId));
+    if (res.ok) router.push(`/messages/${res.value}`);
   };
 
-  const openDiscussion = async () => {
-    const convoId = useStore.getState().conversations.find((c) => c.eventId === event.id)?.id;
-    if (convoId) router.push(`/messages/${convoId}`);
-    else await messageHost();
-  };
+  const shareEvent = () =>
+    shareContent({ title: event.title, message: `${event.title} — ${formatDay(event.startsAt, locale)} ${formatTimeRange(event.startsAt, event.endsAt, locale)}`, url: links.event(event.id) });
 
-  const shareEvent = () => shareContent({ title: event.title, message: event.title, url: links.event(event.id) });
-
-  const joinLabel = mine
-    ? mine.status === 'waitlisted'
-      ? t.events.waitlisted
-      : t.events.joined
-    : isFull
-      ? t.events.joinWaitlist
-      : t.events.join;
+  const joinLabel = isFull ? t.events.joinWaitlist : t.events.join;
+  const hasPin = event.approxLat != null && event.approxLng != null;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -90,42 +94,48 @@ export default function EventDetailScreen() {
           </IconButton>
         }
       />
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <Image source={{ uri: event.coverImage }} style={styles.hero} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
+        {event.coverImage ? (
+          <Image source={{ uri: event.coverImage }} style={styles.hero} contentFit="cover" />
+        ) : (
+          <View style={[styles.hero, styles.tile, { backgroundColor: theme.colors.successSurface }]}>
+            <Text style={{ fontSize: 56 }}>{CATEGORY_ICON[event.category] ?? '📍'}</Text>
+          </View>
+        )}
         <View style={{ padding: theme.spacing.md }}>
-          <Badge label={t.eventCreate.categories[event.category]} tone="primary" />
+          <View style={[theme.row(), { gap: 6, flexWrap: 'wrap' }]}>
+            <Badge label={event.kind === 'activity' ? t.events.kindActivity : t.events.kindEvent} tone="primary" />
+            <Badge label={categoryLabel} tone="neutral" />
+            {occasionLabel ? <Badge label={occasionLabel} tone="info" /> : null}
+            {event.cancelled ? <Badge label={t.events.cancelled} tone="danger" /> : ended ? <Badge label={t.events.ended} tone="warning" /> : null}
+          </View>
           <Text style={[theme.text('heading1'), { marginTop: 10 }]}>{event.title}</Text>
 
           <View style={{ marginTop: 12, gap: 8 }}>
-            <View style={[theme.row(), { alignItems: 'center', gap: 8 }]}>
-              <Calendar size={16} color={theme.colors.textMuted} />
-              <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>
-                {formatDay(event.startsAt, locale)} · {formatClock(event.startsAt, locale)} - {formatClock(event.endsAt, locale)}
-              </Text>
-            </View>
-            <View style={[theme.row(), { alignItems: 'center', gap: 8 }]}>
-              <MapPin size={16} color={theme.colors.textMuted} />
-              <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{event.locationLabel}</Text>
-            </View>
-            <View style={[theme.row(), { alignItems: 'center', gap: 8 }]}>
-              <Users size={16} color={theme.colors.textMuted} />
-              <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>
-                {going.length}/{event.capacity} {t.events.attendees.toLowerCase()}
-                {waitlisted.length > 0 ? ` · ${waitlisted.length} ${t.events.waitlisted}` : ''}
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ marginTop: 16 }}>
-            <MapPlaceholder
-              centerLat={event.approxLat}
-              centerLng={event.approxLng}
-              pins={[{ id: event.id, lat: event.approxLat, lng: event.approxLng, color: theme.colors.primary }]}
-              height={140}
+            <InfoRow icon={Calendar} text={formatDay(event.startsAt, locale)} />
+            <InfoRow icon={Clock} text={`${formatTimeRange(event.startsAt, event.endsAt, locale)} · ${t.eventCreate.timesInSaudi}`} />
+            <InfoRow icon={MapPin} text={event.locationLabel} />
+            <InfoRow
+              icon={Users}
+              text={`${localizeDigits(going, locale)}/${localizeDigits(event.capacity, locale)} ${t.events.participants}${
+                !isFull && !ended ? ` · ${localizeDigits(spotsLeft, locale)} ${t.events.spotsLeft}` : isFull ? ` · ${t.events.full}` : ''
+              }${waitlisted.length > 0 ? ` · ${localizeDigits(waitlisted.length, locale)} ${t.events.waitlisted}` : ''}`}
             />
           </View>
 
-          <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 16 }]}>{event.description}</Text>
+          {hasPin ? (
+            <Button
+              label={t.events.viewOnMap}
+              onPress={() => router.push({ pathname: '/(tabs)/map', params: { focus: event.id } })}
+              variant="outline"
+              size="sm"
+              icon={<MapIcon size={15} color={theme.colors.primary} />}
+            />
+          ) : (
+            <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>{t.events.noLocationOnMap}</Text>
+          )}
+
+          {event.description ? <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 16 }]}>{event.description}</Text> : null}
 
           {event.rules ? (
             <Card style={{ marginTop: 14 }}>
@@ -134,48 +144,60 @@ export default function EventDetailScreen() {
           ) : null}
 
           <View style={{ marginTop: 16 }}>
-            <UserRow user={host} subtitle={t.events.host} onPress={() => router.push(`/profile/${host.id}`)} />
+            {host ? (
+              <UserRow user={host} subtitle={t.events.organizer} onPress={() => router.push(`/profile/${host.id}`)} />
+            ) : (
+              <Text style={theme.text('bodySmall', theme.colors.textMuted)}>
+                {t.events.organizer}: {t.common.neighbor}
+              </Text>
+            )}
           </View>
 
-          {event.cancelled ? (
-            <Badge label={t.common.cancel} tone="danger" />
-          ) : isOwn ? (
-            <View style={{ marginTop: 16, gap: 10 }}>
-              <Button label={t.common.share} onPress={shareEvent} variant="outline" fullWidth />
-              <Button
-                label={t.events.discussion}
-                onPress={openDiscussion}
-                variant="outline"
-                icon={<MessageCircle size={16} color={theme.colors.primary} />}
-                fullWidth
-              />
-              <Button label={t.common.cancel} onPress={() => setCancelOpen(true)} variant="danger" fullWidth />
-            </View>
-          ) : (
-            <View style={{ marginTop: 16, gap: 10 }}>
-              {mine ? (
-                <Button label={t.events.leave} onPress={() => leaveEvent(event.id)} variant="outline" fullWidth size="lg" />
+          {myWaitlistPos > 0 ? (
+            <Text style={[theme.text('bodySmall', theme.colors.info), { marginTop: 12 }]}>
+              {t.events.waitlistPosition}: {localizeDigits(myWaitlistPos, locale)}
+            </Text>
+          ) : null}
+
+          <View style={{ marginTop: 16, gap: 10 }}>
+            {canRsvp && !isOwn ? (
+              mine ? (
+                <Button
+                  label={mine.status === 'waitlisted' ? t.events.leaveWaitlist : t.events.leave}
+                  onPress={() => run(() => leaveEvent(event.id))}
+                  variant="outline"
+                  loading={pending}
+                  fullWidth
+                  size="lg"
+                />
               ) : (
-                <Button label={joinLabel} onPress={onJoin} fullWidth size="lg" />
-              )}
-              <Button label={t.events.messageHost} onPress={messageHost} variant="outline" fullWidth />
+                <Button label={joinLabel} onPress={onJoin} loading={pending} fullWidth size="lg" />
+              )
+            ) : null}
+            <Button label={t.events.share} onPress={shareEvent} variant="outline" icon={<Share2 size={16} color={theme.colors.primary} />} fullWidth />
+            {discussion ? (
               <Button
                 label={t.events.discussion}
-                onPress={openDiscussion}
+                onPress={() => router.push(`/messages/${discussion.id}`)}
                 variant="ghost"
                 icon={<MessageCircle size={16} color={theme.colors.primary} />}
                 fullWidth
               />
-            </View>
-          )}
+            ) : null}
+            {!isOwn ? <Button label={t.events.messageHost} onPress={messageHost} variant="ghost" fullWidth /> : null}
+            {isOwn && !event.cancelled && !ended ? <Button label={t.events.cancelEvent} onPress={() => setCancelOpen(true)} variant="danger" fullWidth /> : null}
+          </View>
 
-          {going.length > 0 ? (
+          {going > 0 ? (
             <View style={{ marginTop: 20 }}>
               <Text style={[theme.text('title'), { marginBottom: 8 }]}>{t.events.attendees}</Text>
-              {going.slice(0, 6).map((a) => {
-                const u = users.find((x) => x.id === a.userId);
-                return u ? <UserRow key={a.userId} user={u} onPress={() => router.push(`/profile/${u.id}`)} /> : null;
-              })}
+              {event.attendees
+                .filter((a) => a.status === 'going')
+                .slice(0, 12)
+                .map((a) => {
+                  const u = users.find((x) => x.id === a.userId);
+                  return u ? <UserRow key={a.userId} user={u} onPress={() => router.push(`/profile/${u.id}`)} /> : null;
+                })}
             </View>
           ) : null}
         </View>
@@ -183,19 +205,29 @@ export default function EventDetailScreen() {
 
       <ConfirmationModal
         visible={cancelOpen}
-        title={t.common.cancel}
+        title={t.events.cancelEvent}
         body={event.title}
         destructive
         onCancel={() => setCancelOpen(false)}
         onConfirm={() => {
-          cancelEvent(event.id);
           setCancelOpen(false);
+          run(() => cancelEvent(event.id));
         }}
       />
     </View>
   );
+
+  function InfoRow({ icon: Icon, text }: { icon: typeof Calendar; text: string }) {
+    return (
+      <View style={[theme.row(), { alignItems: 'center', gap: 8 }]}>
+        <Icon size={16} color={theme.colors.textMuted} />
+        <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { flex: 1 }]}>{text}</Text>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
   hero: { width: '100%', height: 220 },
+  tile: { alignItems: 'center', justifyContent: 'center' },
 });

@@ -24,6 +24,9 @@ export interface HaratnaMapProps {
   polygons?: MapCoordinate[][];
   onMarkerPress?: (id: string) => void;
   showsUserLocation?: boolean;
+  /** Tap on empty map (used to drop a pin when creating an activity). */
+  onMapPress?: (c: MapCoordinate) => void;
+  scrollEnabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -37,7 +40,7 @@ export interface HaratnaMapHandle {
  * the map never adds pins of its own.
  */
 export const HaratnaMap = forwardRef<HaratnaMapHandle, HaratnaMapProps>(function HaratnaMap(
-  { center, delta = 0.02, markers, polygons = [], onMarkerPress, showsUserLocation, style },
+  { center, delta = 0.02, markers, polygons = [], onMarkerPress, showsUserLocation, onMapPress, scrollEnabled = true, style },
   ref,
 ) {
   const theme = useTheme();
@@ -60,6 +63,8 @@ export const HaratnaMap = forwardRef<HaratnaMapHandle, HaratnaMapProps>(function
       showsScale
       pitchEnabled={false}
       toolbarEnabled={false}
+      scrollEnabled={scrollEnabled}
+      onPress={onMapPress ? (e) => onMapPress(e.nativeEvent.coordinate) : undefined}
       userInterfaceStyle={theme.scheme === 'dark' ? 'dark' : 'light'}
       accessibilityLabel="map"
     >

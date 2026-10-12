@@ -403,6 +403,7 @@ const ar = {
     allKinds: 'الكل',
     activitiesOnly: 'أنشطة',
     eventsOnly: 'فعاليات',
+    cancelEvent: 'إلغاء النشاط',
   },
   eventCreate: {
     title: 'إنشاء نشاط أو فعالية',

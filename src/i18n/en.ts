@@ -405,6 +405,7 @@ const en: typeof ar = {
     allKinds: 'All',
     activitiesOnly: 'Activities',
     eventsOnly: 'Events',
+    cancelEvent: 'Cancel activity',
   },
   eventCreate: {
     title: 'Create activity or event',

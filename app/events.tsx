@@ -1,117 +1,131 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarOff } from 'lucide-react-native';
+import { CalendarPlus } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
-import { eventService } from '@/services';
-import { useAsync } from '@/hooks/useAsync';
+import { requestSync } from '@/backend/sync';
 import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { SectionHeader } from '@/components/SectionHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
 import { SkeletonCardRow } from '@/components/Skeleton';
-import { EventCard } from '@/features/events/EventCard';
-import type { EventCategory } from '@/models';
+import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
+import { EventCard, eventState } from '@/features/events/EventCard';
+import type { CommunityEvent, EventCategory } from '@/models';
+import { isSameSaudiDay } from '@/utils/format';
 
-export default function EventsScreen() {
+type KindFilter = 'all' | 'activity' | 'event';
+
+/** Splits real events into the Activities page sections. Exported for tests. */
+export function groupActivities(events: CommunityEvent[], now = new Date()) {
+  const t = now.getTime();
+  const week = t + 7 * 86400000;
+  const live = events.filter((e) => !e.cancelled);
+  const upcomingAll = live.filter((e) => new Date(e.endsAt).getTime() > t).sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt));
+  const past = live.filter((e) => new Date(e.endsAt).getTime() <= t).sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt));
+  const today = upcomingAll.filter((e) => isSameSaudiDay(e.startsAt, now) || new Date(e.startsAt).getTime() <= t);
+  const thisWeek = upcomingAll.filter((e) => !today.includes(e) && new Date(e.startsAt).getTime() < week);
+  const later = upcomingAll.filter((e) => !today.includes(e) && !thisWeek.includes(e));
+  // Featured = the most-joined upcoming ones (a real signal, not editorial).
+  const featured = [...upcomingAll]
+    .filter((e) => eventState(e).going > 1)
+    .sort((a, b) => eventState(b).going - eventState(a).going)
+    .slice(0, 3);
+  return { featured, today, thisWeek, upcoming: later, past: past.slice(0, 20) };
+}
+
+export default function ActivitiesScreen() {
   const theme = useTheme();
   const { t } = useI18n();
-  const categoryFilters: { key: EventCategory | 'all'; label: string }[] = [
-    { key: 'all', label: t.common.all },
-    { key: 'football', label: t.eventCreate.categories.football },
-    { key: 'padel', label: t.eventCreate.categories.padel },
-    { key: 'walking', label: t.eventCreate.categories.walking },
-    { key: 'cleanup', label: t.eventCreate.categories.cleanup },
-    { key: 'coffee', label: t.eventCreate.categories.coffee },
-    { key: 'iftar', label: t.eventCreate.categories.iftar },
-    { key: 'kids', label: t.eventCreate.categories.kids },
-  ];
   const router = useRouter();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  const [filter, setFilter] = useState<EventCategory | 'all'>('all');
+  const allEvents = useStore((s) => s.events);
+  const syncStatus = useStore((s) => s.sync.status);
+  const needsVerification = useNeedsVerification();
+  const [kind, setKind] = useState<KindFilter>('all');
+  const [category, setCategory] = useState<EventCategory | 'all'>('all');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const {
-    data: events,
-    loading,
-    refreshing,
-    error,
-    refresh,
-  } = useAsync(() => eventService.getEvents(neighborhoodId ?? ''), [neighborhoodId]);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await requestSync();
+    setRefreshing(false);
+  }, []);
 
-  const active = useMemo(() => (events ?? []).filter((e) => !e.cancelled && (filter === 'all' || e.category === filter)), [events, filter]);
-
-  const now = Date.now();
-  const dayMs = 24 * 3600 * 1000;
-  const today = active.filter((e) => +new Date(e.startsAt) - now < dayMs);
-  const thisWeek = active.filter((e) => +new Date(e.startsAt) - now >= dayMs && +new Date(e.startsAt) - now < 7 * dayMs);
-  const upcoming = active.filter((e) => +new Date(e.startsAt) - now >= 7 * dayMs);
-  const sports = active.filter((e) => e.category === 'football' || e.category === 'padel' || e.category === 'walking');
-  const family = active.filter((e) => e.category === 'family' || e.category === 'kids');
-  const community = active.filter(
-    (e) => e.category === 'community' || e.category === 'cleanup' || e.category === 'coffee' || e.category === 'iftar',
+  const visible = useMemo(
+    () => allEvents.filter((e) => e.neighborhoodId === neighborhoodId && (kind === 'all' || e.kind === kind) && (category === 'all' || e.category === category)),
+    [allEvents, neighborhoodId, kind, category],
   );
+  const groups = useMemo(() => groupActivities(visible), [visible]);
 
-  if (!neighborhoodId) return null;
+  const categories: (EventCategory | 'all')[] = ['all', 'football', 'padel', 'walking', 'family', 'kids', 'iftar', 'cleanup', 'coffee', 'community'];
+  const labels = t.eventCreate.categories as Record<string, string>;
+  const loading = syncStatus === 'loading' && allEvents.length === 0;
+  const empty = !loading && groups.featured.length + groups.today.length + groups.thisWeek.length + groups.upcoming.length + groups.past.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      {/* Now a root-level route pushed from Explore/Home (see app/(tabs)/_layout.tsx) — needs its own back control, unlike when this lived in the tab bar. */}
       <AppHeader title={t.events.title} fallbackRoute="/" />
-
-      <View style={{ marginBottom: 10 }}>
-        <FilterBar options={categoryFilters} selected={filter} onSelect={(k) => setFilter(k as EventCategory | 'all')} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 110 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={theme.colors.primary} />}
-      >
-        {loading ? (
-          <View style={{ paddingHorizontal: theme.spacing.md }}>
-            <SkeletonCardRow count={3} />
+      {needsVerification ? (
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          <VerifyGate />
+        </ScrollView>
+      ) : (
+        <>
+          <View style={{ marginBottom: 6 }}>
+            <FilterBar
+              options={[
+                { key: 'all', label: t.events.allKinds },
+                { key: 'activity', label: t.events.activitiesOnly },
+                { key: 'event', label: t.events.eventsOnly },
+              ]}
+              selected={kind}
+              onSelect={(k) => setKind(k as KindFilter)}
+            />
           </View>
-        ) : error ? (
-          <ErrorState onRetry={refresh} />
-        ) : active.length === 0 ? (
-          <EmptyState
-            icon={CalendarOff}
-            title={t.emptyStates.noEvents}
-            actionLabel={t.events.create}
-            onAction={() => router.push('/event/create')}
-          />
-        ) : (
-          <>
-            <EventSection title={t.events.happeningToday} events={today} />
-            <EventSection title={t.events.thisWeek} events={thisWeek} />
-            <EventSection title={t.events.sports} events={sports} />
-            <EventSection title={t.events.family} events={family} />
-            <EventSection title={t.events.community} events={community} />
-            <EventSection title={t.events.upcoming} events={upcoming} />
-          </>
-        )}
-      </ScrollView>
+          <View style={{ marginBottom: 10 }}>
+            <FilterBar options={categories.map((c) => ({ key: c, label: c === 'all' ? t.common.all : labels[c] }))} selected={category} onSelect={(k) => setCategory(k as EventCategory | 'all')} />
+          </View>
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: 40 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+          >
+            <SyncNotice />
+            {loading ? (
+              <View style={{ paddingHorizontal: theme.spacing.md }}>
+                <SkeletonCardRow count={3} />
+              </View>
+            ) : empty ? (
+              <EmptyState icon={CalendarPlus} title={t.events.noActivities} body={t.events.noActivitiesBody} actionLabel={t.events.create} onAction={() => router.push('/event/create')} />
+            ) : (
+              <>
+                <Section title={t.events.featured} events={groups.featured} wide />
+                <Section title={t.events.happeningToday} events={groups.today} />
+                <Section title={t.events.thisWeek} events={groups.thisWeek} />
+                <Section title={t.events.upcoming} events={groups.upcoming} />
+                <Section title={t.events.past} events={groups.past} />
+              </>
+            )}
+          </ScrollView>
+        </>
+      )}
     </View>
   );
 }
 
-function EventSection({ title, events }: { title: string; events: ReturnType<typeof useStore.getState>['events'] }) {
+function Section({ title, events, wide }: { title: string; events: CommunityEvent[]; wide?: boolean }) {
   const theme = useTheme();
   if (events.length === 0) return null;
   return (
     <View style={{ marginBottom: 20 }}>
       <SectionHeader title={title} />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
         {events.map((e) => (
-          <View key={e.id} style={{ width: 240 }}>
-            <EventCard event={e} compact />
+          <View key={e.id} style={{ width: wide ? 290 : 250 }}>
+            <EventCard event={e} compact={!wide} />
           </View>
         ))}
       </ScrollView>
