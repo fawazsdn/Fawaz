@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import { ImagePlus, X } from 'lucide-react-native';
+import { ImagePlus, MapPin, X } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { postService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { useIsVerified } from '@/hooks/useNeighborhood';
+import { createPost } from '@/backend/actions';
+import { locateOnce } from '@/backend/location';
+import { useImagePicker } from '@/components/imageEditor/useImagePicker';
+import { VerifyGate } from '@/components/VerifyGate';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
@@ -18,32 +24,48 @@ export default function CreatePostScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const verified = useIsVerified();
+  const { run, pending: submitting } = useAction();
+  const { pickImage: pickEdited, editor } = useImagePicker({ aspects: ['portrait', 'square', 'wide', 'original'] });
   const [text, setText] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [category, setCategory] = useState<PostType>('general');
   const [audience, setAudience] = useState<'neighborhood' | 'city'>('neighborhood');
-  const [submitting, setSubmitting] = useState(false);
+  const [shareLocation, setShareLocation] = useState(false);
+  const [locNote, setLocNote] = useState<string | null>(null);
 
+  // One photo at a time, each through the crop/preview editor (max 4).
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-      selectionLimit: 4 - images.length,
-    });
-    if (!result.canceled) setImages((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4));
+    if (images.length >= 4) return;
+    const uri = await pickEdited();
+    if (uri) setImages((prev) => [...prev, uri].slice(0, 4));
   };
 
   const canSubmit = text.trim().length > 0 || images.length > 0;
 
   const onSubmit = async () => {
-    setSubmitting(true);
-    const post = await postService.createPost({ type: category, textAr: text.trim(), images, audience });
-    setSubmitting(false);
-    router.replace(`/post/${post.id}`);
+    let geotag: { lat: number; lng: number } | undefined;
+    if (shareLocation) {
+      const loc = await locateOnce();
+      if (loc.status !== 'ok') {
+        setLocNote(loc.status === 'denied' ? t.map.locationDenied : t.verification.locationUnavailableBody);
+        return;
+      }
+      geotag = { lat: loc.lat, lng: loc.lng };
+    }
+    const res = await run(() => createPost({ type: category, textAr: text.trim(), localImages: images, audience, geotag }));
+    if (res.ok) router.replace(`/post/${res.value}`);
   };
+
+  if (!verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.create.post} fallbackRoute="/create" />
+        <VerifyGate />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -51,7 +73,12 @@ export default function CreatePostScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader title={t.create.post} fallbackRoute="/create" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: insets.bottom + 32 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+      >
         <TextInput
           value={text}
           onChangeText={setText}
@@ -66,7 +93,7 @@ export default function CreatePostScreen() {
           <View style={[theme.row(), styles.imageRow]}>
             {images.map((uri, i) => (
               <View key={uri} style={styles.imageWrap}>
-                <Image source={{ uri }} style={styles.image} />
+                <Image source={{ uri }} style={styles.image} contentFit="cover" />
                 <Pressable
                   style={[styles.removeBtn, { backgroundColor: theme.colors.overlay }]}
                   onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
@@ -80,7 +107,8 @@ export default function CreatePostScreen() {
 
         <Pressable
           onPress={pickImage}
-          style={[theme.row(), styles.addImageBtn, { borderColor: theme.colors.border }]}
+          disabled={images.length >= 4}
+          style={[theme.row(), styles.addImageBtn, { borderColor: theme.colors.border, opacity: images.length >= 4 ? 0.5 : 1 }]}
           accessibilityRole="button"
         >
           <ImagePlus size={17} color={theme.colors.primary} />
@@ -105,9 +133,22 @@ export default function CreatePostScreen() {
           <Chip label={t.post.audienceCity} selected={audience === 'city'} onPress={() => setAudience('city')} />
         </View>
 
+        <View style={[theme.row(), styles.switchRow]}>
+          <View style={[theme.row(), { alignItems: 'center', gap: 6, flex: 1 }]}>
+            <MapPin size={15} color={theme.colors.textMuted} />
+            <View style={{ flex: 1 }}>
+              <Text style={theme.text('body')}>{t.post.showOnMap}</Text>
+              <Text style={theme.text('caption', theme.colors.textMuted)}>{t.post.showOnMapHint}</Text>
+            </View>
+          </View>
+          <Switch value={shareLocation} onValueChange={setShareLocation} trackColor={{ true: theme.colors.primary }} />
+        </View>
+        {locNote ? <Text style={theme.text('caption', theme.colors.danger)}>{locNote}</Text> : null}
+
         <View style={{ height: 24 }} />
-        <Button label={t.post.publish} onPress={onSubmit} disabled={!canSubmit} loading={submitting} fullWidth size="lg" />
+        <Button label={t.post.publish} onPress={onSubmit} disabled={!canSubmit || submitting} loading={submitting} fullWidth size="lg" />
       </ScrollView>
+      {editor}
     </KeyboardAvoidingView>
   );
 }
@@ -140,4 +181,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: { marginBottom: 8, marginTop: 4 },
+  switchRow: { alignItems: 'center', justifyContent: 'space-between', marginTop: 20, gap: 10 },
 });

@@ -285,6 +285,8 @@ const ar = {
     sellDesc: 'أعرض غرض للبيع أو التبرع به',
     lostFound: 'مفقودات',
     lostFoundDesc: 'أبلغ عن غرض أو حيوان مفقود أو تم العثور عليه',
+    activity: 'نظّم نشاطاً',
+    activityDesc: 'مباراة، مشي، إفطار جماعي، حملة تنظيف…',
   },
   post: {
     composerPlaceholder: 'وش يصير في حيّك؟',
@@ -310,6 +312,8 @@ const ar = {
       announcement: 'إعلان',
       recommendation: 'توصية',
     },
+    showOnMap: 'إظهار المنشور على الخريطة',
+    showOnMapHint: 'يُستخدم موقع تقريبي (حوالي ١٠٠ م) — ليس موقع بيتك بالضبط.',
   },
   issueCreate: {
     title: 'الإبلاغ عن مشكلة',

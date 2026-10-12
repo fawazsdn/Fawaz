@@ -5,7 +5,11 @@ import { Plus, X } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { pollService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { useIsVerified } from '@/hooks/useNeighborhood';
+import { createPoll } from '@/backend/actions';
+import { VerifyGate } from '@/components/VerifyGate';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
@@ -20,14 +24,16 @@ export default function CreatePollScreen() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const verified = useIsVerified();
+  const { run, pending: submitting } = useAction();
 
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [duration, setDuration] = useState(72);
-  const [submitting, setSubmitting] = useState(false);
 
   const durationLabel = (h: number) => {
-    if (locale === 'ar') return h === 24 ? 'يوم واحد' : h === 72 ? '3 أيام' : 'أسبوع';
+    if (locale === 'ar') return h === 24 ? 'يوم واحد' : h === 72 ? '٣ أيام' : 'أسبوع';
     return h === 24 ? '1 day' : h === 72 ? '3 days' : '1 week';
   };
 
@@ -39,11 +45,18 @@ export default function CreatePollScreen() {
   const canSubmit = question.trim().length > 2 && validOptions.length >= 2;
 
   const onSubmit = async () => {
-    setSubmitting(true);
-    const poll = await pollService.createPoll({ question: question.trim(), options: validOptions, closesInHours: duration });
-    setSubmitting(false);
-    router.replace(`/post/${poll.postId}`);
+    const res = await run(() => createPoll({ question: question.trim(), options: validOptions, closesInHours: duration }));
+    if (res.ok) router.replace(`/post/${res.value.post_id}`);
   };
+
+  if (!verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.create.poll} fallbackRoute="/create" />
+        <VerifyGate />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -51,7 +64,12 @@ export default function CreatePollScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader title={t.create.poll} fallbackRoute="/create" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: insets.bottom + 32 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+      >
         <TextInput
           value={question}
           onChangeText={setQuestion}

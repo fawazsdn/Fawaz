@@ -45,7 +45,11 @@ function RootStack() {
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="create" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      {/* Create is a full-screen card that slides up — not a native page-sheet
+          modal with a nested stack (that combination rendered a blank white
+          sheet on iOS, and screens pushed from inside a native modal can
+          appear behind it). */}
+      <Stack.Screen name="create/index" options={{ animation: 'slide_from_bottom', gestureDirection: 'vertical' }} />
     </Stack>
   );
 

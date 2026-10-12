@@ -287,6 +287,8 @@ const en: typeof ar = {
     sellDesc: 'List an item for sale or donation',
     lostFound: 'Lost & found',
     lostFoundDesc: 'Report a lost or found item or pet',
+    activity: 'Organize an activity',
+    activityDesc: 'A match, a walk, a community iftar, a cleanup…',
   },
   post: {
     composerPlaceholder: "What's happening in your neighborhood?",
@@ -312,6 +314,8 @@ const en: typeof ar = {
       announcement: 'Announcement',
       recommendation: 'Recommendation',
     },
+    showOnMap: 'Show this post on the map',
+    showOnMapHint: 'Uses an approximate location (about 100 m) — never your exact home.',
   },
   issueCreate: {
     title: 'Report an issue',
