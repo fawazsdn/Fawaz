@@ -163,7 +163,7 @@ export async function syncAll(): Promise<void> {
     if (convIds.length > 0) {
       const [convRes, membersRes, messagesRes] = await Promise.all([
         supabase.from('conversations').select('*').in('id', convIds),
-        supabase.from('conversation_members').select('conversation_id, user_id').in('conversation_id', convIds).is('left_at', null),
+        supabase.from('conversation_members').select('conversation_id, user_id, last_read_at').in('conversation_id', convIds).is('left_at', null),
         supabase.from('messages').select('*').in('conversation_id', convIds).is('deleted_at', null).order('created_at', { ascending: false }).limit(500),
       ]);
       const members = must(membersRes, 'members') as Row[];
@@ -182,7 +182,14 @@ export async function syncAll(): Promise<void> {
       const messageUrls = await resolveMediaUrls(messageRows.map((m) => m.image_path));
       entities.messages = messageRows.map((m) => {
         const msg = mapMessage(m, lastRead.get(m.conversation_id) ?? null, me);
-        return { ...msg, image: m.image_path ? messageUrls[m.image_path] : undefined };
+        // For my own messages, "read" means another member's last_read_at has passed it.
+        const readers =
+          m.sender_id === me
+            ? members
+                .filter((x) => x.conversation_id === m.conversation_id && x.user_id !== me && x.last_read_at && new Date(x.last_read_at).getTime() >= new Date(m.created_at).getTime())
+                .map((x) => x.user_id as string)
+            : [];
+        return { ...msg, readBy: m.sender_id === me ? [me, ...readers] : msg.readBy, image: m.image_path ? messageUrls[m.image_path] : undefined };
       });
     }
 
@@ -636,7 +643,7 @@ export function mapNotification(n: Row): AppNotification {
  * read by me when it's mine or older than my last read marker.
  */
 export function mapMessage(m: Row, myLastReadAt: string | null, me: string): Message {
-  const readByMe = m.sender_id === me || (!!myLastReadAt && new Date(m.created_at).getTime() <= new Date(myLastReadAt).getTime());
+  const readByMe = m.sender_id !== me && !!myLastReadAt && new Date(m.created_at).getTime() <= new Date(myLastReadAt).getTime();
   return {
     id: m.id,
     conversationId: m.conversation_id,
@@ -645,7 +652,7 @@ export function mapMessage(m: Row, myLastReadAt: string | null, me: string): Mes
     image: m.image_path ?? undefined,
     replyToId: m.reply_to_id ?? undefined,
     createdAt: m.created_at,
-    readBy: readByMe ? [m.sender_id, me] : [m.sender_id],
+    readBy: m.sender_id === me ? [me] : readByMe ? [m.sender_id, me] : [m.sender_id],
   };
 }
 
