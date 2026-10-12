@@ -59,7 +59,11 @@ export default function CreateLostFoundScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader title={t.lostFound.report} fallbackRoute="/lost-found" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <ScrollView
+        contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <Pressable onPress={pickImage} style={[styles.imagePicker, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
           {image ? <Image source={{ uri: image }} style={styles.image} /> : <ImagePlus size={26} color={theme.colors.primary} />}
         </Pressable>

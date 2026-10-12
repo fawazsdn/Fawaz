@@ -57,7 +57,11 @@ export function DateTimeField({ label, mode, value, onChange, minimumDate }: Pro
         onPress={openPicker}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${display}`}
-        style={[theme.row(), styles.field, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md }]}
+        style={[
+          theme.row(),
+          styles.field,
+          { borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md },
+        ]}
       >
         <Icon size={16} color={theme.colors.primary} />
         <View style={{ flex: 1 }}>

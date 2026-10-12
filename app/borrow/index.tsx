@@ -20,10 +20,7 @@ export default function BorrowScreen() {
   // Raw state + useMemo, not filter() inside the selector — see HomeHeader
   // for why (getSnapshot must return a stable reference across renders).
   const allBorrowItems = useStore((s) => s.borrowItems);
-  const items = useMemo(
-    () => allBorrowItems.filter((b) => b.neighborhoodId === neighborhoodId),
-    [allBorrowItems, neighborhoodId],
-  );
+  const items = useMemo(() => allBorrowItems.filter((b) => b.neighborhoodId === neighborhoodId), [allBorrowItems, neighborhoodId]);
   const users = useStore((s) => s.users);
 
   return (

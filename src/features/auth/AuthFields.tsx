@@ -49,7 +49,11 @@ export const PasswordField = forwardRef<TextInput, FieldProps>(function Password
       <View
         style={[
           styles.passwordWrap,
-          { borderColor: error ? theme.colors.danger : theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radii.md },
+          {
+            borderColor: error ? theme.colors.danger : theme.colors.border,
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.radii.md,
+          },
         ]}
       >
         <TextInput

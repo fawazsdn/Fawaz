@@ -30,15 +30,9 @@ export default function CommunityScreen() {
   const allGroups = useStore((s) => s.communityGroups);
   const allInstitutions = useStore((s) => s.institutions);
 
-  const members = useMemo(
-    () => allUsers.filter((u) => u.neighborhoodId === neighborhood?.id).slice(0, 4),
-    [allUsers, neighborhood?.id],
-  );
+  const members = useMemo(() => allUsers.filter((u) => u.neighborhoodId === neighborhood?.id).slice(0, 4), [allUsers, neighborhood?.id]);
   const alerts = useMemo(() => allAlerts.filter((a) => a.neighborhoodId === neighborhood?.id), [allAlerts, neighborhood?.id]);
-  const groups = useMemo(
-    () => allGroups.filter((g) => g.neighborhoodId === neighborhood?.id),
-    [allGroups, neighborhood?.id],
-  );
+  const groups = useMemo(() => allGroups.filter((g) => g.neighborhoodId === neighborhood?.id), [allGroups, neighborhood?.id]);
   const institutions = useMemo(
     () => allInstitutions.filter((i) => i.neighborhoodId === neighborhood?.id),
     [allInstitutions, neighborhood?.id],

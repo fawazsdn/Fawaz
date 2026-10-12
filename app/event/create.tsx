@@ -122,10 +122,17 @@ export default function CreateEventScreen() {
     if (res.ok) router.replace(`/event/${res.value}`);
   };
 
-  const inputStyle = (bad: boolean) => [theme.text('body'), styles.input, { borderColor: bad ? theme.colors.danger : theme.colors.border, backgroundColor: theme.colors.surface }];
+  const inputStyle = (bad: boolean) => [
+    theme.text('body'),
+    styles.input,
+    { borderColor: bad ? theme.colors.danger : theme.colors.border, backgroundColor: theme.colors.surface },
+  ];
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <AppHeader title={t.eventCreate.title} fallbackRoute="/events" />
       <ScrollView
         contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: insets.bottom + 40 }}
@@ -163,7 +170,11 @@ export default function CreateEventScreen() {
             )}
           </Pressable>
           {image ? (
-            <Pressable onPress={() => setImage(undefined)} style={[theme.row(), { alignItems: 'center', gap: 4, marginTop: 6 }]} accessibilityRole="button">
+            <Pressable
+              onPress={() => setImage(undefined)}
+              style={[theme.row(), { alignItems: 'center', gap: 4, marginTop: 6 }]}
+              accessibilityRole="button"
+            >
               <X size={14} color={theme.colors.textMuted} />
               <Text style={theme.text('caption', theme.colors.textMuted)}>{t.common.remove}</Text>
             </Pressable>
@@ -171,13 +182,24 @@ export default function CreateEventScreen() {
         </Field>
 
         <Field label={t.eventCreate.titleLabel}>
-          <TextInput value={title} onChangeText={setTitle} maxLength={200} style={inputStyle(submitted && errors.title)} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            maxLength={200}
+            style={inputStyle(submitted && errors.title)}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.eventCreate.category}>
           <View style={[theme.row(), styles.wrap]}>
             {CATEGORIES.map((c) => (
-              <Chip key={c} label={`${CATEGORY_ICON[c] ?? ''} ${t.eventCreate.categories[c]}`} selected={category === c} onPress={() => setCategory(c)} />
+              <Chip
+                key={c}
+                label={`${CATEGORY_ICON[c] ?? ''} ${t.eventCreate.categories[c]}`}
+                selected={category === c}
+                onPress={() => setCategory(c)}
+              />
             ))}
           </View>
         </Field>
@@ -191,7 +213,14 @@ export default function CreateEventScreen() {
         </Field>
 
         <Field label={t.eventCreate.description}>
-          <TextInput value={description} onChangeText={setDescription} multiline maxLength={5000} style={[...inputStyle(false), styles.textArea]} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            maxLength={5000}
+            style={[...inputStyle(false), styles.textArea]}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.eventCreate.date}>
@@ -211,7 +240,13 @@ export default function CreateEventScreen() {
         </Field>
 
         <Field label={t.eventCreate.location}>
-          <TextInput value={location} onChangeText={setLocation} maxLength={200} style={inputStyle(submitted && errors.location)} placeholderTextColor={theme.colors.textMuted} />
+          <TextInput
+            value={location}
+            onChangeText={setLocation}
+            maxLength={200}
+            style={inputStyle(submitted && errors.location)}
+            placeholderTextColor={theme.colors.textMuted}
+          />
         </Field>
 
         <Field label={t.eventCreate.pinLocation}>
@@ -221,7 +256,9 @@ export default function CreateEventScreen() {
               <HaratnaMap
                 center={pin ?? { latitude: neighborhood.centerLat, longitude: neighborhood.centerLng }}
                 delta={0.02}
-                markers={pin ? [{ id: 'pin', coordinate: pin, title: location || title || t.eventCreate.pinned, color: theme.colors.primary }] : []}
+                markers={
+                  pin ? [{ id: 'pin', coordinate: pin, title: location || title || t.eventCreate.pinned, color: theme.colors.primary }] : []
+                }
                 onMapPress={(c) => setPin({ latitude: approximateCoordinate(c.latitude), longitude: approximateCoordinate(c.longitude) })}
               />
             </View>
@@ -235,7 +272,15 @@ export default function CreateEventScreen() {
               loading={locating}
               icon={<LocateFixed size={14} color={theme.colors.primary} />}
             />
-            {pin ? <Button label={t.eventCreate.removePin} onPress={() => setPin(null)} variant="ghost" size="sm" icon={<MapPin size={14} color={theme.colors.textMuted} />} /> : null}
+            {pin ? (
+              <Button
+                label={t.eventCreate.removePin}
+                onPress={() => setPin(null)}
+                variant="ghost"
+                size="sm"
+                icon={<MapPin size={14} color={theme.colors.textMuted} />}
+              />
+            ) : null}
           </View>
           {locNote ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{locNote}</Text> : null}
         </Field>
@@ -263,7 +308,9 @@ export default function CreateEventScreen() {
 
         <View style={{ height: 8 }} />
         <Button label={t.eventCreate.publish} onPress={onSubmit} loading={pending} disabled={pending} fullWidth size="lg" />
-        {submitted && !valid ? <Text style={[theme.text('caption', theme.colors.danger), { textAlign: 'center', marginTop: 8 }]}>{t.errors.invalid}</Text> : null}
+        {submitted && !valid ? (
+          <Text style={[theme.text('caption', theme.colors.danger), { textAlign: 'center', marginTop: 8 }]}>{t.errors.invalid}</Text>
+        ) : null}
       </ScrollView>
       {editor}
     </KeyboardAvoidingView>

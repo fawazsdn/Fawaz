@@ -42,7 +42,7 @@ describe('geography hierarchy', () => {
     expect(orphanRegion).toEqual([]);
   });
 
-  it('every neighborhood\'s regionId matches its parent city\'s regionId', () => {
+  it("every neighborhood's regionId matches its parent city's regionId", () => {
     const cityById = new Map(cities.map((c) => [c.id, c]));
     const mismatched = neighborhoods.filter((n) => cityById.get(n.cityId)?.regionId !== n.regionId);
     expect(mismatched).toEqual([]);

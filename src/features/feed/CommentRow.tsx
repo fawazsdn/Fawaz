@@ -87,7 +87,10 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
           <Pressable onPress={() => onReply(comment)}>
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{t.post.reply}</Text>
           </Pressable>
-          <Pressable onPress={() => run(() => toggleCommentLike(comment.id, comment.postId))} style={[theme.row(), { alignItems: 'center', gap: 3 }]}>
+          <Pressable
+            onPress={() => run(() => toggleCommentLike(comment.id, comment.postId))}
+            style={[theme.row(), { alignItems: 'center', gap: 3 }]}
+          >
             <Heart
               size={12}
               color={liked ? theme.colors.danger : theme.colors.textMuted}

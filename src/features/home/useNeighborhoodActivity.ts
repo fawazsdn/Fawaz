@@ -34,10 +34,7 @@ export function useNeighborhoodActivity(neighborhoodId: string | null) {
     [allHelpRequests, neighborhoodId],
   );
   const listings = useMemo(
-    () =>
-      allListings.filter(
-        (m) => m.neighborhoodId === neighborhoodId && Date.now() - new Date(m.createdAt).getTime() < 48 * 3600 * 1000,
-      ),
+    () => allListings.filter((m) => m.neighborhoodId === neighborhoodId && Date.now() - new Date(m.createdAt).getTime() < 48 * 3600 * 1000),
     [allListings, neighborhoodId],
   );
 

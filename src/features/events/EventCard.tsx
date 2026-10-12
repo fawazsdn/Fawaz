@@ -90,7 +90,12 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
       accessibilityLabel={event.title}
     >
       {event.coverImage ? (
-        <Image source={{ uri: event.coverImage }} style={{ width: '100%', height: compact ? 110 : 150 }} contentFit="cover" transition={150} />
+        <Image
+          source={{ uri: event.coverImage }}
+          style={{ width: '100%', height: compact ? 110 : 150 }}
+          contentFit="cover"
+          transition={150}
+        />
       ) : (
         <View style={[styles.tile, { height: compact ? 72 : 96, backgroundColor: theme.colors.successSurface }]}>
           <Text style={{ fontSize: compact ? 30 : 38 }}>{CATEGORY_ICON[event.category] ?? '📍'}</Text>
@@ -141,7 +146,14 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
             </View>
           </View>
           {!event.cancelled && !started ? (
-            <Button label={buttonLabel} size="sm" variant={mine ? 'outline' : 'primary'} onPress={onJoin} disabled={!!mine || pending} loading={pending} />
+            <Button
+              label={buttonLabel}
+              size="sm"
+              variant={mine ? 'outline' : 'primary'}
+              onPress={onJoin}
+              disabled={!!mine || pending}
+              loading={pending}
+            />
           ) : null}
         </View>
       </View>

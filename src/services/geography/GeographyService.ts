@@ -58,8 +58,6 @@ export interface GeographyService {
 
   /** "Can't find your neighborhood?" flow — stored locally only; a real
    * backend turns this into a moderation queue. */
-  submitNeighborhoodSuggestion(
-    input: Omit<NeighborhoodSuggestion, 'id' | 'createdAt' | 'status'>,
-  ): Promise<NeighborhoodSuggestion>;
+  submitNeighborhoodSuggestion(input: Omit<NeighborhoodSuggestion, 'id' | 'createdAt' | 'status'>): Promise<NeighborhoodSuggestion>;
   getNeighborhoodSuggestions(): Promise<NeighborhoodSuggestion[]>;
 }

@@ -29,10 +29,7 @@ export default function BusinessDetailScreen() {
   // src/features/home/HomeHeader.tsx for why.
   const allRecommendations = useStore((s) => s.recommendations);
   const recommendations = useMemo(
-    () =>
-      allRecommendations
-        .filter((r) => r.businessId === id)
-        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    () => allRecommendations.filter((r) => r.businessId === id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
     [allRecommendations, id],
   );
   const users = useStore((s) => s.users);
@@ -74,7 +71,11 @@ export default function BusinessDetailScreen() {
         }
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {business.coverImage ? <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" /> : <View style={{ height: 80 }} />}
+        {business.coverImage ? (
+          <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
+        ) : (
+          <View style={{ height: 80 }} />
+        )}
         <View style={{ padding: theme.spacing.md }}>
           <View style={{ ...theme.row(), alignItems: 'center', gap: 6 }}>
             <Text style={theme.text('heading1')}>{business.name}</Text>

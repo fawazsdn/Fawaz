@@ -17,7 +17,8 @@ export type AssistantTopic =
 export type TimeWindow = 'today' | 'tonight' | 'tomorrow' | 'week' | 'weekend' | 'upcoming';
 
 export type IssueFocus = 'water' | 'electricity' | 'streetlight' | 'road_damage' | 'trash' | 'flooding' | 'safety' | null;
-export type BusinessFocus = 'ac_repair' | 'electrician' | 'plumber' | 'cafe' | 'restaurant' | 'barber' | 'cleaning' | 'tutor' | 'car_wash' | null;
+export type BusinessFocus =
+  'ac_repair' | 'electrician' | 'plumber' | 'cafe' | 'restaurant' | 'barber' | 'cleaning' | 'tutor' | 'car_wash' | null;
 
 export interface ParsedQuestion {
   topic: AssistantTopic;
@@ -34,9 +35,12 @@ const P = {
   capabilities: /(what can you (do|help)|who are you|help me use|وش تقدر|ايش تقدر|شو تقدر|مين انت|كيف استخدم)/,
   sports: /(football|soccer|padel|match|game|sport|walk|run|كوره|كرة|كره|مباره|مباراه|ماتش|بادل|رياض|مشي|جري|دوري|بطوله)/,
   family: /(family|kid|child|children|families|عائل|عايل|اطفال|طفل|بزران|عيال|اسر)/,
-  events: /(event|activit|happening|going on|plan|gathering|meetup|festival|iftar|eid|national day|فعالي|فعاليه|نشاط|انشطه|ايش فيه|وش فيه|شو فيه|وش في|ايش في|وش صاير|ايش صاير|تجمع|لقاء|افطار|عيد|اليوم الوطني|مهرجان|سهره)/,
-  issues: /(issue|problem|outage|cut|leak|broken|report|water|power|electric|light|pothole|trash|garbage|flood|بلاغ|مشكل|مشاكل|انقطاع|قطع|تسرب|موي|ميا|ماء|كهرب|انار|اناره|حفر|حفره|زبال|نفايات|مطر|سيول|غرق)/,
-  businesses: /(recommend|plumber|electrician|\bac\b|air ?con|repair|cafe|coffee|restaurant|barber|cleaning|tutor|car wash|shop|business|service|توصي|انصح|تنصح|سباك|كهربائي|فني|مكيف|مكيفات|تكييف|مطعم|كافيه|كوفي|قهوه|حلاق|تنظيف|مدرس|غسيل|محل|خدم)/,
+  events:
+    /(event|activit|happening|going on|plan|gathering|meetup|festival|iftar|eid|national day|فعالي|فعاليه|نشاط|انشطه|ايش فيه|وش فيه|شو فيه|وش في|ايش في|وش صاير|ايش صاير|تجمع|لقاء|افطار|عيد|اليوم الوطني|مهرجان|سهره)/,
+  issues:
+    /(issue|problem|outage|cut|leak|broken|report|water|power|electric|light|pothole|trash|garbage|flood|بلاغ|مشكل|مشاكل|انقطاع|قطع|تسرب|موي|ميا|ماء|كهرب|انار|اناره|حفر|حفره|زبال|نفايات|مطر|سيول|غرق)/,
+  businesses:
+    /(recommend|plumber|electrician|\bac\b|air ?con|repair|cafe|coffee|restaurant|barber|cleaning|tutor|car wash|shop|business|service|توصي|انصح|تنصح|سباك|كهربائي|فني|مكيف|مكيفات|تكييف|مطعم|كافيه|كوفي|قهوه|حلاق|تنظيف|مدرس|غسيل|محل|خدم)/,
   marketplace: /(sell|selling|buy|for sale|marketplace|second ?hand|free stuff|listing|حراج|بيع|للبيع|شراء|اشتري|سوق|مستعمل|ببلاش|مجان)/,
   help: /(help request|need help|anyone help|volunteer|طلب مساعده|طلبات|مساعده|فزعه|فزعة|يساعد|محتاج)/,
   polls: /(poll|vote|survey|تصويت|استفتاء|استطلاع|صوت)/,

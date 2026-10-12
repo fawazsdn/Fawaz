@@ -38,10 +38,7 @@ export default function ProfileScreen() {
   const businesses = useStore((s) => s.businesses);
   const posts = useMemo(() => allPosts.filter((p) => p.authorId === id), [allPosts, id]);
   const events = useMemo(() => allEvents.filter((e) => e.hostId === id), [allEvents, id]);
-  const recommendations = useMemo(
-    () => allRecommendations.filter((r) => r.authorId === id),
-    [allRecommendations, id],
-  );
+  const recommendations = useMemo(() => allRecommendations.filter((r) => r.authorId === id), [allRecommendations, id]);
 
   const [tab, setTab] = useState<'activity' | 'events' | 'recommendations'>(
     initialTab === 'events' || initialTab === 'recommendations' ? initialTab : 'activity',

@@ -112,7 +112,12 @@ export async function syncAll(): Promise<void> {
     // 1. Who am I, and which neighborhood am I actually a member of (server truth)?
     const [profileRes, membershipRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', me).maybeSingle(),
-      supabase.from('neighborhood_memberships').select('neighborhood_id, verification_status').eq('user_id', me).eq('active', true).maybeSingle(),
+      supabase
+        .from('neighborhood_memberships')
+        .select('neighborhood_id, verification_status')
+        .eq('user_id', me)
+        .eq('active', true)
+        .maybeSingle(),
     ]);
     if (profileRes.error) throw new Error(`profile: ${profileRes.error.message}`);
     const myProfile = profileRes.data as Row | null;
@@ -156,17 +161,33 @@ export async function syncAll(): Promise<void> {
       createdAt: r.created_at,
       status: r.status,
     }));
-    useStore.getState().setReferral({ code: (referralRes.data as Row | null)?.code ?? undefined, joinedCount: attributedRes.count ?? null });
+    useStore
+      .getState()
+      .setReferral({ code: (referralRes.data as Row | null)?.code ?? undefined, joinedCount: attributedRes.count ?? null });
 
     // 3. Conversations the resident is a member of.
-    const myConvRes = await supabase.from('conversation_members').select('conversation_id, last_read_at').eq('user_id', me).is('left_at', null);
+    const myConvRes = await supabase
+      .from('conversation_members')
+      .select('conversation_id, last_read_at')
+      .eq('user_id', me)
+      .is('left_at', null);
     const myConvRows = must(myConvRes, 'conversation_members') as Row[];
     const convIds = myConvRows.map((r) => r.conversation_id as string);
     if (convIds.length > 0) {
       const [convRes, membersRes, messagesRes] = await Promise.all([
         supabase.from('conversations').select('*').in('id', convIds),
-        supabase.from('conversation_members').select('conversation_id, user_id, last_read_at').in('conversation_id', convIds).is('left_at', null),
-        supabase.from('messages').select('*').in('conversation_id', convIds).is('deleted_at', null).order('created_at', { ascending: false }).limit(500),
+        supabase
+          .from('conversation_members')
+          .select('conversation_id, user_id, last_read_at')
+          .in('conversation_id', convIds)
+          .is('left_at', null),
+        supabase
+          .from('messages')
+          .select('*')
+          .in('conversation_id', convIds)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .limit(500),
       ]);
       const members = must(membersRes, 'members') as Row[];
       const lastRead = new Map(myConvRows.map((r) => [r.conversation_id as string, r.last_read_at as string | null]));
@@ -188,10 +209,20 @@ export async function syncAll(): Promise<void> {
         const readers =
           m.sender_id === me
             ? members
-                .filter((x) => x.conversation_id === m.conversation_id && x.user_id !== me && x.last_read_at && new Date(x.last_read_at).getTime() >= new Date(m.created_at).getTime())
+                .filter(
+                  (x) =>
+                    x.conversation_id === m.conversation_id &&
+                    x.user_id !== me &&
+                    x.last_read_at &&
+                    new Date(x.last_read_at).getTime() >= new Date(m.created_at).getTime(),
+                )
                 .map((x) => x.user_id as string)
             : [];
-        return { ...msg, readBy: m.sender_id === me ? [me, ...readers] : msg.readBy, image: m.image_path ? messageUrls[m.image_path] : undefined };
+        return {
+          ...msg,
+          readBy: m.sender_id === me ? [me, ...readers] : msg.readBy,
+          image: m.image_path ? messageUrls[m.image_path] : undefined,
+        };
       });
     }
 
@@ -199,35 +230,87 @@ export async function syncAll(): Promise<void> {
     if (verified && neighborhoodId) {
       const nb = neighborhoodId;
       const since = new Date(Date.now() - 60 * 86400000).toISOString();
-      const [postsRes, savedRes, pollsRes, myVotesRes, eventsRes, listingsRes, favRes, lostRes, helpRes, issuesRes, bizRes, alertsRes, instRes, groupsRes, borrowRes] =
-        await Promise.all([
-          supabase
-            .from('posts')
-            .select('*, post_reactions(user_id, type), post_comments(count)')
-            .eq('neighborhood_id', nb)
-            .order('created_at', { ascending: false })
-            .limit(CONTENT_LIMIT),
-          supabase.from('saved_posts').select('post_id').eq('user_id', me),
-          supabase.from('polls').select('*, poll_options(id, text_ar, position)').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(CONTENT_LIMIT),
-          supabase.from('poll_votes').select('poll_id, option_id').eq('user_id', me),
-          supabase
-            .from('events')
-            .select('*, event_attendees(user_id, status, joined_at, waitlist_position)')
-            .eq('neighborhood_id', nb)
-            .gte('ends_at', since)
-            .order('starts_at', { ascending: true })
-            .limit(CONTENT_LIMIT),
-          supabase.from('marketplace_listings').select('*').eq('neighborhood_id', nb).neq('status', 'archived').order('created_at', { ascending: false }).limit(CONTENT_LIMIT),
-          supabase.from('marketplace_favorites').select('listing_id').eq('user_id', me),
-          supabase.from('lost_found_posts').select('*').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(CONTENT_LIMIT),
-          supabase.from('help_requests').select('*, help_request_responses(responder_id, status)').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(CONTENT_LIMIT),
-          supabase.from('issues').select('*, issue_engagements(user_id, kind), issue_updates(id, status, note, created_at)').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(CONTENT_LIMIT),
-          supabase.from('businesses').select('*, business_neighborhoods!inner(neighborhood_id), business_recommendations(id, author_id, body, sentiment, created_at, deleted_at)').eq('business_neighborhoods.neighborhood_id', nb).limit(CONTENT_LIMIT),
-          supabase.from('community_alerts').select('*').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(50),
-          supabase.from('institutions').select('*, institution_content(*)').eq('neighborhood_id', nb).limit(50),
-          supabase.from('community_groups').select('*').eq('neighborhood_id', nb).limit(100),
-          supabase.from('borrow_listings').select('*, borrow_requests(requester_id, status, created_at)').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(CONTENT_LIMIT),
-        ]);
+      const [
+        postsRes,
+        savedRes,
+        pollsRes,
+        myVotesRes,
+        eventsRes,
+        listingsRes,
+        favRes,
+        lostRes,
+        helpRes,
+        issuesRes,
+        bizRes,
+        alertsRes,
+        instRes,
+        groupsRes,
+        borrowRes,
+      ] = await Promise.all([
+        supabase
+          .from('posts')
+          .select('*, post_reactions(user_id, type), post_comments(count)')
+          .eq('neighborhood_id', nb)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+        supabase.from('saved_posts').select('post_id').eq('user_id', me),
+        supabase
+          .from('polls')
+          .select('*, poll_options(id, text_ar, position)')
+          .eq('neighborhood_id', nb)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+        supabase.from('poll_votes').select('poll_id, option_id').eq('user_id', me),
+        supabase
+          .from('events')
+          .select('*, event_attendees(user_id, status, joined_at, waitlist_position)')
+          .eq('neighborhood_id', nb)
+          .gte('ends_at', since)
+          .order('starts_at', { ascending: true })
+          .limit(CONTENT_LIMIT),
+        supabase
+          .from('marketplace_listings')
+          .select('*')
+          .eq('neighborhood_id', nb)
+          .neq('status', 'archived')
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+        supabase.from('marketplace_favorites').select('listing_id').eq('user_id', me),
+        supabase
+          .from('lost_found_posts')
+          .select('*')
+          .eq('neighborhood_id', nb)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+        supabase
+          .from('help_requests')
+          .select('*, help_request_responses(responder_id, status)')
+          .eq('neighborhood_id', nb)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+        supabase
+          .from('issues')
+          .select('*, issue_engagements(user_id, kind), issue_updates(id, status, note, created_at)')
+          .eq('neighborhood_id', nb)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+        supabase
+          .from('businesses')
+          .select(
+            '*, business_neighborhoods!inner(neighborhood_id), business_recommendations(id, author_id, body, sentiment, created_at, deleted_at)',
+          )
+          .eq('business_neighborhoods.neighborhood_id', nb)
+          .limit(CONTENT_LIMIT),
+        supabase.from('community_alerts').select('*').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(50),
+        supabase.from('institutions').select('*, institution_content(*)').eq('neighborhood_id', nb).limit(50),
+        supabase.from('community_groups').select('*').eq('neighborhood_id', nb).limit(100),
+        supabase
+          .from('borrow_listings')
+          .select('*, borrow_requests(requester_id, status, created_at)')
+          .eq('neighborhood_id', nb)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT),
+      ]);
 
       const saved = new Set((must(savedRes, 'saved') as Row[]).map((r) => r.post_id));
       const favs = new Set((must(favRes, 'favorites') as Row[]).map((r) => r.listing_id));
@@ -274,31 +357,46 @@ export async function syncAll(): Promise<void> {
       entities.helpRequests = helpRows.map(mapHelp);
       entities.issues = issueRows.map((i) => mapIssue(i, imgs));
       entities.issueUpdates = issueRows.flatMap((i) =>
-        ((i.issue_updates ?? []) as Row[]).map((u): IssueUpdate => ({ id: u.id, issueId: i.id, status: u.status, note: u.note ?? undefined, createdAt: u.created_at })),
+        ((i.issue_updates ?? []) as Row[]).map((u): IssueUpdate => ({
+          id: u.id,
+          issueId: i.id,
+          status: u.status,
+          note: u.note ?? undefined,
+          createdAt: u.created_at,
+        })),
       );
       entities.businesses = bizRows.map((b) => mapBusiness(b, img));
       entities.recommendations = bizRows.flatMap((b) =>
         ((b.business_recommendations ?? []) as Row[])
           .filter((r) => !r.deleted_at)
-          .map((r): Recommendation => ({ id: r.id, businessId: b.id, authorId: r.author_id, textAr: r.body, createdAt: r.created_at, sentiment: r.sentiment })),
+          .map((r): Recommendation => ({
+            id: r.id,
+            businessId: b.id,
+            authorId: r.author_id,
+            textAr: r.body,
+            createdAt: r.created_at,
+            sentiment: r.sentiment,
+          })),
       );
       entities.alerts = (must(alertsRes, 'alerts') as Row[])
         .filter((a) => !a.expires_at || new Date(a.expires_at).getTime() > Date.now())
-        .map(
-          (a): AlertItem => ({
-            id: a.id,
-            titleAr: a.title_ar,
-            bodyAr: a.body_ar,
-            severity: a.severity,
-            neighborhoodId: a.neighborhood_id,
-            createdAt: a.created_at,
-            expiresAt: a.expires_at ?? undefined,
-          }),
-        );
+        .map((a): AlertItem => ({
+          id: a.id,
+          titleAr: a.title_ar,
+          bodyAr: a.body_ar,
+          severity: a.severity,
+          neighborhoodId: a.neighborhood_id,
+          createdAt: a.created_at,
+          expiresAt: a.expires_at ?? undefined,
+        }));
       entities.institutions = instRows.map((i) => mapInstitution(i, img));
-      entities.communityGroups = (must(groupsRes, 'groups') as Row[]).map(
-        (g): CommunityGroup => ({ id: g.id, name: g.name, description: g.description, neighborhoodId: g.neighborhood_id, memberCount: 0 }),
-      );
+      entities.communityGroups = (must(groupsRes, 'groups') as Row[]).map((g): CommunityGroup => ({
+        id: g.id,
+        name: g.name,
+        description: g.description,
+        neighborhoodId: g.neighborhood_id,
+        memberCount: 0,
+      }));
       entities.borrowItems = borrowRows.map((b) => mapBorrow(b, imgs));
     }
 
@@ -328,9 +426,14 @@ export async function syncAll(): Promise<void> {
       supabase.from('reputation_events').select('*').in('user_id', ids).order('created_at', { ascending: false }).limit(500),
     ]);
     const reputation = (repRes.data ?? []) as Row[];
-    entities.reputationEvents = reputation.map(
-      (r): ReputationEvent => ({ id: r.id, userId: r.user_id, type: r.type, reasonAr: r.reason_ar, fromUserId: r.actor_id ?? undefined, createdAt: r.created_at }),
-    );
+    entities.reputationEvents = reputation.map((r): ReputationEvent => ({
+      id: r.id,
+      userId: r.user_id,
+      type: r.type,
+      reasonAr: r.reason_ar,
+      fromUserId: r.actor_id ?? undefined,
+      createdAt: r.created_at,
+    }));
     entities.users = (must(profilesRes, 'profiles') as Row[]).map((p) =>
       mapProfile(p, {
         isSelf: p.id === me,
@@ -417,7 +520,14 @@ export function stopRealtime() {
 
 export function mapProfile(
   p: Row,
-  extra: { isSelf: boolean; neighborhoodId: string; verification: VerificationStatus; eventsHosted: number; neighborsHelped: number; thanksReceived: number },
+  extra: {
+    isSelf: boolean;
+    neighborhoodId: string;
+    verification: VerificationStatus;
+    eventsHosted: number;
+    neighborsHelped: number;
+    thanksReceived: number;
+  },
 ): User {
   const points = Number(p.reputation_points ?? 0);
   return {
@@ -602,9 +712,13 @@ function mapInstitution(i: Row, img: (p?: string | null) => string | undefined):
     neighborhoodId: i.neighborhood_id,
     coverImage: img(i.cover_image_path),
     verified: !!i.verified,
-    announcements: content.filter((c) => c.kind === 'announcement').map((c) => ({ id: c.id, textAr: c.body_ar ?? c.title_ar ?? '', createdAt: c.created_at })),
+    announcements: content
+      .filter((c) => c.kind === 'announcement')
+      .map((c) => ({ id: c.id, textAr: c.body_ar ?? c.title_ar ?? '', createdAt: c.created_at })),
     classes: content.filter((c) => c.kind === 'class').map((c) => ({ id: c.id, titleAr: c.title_ar ?? '', schedule: c.schedule ?? '' })),
-    volunteerOpportunities: content.filter((c) => c.kind === 'volunteer').map((c) => ({ id: c.id, titleAr: c.title_ar ?? '', spotsLeft: c.spots_left ?? 0 })),
+    volunteerOpportunities: content
+      .filter((c) => c.kind === 'volunteer')
+      .map((c) => ({ id: c.id, titleAr: c.title_ar ?? '', spotsLeft: c.spots_left ?? 0 })),
   };
 }
 

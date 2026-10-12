@@ -18,7 +18,11 @@ export function LostFoundCard({ item }: { item: LostFoundPost }) {
   return (
     <Pressable
       onPress={() => router.push(`/lost-found/${item.id}`)}
-      style={[styles.card, theme.row(), { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
+      style={[
+        styles.card,
+        theme.row(),
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+      ]}
       accessibilityRole="button"
     >
       {item.image ? (

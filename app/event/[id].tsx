@@ -76,7 +76,11 @@ export default function EventDetailScreen() {
   };
 
   const shareEvent = () =>
-    shareContent({ title: event.title, message: `${event.title} — ${formatDay(event.startsAt, locale)} ${formatTimeRange(event.startsAt, event.endsAt, locale)}`, url: links.event(event.id) });
+    shareContent({
+      title: event.title,
+      message: `${event.title} — ${formatDay(event.startsAt, locale)} ${formatTimeRange(event.startsAt, event.endsAt, locale)}`,
+      url: links.event(event.id),
+    });
 
   const joinLabel = isFull ? t.events.joinWaitlist : t.events.join;
   const hasPin = event.approxLat != null && event.approxLng != null;
@@ -107,7 +111,11 @@ export default function EventDetailScreen() {
             <Badge label={event.kind === 'activity' ? t.events.kindActivity : t.events.kindEvent} tone="primary" />
             <Badge label={categoryLabel} tone="neutral" />
             {occasionLabel ? <Badge label={occasionLabel} tone="info" /> : null}
-            {event.cancelled ? <Badge label={t.events.cancelled} tone="danger" /> : ended ? <Badge label={t.events.ended} tone="warning" /> : null}
+            {event.cancelled ? (
+              <Badge label={t.events.cancelled} tone="danger" />
+            ) : ended ? (
+              <Badge label={t.events.ended} tone="warning" />
+            ) : null}
           </View>
           <Text style={[theme.text('heading1'), { marginTop: 10 }]}>{event.title}</Text>
 
@@ -135,7 +143,9 @@ export default function EventDetailScreen() {
             <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>{t.events.noLocationOnMap}</Text>
           )}
 
-          {event.description ? <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 16 }]}>{event.description}</Text> : null}
+          {event.description ? (
+            <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 16 }]}>{event.description}</Text>
+          ) : null}
 
           {event.rules ? (
             <Card style={{ marginTop: 14 }}>
@@ -174,7 +184,13 @@ export default function EventDetailScreen() {
                 <Button label={joinLabel} onPress={onJoin} loading={pending} fullWidth size="lg" />
               )
             ) : null}
-            <Button label={t.events.share} onPress={shareEvent} variant="outline" icon={<Share2 size={16} color={theme.colors.primary} />} fullWidth />
+            <Button
+              label={t.events.share}
+              onPress={shareEvent}
+              variant="outline"
+              icon={<Share2 size={16} color={theme.colors.primary} />}
+              fullWidth
+            />
             {discussion ? (
               <Button
                 label={t.events.discussion}
@@ -185,7 +201,9 @@ export default function EventDetailScreen() {
               />
             ) : null}
             {!isOwn ? <Button label={t.events.messageHost} onPress={messageHost} variant="ghost" fullWidth /> : null}
-            {isOwn && !event.cancelled && !ended ? <Button label={t.events.cancelEvent} onPress={() => setCancelOpen(true)} variant="danger" fullWidth /> : null}
+            {isOwn && !event.cancelled && !ended ? (
+              <Button label={t.events.cancelEvent} onPress={() => setCancelOpen(true)} variant="danger" fullWidth />
+            ) : null}
           </View>
 
           {going > 0 ? (

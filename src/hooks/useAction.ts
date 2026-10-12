@@ -45,7 +45,7 @@ export function useAction() {
   const [pending, setPending] = useState(false);
 
   const run = useCallback(
-    async <T,>(fn: () => Promise<T>): Promise<ActionResult<T>> => {
+    async <T>(fn: () => Promise<T>): Promise<ActionResult<T>> => {
       setPending(true);
       try {
         return { ok: true, value: await fn() };

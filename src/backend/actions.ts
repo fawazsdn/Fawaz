@@ -26,7 +26,8 @@ import { requestSync } from './sync';
  * stable `code` that screens map to a translated message.
  */
 
-export type ActionErrorCode = 'not_signed_in' | 'not_verified' | 'no_neighborhood' | 'offline' | 'closed' | 'forbidden' | 'invalid' | 'unknown';
+export type ActionErrorCode =
+  'not_signed_in' | 'not_verified' | 'no_neighborhood' | 'offline' | 'closed' | 'forbidden' | 'invalid' | 'unknown';
 
 export class ActionError extends Error {
   code: ActionErrorCode;
@@ -83,7 +84,14 @@ export function approximateCoordinate(value: number): number {
 
 // ---------------------------------------------------------------- profile --
 
-export async function saveProfile(input: { firstName: string; lastName: string; namePrivacy: NamePrivacy; bio?: string; localAvatarUri?: string; locale?: 'ar' | 'en' }) {
+export async function saveProfile(input: {
+  firstName: string;
+  lastName: string;
+  namePrivacy: NamePrivacy;
+  bio?: string;
+  localAvatarUri?: string;
+  locale?: 'ar' | 'en';
+}) {
   return run(async () => {
     const uid = me();
     let avatarUrl: string | undefined;
@@ -110,7 +118,9 @@ export async function saveProfile(input: { firstName: string; lastName: string; 
 export async function chooseNeighborhood(neighborhoodId: string) {
   return run(async () => {
     me();
-    const row = check(await supabase.rpc('select_neighborhood', { target_neighborhood_id: neighborhoodId })) as { verification_status?: string } | null;
+    const row = check(await supabase.rpc('select_neighborhood', { target_neighborhood_id: neighborhoodId })) as {
+      verification_status?: string;
+    } | null;
     useStore.getState().patchSession({
       neighborhoodId,
       verification: row?.verification_status === 'verified' ? 'verified' : 'pending',
@@ -165,7 +175,10 @@ export async function toggleReaction(postId: string, type: 'like' | 'helpful') {
 export async function toggleSavePost(postId: string) {
   return run(async () => {
     const uid = me();
-    const saved = useStore.getState().posts.find((p) => p.id === postId)?.savedBy.includes(uid);
+    const saved = useStore
+      .getState()
+      .posts.find((p) => p.id === postId)
+      ?.savedBy.includes(uid);
     if (saved) check(await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', uid));
     else check(await supabase.from('saved_posts').insert({ post_id: postId, user_id: uid }));
   });
@@ -183,7 +196,11 @@ export async function loadComments(postId: string): Promise<Comment[]> {
   try {
     const uid = getCurrentUserId();
     const rows = check(
-      await supabase.from('post_comments').select('*, comment_reactions(user_id)').eq('post_id', postId).order('created_at', { ascending: true }),
+      await supabase
+        .from('post_comments')
+        .select('*, comment_reactions(user_id)')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true }),
     ) as Record<string, unknown>[];
     const comments: Comment[] = rows.map((c) => ({
       id: c.id as string,
@@ -237,7 +254,10 @@ export async function toggleCommentLike(commentId: string, postId: string) {
   return run(
     async () => {
       const uid = me();
-      const liked = useStore.getState().comments.find((c) => c.id === commentId)?.likedBy.includes(uid);
+      const liked = useStore
+        .getState()
+        .comments.find((c) => c.id === commentId)
+        ?.likedBy.includes(uid);
       if (liked) check(await supabase.from('comment_reactions').delete().eq('comment_id', commentId).eq('user_id', uid));
       else check(await supabase.from('comment_reactions').insert({ comment_id: commentId, user_id: uid, type: 'like' }));
       await loadComments(postId);
@@ -381,7 +401,10 @@ export async function createIssue(input: {
 export async function markIssueAffected(issueId: string) {
   return run(async () => {
     const uid = me();
-    const already = useStore.getState().issues.find((i) => i.id === issueId)?.affectedUserIds.includes(uid);
+    const already = useStore
+      .getState()
+      .issues.find((i) => i.id === issueId)
+      ?.affectedUserIds.includes(uid);
     if (!already) check(await supabase.from('issue_engagements').insert({ issue_id: issueId, user_id: uid, kind: 'affected' }));
   });
 }
@@ -389,8 +412,12 @@ export async function markIssueAffected(issueId: string) {
 export async function toggleFollowIssue(issueId: string) {
   return run(async () => {
     const uid = me();
-    const following = useStore.getState().issues.find((i) => i.id === issueId)?.followerIds.includes(uid);
-    if (following) check(await supabase.from('issue_engagements').delete().eq('issue_id', issueId).eq('user_id', uid).eq('kind', 'following'));
+    const following = useStore
+      .getState()
+      .issues.find((i) => i.id === issueId)
+      ?.followerIds.includes(uid);
+    if (following)
+      check(await supabase.from('issue_engagements').delete().eq('issue_id', issueId).eq('user_id', uid).eq('kind', 'following'));
     else check(await supabase.from('issue_engagements').insert({ issue_id: issueId, user_id: uid, kind: 'following' }));
   });
 }
@@ -424,7 +451,9 @@ export async function createHelpRequest(input: { title: string; category: HelpCa
 export async function offerHelp(helpRequestId: string, message?: string) {
   return run(async () => {
     const uid = me();
-    check(await supabase.from('help_request_responses').insert({ help_request_id: helpRequestId, responder_id: uid, message: message ?? null }));
+    check(
+      await supabase.from('help_request_responses').insert({ help_request_id: helpRequestId, responder_id: uid, message: message ?? null }),
+    );
   });
 }
 
@@ -474,7 +503,10 @@ export async function createListing(input: {
 export async function toggleSaveListing(listingId: string) {
   return run(async () => {
     const uid = me();
-    const saved = useStore.getState().marketplaceListings.find((m) => m.id === listingId)?.savedBy.includes(uid);
+    const saved = useStore
+      .getState()
+      .marketplaceListings.find((m) => m.id === listingId)
+      ?.savedBy.includes(uid);
     if (saved) check(await supabase.from('marketplace_favorites').delete().eq('listing_id', listingId).eq('user_id', uid));
     else check(await supabase.from('marketplace_favorites').insert({ listing_id: listingId, user_id: uid }));
   });
@@ -500,13 +532,21 @@ export async function recommendBusiness(businessId: string, text: string) {
   return run(async () => {
     const uid = me();
     const nb = verifiedNeighborhood();
-    check(await supabase.from('business_recommendations').insert({ business_id: businessId, author_id: uid, neighborhood_id: nb, body: text }));
+    check(
+      await supabase.from('business_recommendations').insert({ business_id: businessId, author_id: uid, neighborhood_id: nb, body: text }),
+    );
   });
 }
 
 // ------------------------------------------------------------- lost/found --
 
-export async function createLostFound(input: { kind: 'pet' | 'item'; title: string; description: string; localImage?: string; status: LostFoundStatus }) {
+export async function createLostFound(input: {
+  kind: 'pet' | 'item';
+  title: string;
+  description: string;
+  localImage?: string;
+  status: LostFoundStatus;
+}) {
   return run(async () => {
     const uid = me();
     const nb = verifiedNeighborhood();
@@ -557,14 +597,24 @@ export async function sendMessage(conversationId: string, text: string, localIma
       if (!nb) throw new ActionError('no_neighborhood');
       imagePath = await uploadCommunityImage(localImage, nb, uid);
     }
-    check(await supabase.from('messages').insert({ conversation_id: conversationId, sender_id: uid, body: text || null, image_path: imagePath }));
+    check(
+      await supabase
+        .from('messages')
+        .insert({ conversation_id: conversationId, sender_id: uid, body: text || null, image_path: imagePath }),
+    );
   });
 }
 
 export async function markConversationRead(conversationId: string) {
   return run(async () => {
     const uid = me();
-    check(await supabase.from('conversation_members').update({ last_read_at: new Date().toISOString() }).eq('conversation_id', conversationId).eq('user_id', uid));
+    check(
+      await supabase
+        .from('conversation_members')
+        .update({ last_read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('user_id', uid),
+    );
   });
 }
 
@@ -614,7 +664,11 @@ export async function toggleMuteUser(userId: string) {
 export async function submitReport(targetType: ReportTargetType, targetId: string, reason: ReportReason, note?: string) {
   return run(async () => {
     const uid = me();
-    check(await supabase.from('reports').insert({ reporter_id: uid, target_type: targetType, target_id: targetId, reason, description: note ?? null }));
+    check(
+      await supabase
+        .from('reports')
+        .insert({ reporter_id: uid, target_type: targetType, target_id: targetId, reason, description: note ?? null }),
+    );
   });
 }
 

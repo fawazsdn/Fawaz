@@ -6,7 +6,18 @@ beforeEach(() => resetStoreForTests());
 describe('store contains no seeded content', () => {
   it('starts with every entity list empty (no demo posts, events, people or messages)', () => {
     const s = useStore.getState();
-    for (const key of ['users', 'posts', 'events', 'polls', 'conversations', 'messages', 'notifications', 'marketplaceListings', 'businesses', 'alerts'] as const) {
+    for (const key of [
+      'users',
+      'posts',
+      'events',
+      'polls',
+      'conversations',
+      'messages',
+      'notifications',
+      'marketplaceListings',
+      'businesses',
+      'alerts',
+    ] as const) {
       expect(s[key]).toEqual([]);
     }
     expect(s.referral.joinedCount).toBeNull();
@@ -58,7 +69,10 @@ describe('mergePersistedState', () => {
   });
 
   it('drops an old phone/OTP "authenticated" session that has no real Supabase user', () => {
-    const merged = mergePersistedState({ session: { isAuthenticated: true, otpVerified: true, phone: '+966500000000', authProvider: 'phone' } }, current());
+    const merged = mergePersistedState(
+      { session: { isAuthenticated: true, otpVerified: true, phone: '+966500000000', authProvider: 'phone' } },
+      current(),
+    );
     expect(merged.session.isAuthenticated).toBe(false);
     expect(merged.session.authProvider).toBeNull();
     expect((merged.session as unknown as Record<string, unknown>).phone).toBeUndefined();
@@ -66,7 +80,10 @@ describe('mergePersistedState', () => {
 
   it('keeps preferences and a real session', () => {
     const merged = mergePersistedState(
-      { settings: { locale: 'en', demoRole: 'moderator' }, session: { isAuthenticated: true, supabaseUserId: TEST_ME, authProvider: 'email' } },
+      {
+        settings: { locale: 'en', demoRole: 'moderator' },
+        session: { isAuthenticated: true, supabaseUserId: TEST_ME, authProvider: 'email' },
+      },
       current(),
     );
     expect(merged.settings.locale).toBe('en');

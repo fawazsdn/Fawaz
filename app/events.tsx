@@ -56,15 +56,31 @@ export default function ActivitiesScreen() {
   }, []);
 
   const visible = useMemo(
-    () => allEvents.filter((e) => e.neighborhoodId === neighborhoodId && (kind === 'all' || e.kind === kind) && (category === 'all' || e.category === category)),
+    () =>
+      allEvents.filter(
+        (e) =>
+          e.neighborhoodId === neighborhoodId && (kind === 'all' || e.kind === kind) && (category === 'all' || e.category === category),
+      ),
     [allEvents, neighborhoodId, kind, category],
   );
   const groups = useMemo(() => groupActivities(visible), [visible]);
 
-  const categories: (EventCategory | 'all')[] = ['all', 'football', 'padel', 'walking', 'family', 'kids', 'iftar', 'cleanup', 'coffee', 'community'];
+  const categories: (EventCategory | 'all')[] = [
+    'all',
+    'football',
+    'padel',
+    'walking',
+    'family',
+    'kids',
+    'iftar',
+    'cleanup',
+    'coffee',
+    'community',
+  ];
   const labels = t.eventCreate.categories as Record<string, string>;
   const loading = syncStatus === 'loading' && allEvents.length === 0;
-  const empty = !loading && groups.featured.length + groups.today.length + groups.thisWeek.length + groups.upcoming.length + groups.past.length === 0;
+  const empty =
+    !loading && groups.featured.length + groups.today.length + groups.thisWeek.length + groups.upcoming.length + groups.past.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -87,7 +103,11 @@ export default function ActivitiesScreen() {
             />
           </View>
           <View style={{ marginBottom: 10 }}>
-            <FilterBar options={categories.map((c) => ({ key: c, label: c === 'all' ? t.common.all : labels[c] }))} selected={category} onSelect={(k) => setCategory(k as EventCategory | 'all')} />
+            <FilterBar
+              options={categories.map((c) => ({ key: c, label: c === 'all' ? t.common.all : labels[c] }))}
+              selected={category}
+              onSelect={(k) => setCategory(k as EventCategory | 'all')}
+            />
           </View>
           <ScrollView
             contentContainerStyle={{ paddingBottom: 40 }}
@@ -99,7 +119,13 @@ export default function ActivitiesScreen() {
                 <SkeletonCardRow count={3} />
               </View>
             ) : empty ? (
-              <EmptyState icon={CalendarPlus} title={t.events.noActivities} body={t.events.noActivitiesBody} actionLabel={t.events.create} onAction={() => router.push('/event/create')} />
+              <EmptyState
+                icon={CalendarPlus}
+                title={t.events.noActivities}
+                body={t.events.noActivitiesBody}
+                actionLabel={t.events.create}
+                onAction={() => router.push('/event/create')}
+              />
             ) : (
               <>
                 <Section title={t.events.featured} events={groups.featured} wide />
@@ -122,7 +148,11 @@ function Section({ title, events, wide }: { title: string; events: CommunityEven
   return (
     <View style={{ marginBottom: 20 }}>
       <SectionHeader title={title} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}
+      >
         {events.map((e) => (
           <View key={e.id} style={{ width: wide ? 290 : 250 }}>
             <EventCard event={e} compact={!wide} />

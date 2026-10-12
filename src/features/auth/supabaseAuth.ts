@@ -24,8 +24,7 @@ export type AuthErrorReason =
   | 'unknown';
 
 export type AuthOutcome =
-  | { ok: true; userId: string; email: string | null; provider: SignInProvider }
-  | { ok: false; reason: AuthErrorReason; message?: string };
+  { ok: true; userId: string; email: string | null; provider: SignInProvider } | { ok: false; reason: AuthErrorReason; message?: string };
 
 /** Kept for existing callers (Apple/Google buttons). */
 export type SignInOutcome = AuthOutcome;
@@ -54,9 +53,23 @@ export function classifyAuthError(err: { message?: string; code?: string; status
   if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) return 'email_not_confirmed';
   if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered')) return 'user_exists';
   if (code === 'weak_password' || msg.includes('password should')) return 'weak_password';
-  if (code === 'email_address_invalid' || code === 'validation_failed' || msg.includes('invalid format') || msg.includes('unable to validate email')) return 'invalid_email';
-  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || err?.status === 429 || msg.includes('rate limit')) return 'rate_limited';
-  if (code === 'otp_expired' || code === 'flow_state_expired' || code === 'flow_state_not_found' || msg.includes('expired') || msg.includes('code verifier')) return 'link_expired';
+  if (
+    code === 'email_address_invalid' ||
+    code === 'validation_failed' ||
+    msg.includes('invalid format') ||
+    msg.includes('unable to validate email')
+  )
+    return 'invalid_email';
+  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || err?.status === 429 || msg.includes('rate limit'))
+    return 'rate_limited';
+  if (
+    code === 'otp_expired' ||
+    code === 'flow_state_expired' ||
+    code === 'flow_state_not_found' ||
+    msg.includes('expired') ||
+    msg.includes('code verifier')
+  )
+    return 'link_expired';
   if (msg.includes('network') || msg.includes('fetch')) return 'network';
   return 'unknown';
 }
@@ -68,7 +81,11 @@ function providerOf(user: { app_metadata?: { provider?: string } }): SignInProvi
 
 // ------------------------------------------------------------------ email --
 
-export async function signUpWithEmail(email: string, password: string, locale: 'ar' | 'en'): Promise<AuthOutcome & { needsConfirmation?: boolean }> {
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  locale: 'ar' | 'en',
+): Promise<AuthOutcome & { needsConfirmation?: boolean }> {
   const { data, error } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
@@ -90,7 +107,11 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 export async function resendConfirmation(email: string): Promise<{ ok: boolean; reason?: AuthErrorReason }> {
-  const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: AUTH_CALLBACK_URL } });
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email.trim().toLowerCase(),
+    options: { emailRedirectTo: AUTH_CALLBACK_URL },
+  });
   return error ? { ok: false, reason: classifyAuthError(error) } : { ok: true };
 }
 
@@ -166,11 +187,13 @@ export async function signInWithApple(): Promise<AuthOutcome> {
 export async function signInWithGoogle(): Promise<AuthOutcome> {
   const redirectTo = AuthSession.makeRedirectUri({ scheme: 'haratna', path: 'auth/callback' });
   const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } });
-  if (error || !data.url) return { ok: false, reason: classifyAuthError(error), message: error?.message ?? 'Could not start Google sign-in' };
+  if (error || !data.url)
+    return { ok: false, reason: classifyAuthError(error), message: error?.message ?? 'Could not start Google sign-in' };
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
   if (result.type === 'cancel' || result.type === 'dismiss') return { ok: false, reason: 'cancelled' };
-  if (result.type !== 'success' || !result.url) return { ok: false, reason: 'unknown', message: `Unexpected auth session result: ${result.type}` };
+  if (result.type !== 'success' || !result.url)
+    return { ok: false, reason: 'unknown', message: `Unexpected auth session result: ${result.type}` };
 
   const url = new URL(result.url);
   const code = url.searchParams.get('code');

@@ -76,7 +76,10 @@ function windowRange(window: TimeWindow, now: Date): [Date, Date] {
     case 'today':
       return [now, new Date(startOfToday.getTime() + day)];
     case 'tonight':
-      return [new Date(Math.max(now.getTime(), startOfToday.getTime() + 17 * 3600000)), new Date(startOfToday.getTime() + day + 3 * 3600000)];
+      return [
+        new Date(Math.max(now.getTime(), startOfToday.getTime() + 17 * 3600000)),
+        new Date(startOfToday.getTime() + day + 3 * 3600000),
+      ];
     case 'tomorrow':
       return [new Date(startOfToday.getTime() + day), new Date(startOfToday.getTime() + 2 * day)];
     case 'week':
@@ -188,14 +191,20 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
       case 'family': {
         const [from, to] = windowRange(q.window, now);
         const all = (await source.events(from.toISOString(), to.toISOString())).filter((e) => !e.cancelled);
-        const filtered = q.topic === 'sports' ? all.filter((e) => SPORTS.has(e.category)) : q.topic === 'family' ? all.filter((e) => FAMILY.has(e.category)) : all;
+        const filtered =
+          q.topic === 'sports'
+            ? all.filter((e) => SPORTS.has(e.category))
+            : q.topic === 'family'
+              ? all.filter((e) => FAMILY.has(e.category))
+              : all;
         const period = windowPhrase(q.window, lang);
         if (filtered.length === 0) {
           if (lang === 'ar') {
             const what = q.topic === 'sports' ? 'مباريات أو أنشطة رياضية' : q.topic === 'family' ? 'فعاليات عائلية' : 'فعاليات';
             return `حالياً ما فيه ${what} مسجلة في ${hood} ${period}. تقدر تنظّم وحدة من زر «إنشاء».`;
           }
-          const what = q.topic === 'sports' ? 'sports games or activities' : q.topic === 'family' ? 'family events' : 'activities or events';
+          const what =
+            q.topic === 'sports' ? 'sports games or activities' : q.topic === 'family' ? 'family events' : 'activities or events';
           return `There are currently no ${what} listed in ${hood} ${period}. You can organize one from the Create button.`;
         }
         const top = filtered.slice(0, 3).map((e) => describeEvent(e, now, lang));
@@ -215,7 +224,9 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
         const label = focus ? ISSUE_LABEL[focus][lang] : null;
         if (list.length === 0) {
           if (lang === 'ar') return label ? `ما فيه بلاغات ${label} مفتوحة في ${hood} حالياً.` : `ما فيه بلاغات مفتوحة في ${hood} حالياً.`;
-          return label ? `There are no open ${label} reports in ${hood} right now.` : `There are no open issue reports in ${hood} right now.`;
+          return label
+            ? `There are no open ${label} reports in ${hood} right now.`
+            : `There are no open issue reports in ${hood} right now.`;
         }
         const latest = list[0];
         if (lang === 'ar') {
@@ -234,15 +245,22 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
             ? `ما لقيت ${label ? `توصيات لـ${label}` : 'محلات أو خدمات موصى فيها'} في ${hood} لحد الحين. تقدر تسأل الجيران بمنشور.`
             : `I didn't find any ${label ? `${label} recommendations` : 'recommended businesses or services'} in ${hood} yet. You could ask your neighbors in a post.`;
         }
-        const top = list.slice(0, 3).map((b) =>
-          lang === 'ar' ? `«${b.name}» (${n(b.recommendations, 'ar')} توصية)` : `"${b.name}" (${b.recommendations} recommendation${b.recommendations === 1 ? '' : 's'})`,
-        );
-        return lang === 'ar' ? `الأكثر توصية من الجيران: ${listJoin(top, 'ar')}.` : `Most recommended by neighbors: ${listJoin(top, 'en')}.`;
+        const top = list
+          .slice(0, 3)
+          .map((b) =>
+            lang === 'ar'
+              ? `«${b.name}» (${n(b.recommendations, 'ar')} توصية)`
+              : `"${b.name}" (${b.recommendations} recommendation${b.recommendations === 1 ? '' : 's'})`,
+          );
+        return lang === 'ar'
+          ? `الأكثر توصية من الجيران: ${listJoin(top, 'ar')}.`
+          : `Most recommended by neighbors: ${listJoin(top, 'en')}.`;
       }
 
       case 'marketplace': {
         const list = await source.listings();
-        if (list.length === 0) return lang === 'ar' ? `ما فيه إعلانات في حراج ${hood} حالياً.` : `There are no marketplace listings in ${hood} right now.`;
+        if (list.length === 0)
+          return lang === 'ar' ? `ما فيه إعلانات في حراج ${hood} حالياً.` : `There are no marketplace listings in ${hood} right now.`;
         const free = list.filter((l) => l.listingType === 'free').length;
         return lang === 'ar'
           ? `فيه ${n(list.length, 'ar')} إعلان متاح في حراج الحي${free ? `، منها ${n(free, 'ar')} ببلاش` : ''}. أحدثها: «${list[0].title}».`
@@ -251,7 +269,10 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
 
       case 'help': {
         const list = await source.openHelpRequests();
-        if (list.length === 0) return lang === 'ar' ? 'ما فيه طلبات مساعدة مفتوحة من الجيران حالياً.' : 'There are no open help requests from neighbors right now.';
+        if (list.length === 0)
+          return lang === 'ar'
+            ? 'ما فيه طلبات مساعدة مفتوحة من الجيران حالياً.'
+            : 'There are no open help requests from neighbors right now.';
         return lang === 'ar'
           ? `فيه ${n(list.length, 'ar')} طلب مساعدة مفتوح. آخرها: «${list[0].title}».`
           : `There ${list.length === 1 ? 'is 1 open help request' : `are ${list.length} open help requests`}. Latest: "${list[0].title}".`;
@@ -259,7 +280,8 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
 
       case 'polls': {
         const list = await source.openPolls();
-        if (list.length === 0) return lang === 'ar' ? 'ما فيه تصويتات مفتوحة في الحي حالياً.' : 'There are no open polls in the neighborhood right now.';
+        if (list.length === 0)
+          return lang === 'ar' ? 'ما فيه تصويتات مفتوحة في الحي حالياً.' : 'There are no open polls in the neighborhood right now.';
         const p = list[0];
         return lang === 'ar'
           ? `فيه ${n(list.length, 'ar')} تصويت مفتوح. آخرها: «${p.question}» (${n(p.totalVotes, 'ar')} صوت حتى الآن).`
@@ -268,7 +290,10 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
 
       case 'lostFound': {
         const list = (await source.lostFound()).filter((l) => l.status !== 'reunited');
-        if (list.length === 0) return lang === 'ar' ? 'ما فيه بلاغات مفقودات مفتوحة في الحي حالياً.' : 'There are no open lost & found posts in the neighborhood right now.';
+        if (list.length === 0)
+          return lang === 'ar'
+            ? 'ما فيه بلاغات مفقودات مفتوحة في الحي حالياً.'
+            : 'There are no open lost & found posts in the neighborhood right now.';
         const lost = list.filter((l) => l.status === 'lost').length;
         return lang === 'ar'
           ? `فيه ${n(list.length, 'ar')} منشور مفقودات (${n(lost, 'ar')} مفقود). آخرها: «${list[0].title}».`
@@ -278,7 +303,11 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
       case 'summary':
       default: {
         const [from, to] = windowRange(q.window === 'upcoming' ? 'today' : q.window, now);
-        const [events, issues, help] = await Promise.all([source.events(from.toISOString(), to.toISOString()), source.openIssues(), source.openHelpRequests()]);
+        const [events, issues, help] = await Promise.all([
+          source.events(from.toISOString(), to.toISOString()),
+          source.openIssues(),
+          source.openHelpRequests(),
+        ]);
         const active = events.filter((e) => !e.cancelled);
         const period = windowPhrase(q.window === 'upcoming' ? 'today' : q.window, lang);
         if (active.length === 0 && issues.length === 0 && help.length === 0) {
@@ -287,11 +316,19 @@ export async function composeAnswer(q: ParsedQuestion, ctx: AnswerContext): Prom
             : `There's currently nothing listed in ${hood} ${period} — no activities, open issue reports, or help requests.`;
         }
         if (lang === 'ar') {
-          const parts = [`${n(active.length, 'ar')} فعالية ${period}`, `${n(issues.length, 'ar')} بلاغ مفتوح`, `${n(help.length, 'ar')} طلب مساعدة`];
+          const parts = [
+            `${n(active.length, 'ar')} فعالية ${period}`,
+            `${n(issues.length, 'ar')} بلاغ مفتوح`,
+            `${n(help.length, 'ar')} طلب مساعدة`,
+          ];
           const next = active[0] ? ` أقربها: ${describeEvent(active[0], now, 'ar')}.` : '';
           return `في ${hood}: ${parts.join('، ')}.${next}`;
         }
-        const parts = [`${active.length} event${active.length === 1 ? '' : 's'} ${period}`, `${issues.length} open issue report${issues.length === 1 ? '' : 's'}`, `${help.length} help request${help.length === 1 ? '' : 's'}`];
+        const parts = [
+          `${active.length} event${active.length === 1 ? '' : 's'} ${period}`,
+          `${issues.length} open issue report${issues.length === 1 ? '' : 's'}`,
+          `${help.length} help request${help.length === 1 ? '' : 's'}`,
+        ];
         const next = active[0] ? ` Next up: ${describeEvent(active[0], now, 'en')}.` : '';
         return `In ${hood}: ${parts.join(', ')}.${next}`;
       }
@@ -308,7 +345,7 @@ export const assistantMessages = {
   },
   notVerified: {
     ar: 'لازم توثّق إنك من سكان الحي قبل ما أقدر أوريك محتواه. وثّق موقعك من الإعدادات وبعدها اسألني.',
-    en: "Neighborhood content is only visible to verified residents. Verify your location in Settings, then ask me again.",
+    en: 'Neighborhood content is only visible to verified residents. Verify your location in Settings, then ask me again.',
   },
   noNeighborhood: {
     ar: 'اختر حيّك أولاً عشان أقدر أساعدك.',

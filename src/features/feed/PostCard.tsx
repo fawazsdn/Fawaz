@@ -57,7 +57,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
     : [
         { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => run(() => toggleSavePost(post.id)) },
         { key: 'report', label: t.common.report, onPress: () => setReportOpen(true) },
-                { key: 'block', label: t.common.block, destructive: true, onPress: () => run(() => toggleBlockUser(post.authorId)) },
+        { key: 'block', label: t.common.block, destructive: true, onPress: () => run(() => toggleBlockUser(post.authorId)) },
       ];
 
   return (

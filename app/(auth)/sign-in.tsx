@@ -110,14 +110,22 @@ export default function SignInScreen() {
         </Text>
       ) : null}
       {needsConfirmation ? (
-        <Pressable onPress={() => router.push({ pathname: '/(auth)/check-email', params: { email } })} accessibilityRole="button" style={styles.link}>
+        <Pressable
+          onPress={() => router.push({ pathname: '/(auth)/check-email', params: { email } })}
+          accessibilityRole="button"
+          style={styles.link}
+        >
           <Text style={theme.text('bodySmall', theme.colors.primary)}>{t.auth.resendEmail}</Text>
         </Pressable>
       ) : null}
 
       <Button label={t.auth.signIn} onPress={onEmailSignIn} loading={pending === 'email'} disabled={busy} fullWidth size="lg" />
 
-      <Pressable onPress={() => router.push({ pathname: '/(auth)/forgot-password', params: { email } })} accessibilityRole="button" style={styles.link}>
+      <Pressable
+        onPress={() => router.push({ pathname: '/(auth)/forgot-password', params: { email } })}
+        accessibilityRole="button"
+        style={styles.link}
+      >
         <Text style={theme.text('bodySmall', theme.colors.primary)}>{t.auth.forgotPassword}</Text>
       </Pressable>
 
@@ -139,7 +147,9 @@ export default function SignInScreen() {
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
             buttonStyle={
-              theme.scheme === 'dark' ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              theme.scheme === 'dark'
+                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
             }
             cornerRadius={theme.radii.md}
             style={styles.appleButton}

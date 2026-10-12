@@ -124,7 +124,9 @@ function PollOptionRow({
       accessibilityLabel={showResults ? `${label}, ${pct}%${selected ? `, ${yourVoteLabel}` : ''}` : label}
     >
       {showResults ? (
-        <Animated.View style={[StyleSheet.absoluteFill, barStyle, { backgroundColor: theme.colors.successSurface, borderRadius: theme.radii.sm }]} />
+        <Animated.View
+          style={[StyleSheet.absoluteFill, barStyle, { backgroundColor: theme.colors.successSurface, borderRadius: theme.radii.sm }]}
+        />
       ) : null}
       <View style={[theme.row(), styles.optionContent]}>
         <View style={[theme.row(), { alignItems: 'center', gap: 6, flex: 1 }]}>

@@ -39,9 +39,7 @@ export default function SavedScreen() {
   const rows: Row[] = useMemo(() => {
     const postRows: Row[] = filter === 'marketplace' ? [] : savedPosts.map((item) => ({ kind: 'post' as const, item }));
     const listingRows: Row[] = filter === 'posts' ? [] : savedListings.map((item) => ({ kind: 'listing' as const, item }));
-    return [...postRows, ...listingRows].sort(
-      (a, b) => +new Date(b.item.createdAt) - +new Date(a.item.createdAt),
-    );
+    return [...postRows, ...listingRows].sort((a, b) => +new Date(b.item.createdAt) - +new Date(a.item.createdAt));
   }, [filter, savedPosts, savedListings]);
 
   return (

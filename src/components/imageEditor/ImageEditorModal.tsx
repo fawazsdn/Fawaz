@@ -59,7 +59,8 @@ export function ImageEditorModal({ visible, source, aspects, previewShape = 'car
   }, [source?.uri]);
 
   const image: Size | null = working ? { width: working.width, height: working.height } : null;
-  const aspect = aspectKey === 'original' && image ? image.width / image.height : ASPECTS[aspectKey as Exclude<AspectKey, 'original'>] ?? 1;
+  const aspect =
+    aspectKey === 'original' && image ? image.width / image.height : (ASPECTS[aspectKey as Exclude<AspectKey, 'original'>] ?? 1);
   const box = { width: window.width - 32, height: Math.max(220, window.height - insets.top - insets.bottom - 300) };
   const frame = useMemo(() => fitFrame(aspect, box), [aspect, box.width, box.height]); // eslint-disable-line react-hooks/exhaustive-deps
   const base = image ? coverScale(image, frame) : 1;
@@ -169,7 +170,15 @@ export function ImageEditorModal({ visible, source, aspects, previewShape = 'car
   };
 
   const aspectLabel = (k: AspectKey) =>
-    k === 'original' ? t.imageEditor.original : k === 'square' ? t.imageEditor.square : k === 'portrait' ? t.imageEditor.portrait : k === 'wide' ? t.imageEditor.wide : '4:3';
+    k === 'original'
+      ? t.imageEditor.original
+      : k === 'square'
+        ? t.imageEditor.square
+        : k === 'portrait'
+          ? t.imageEditor.portrait
+          : k === 'wide'
+            ? t.imageEditor.wide
+            : '4:3';
 
   if (!visible || !source) return null;
 
@@ -177,14 +186,27 @@ export function ImageEditorModal({ visible, source, aspects, previewShape = 'car
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onCancel}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0B0F0D' }}>
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <Pressable onPress={onCancel} hitSlop={12} accessibilityRole="button" accessibilityLabel={t.common.cancel} style={styles.headerBtn}>
+          <Pressable
+            onPress={onCancel}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t.common.cancel}
+            style={styles.headerBtn}
+          >
             <X size={22} color="#fff" />
           </Pressable>
           <Text style={theme.text('title', '#fff')}>{preview ? t.imageEditor.previewTitle : t.imageEditor.title}</Text>
           {preview ? (
             <View style={styles.headerBtn} />
           ) : (
-            <Pressable onPress={rotate} hitSlop={12} accessibilityRole="button" accessibilityLabel={t.imageEditor.rotate} style={styles.headerBtn} disabled={busy}>
+            <Pressable
+              onPress={rotate}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={t.imageEditor.rotate}
+              style={styles.headerBtn}
+              disabled={busy}
+            >
               <RotateCw size={21} color="#fff" />
             </Pressable>
           )}
@@ -198,13 +220,25 @@ export function ImageEditorModal({ visible, source, aspects, previewShape = 'car
               style={[
                 previewShape === 'circle'
                   ? { width: 220, height: 220, borderRadius: 110 }
-                  : { width: box.width, height: box.width / (preview.width / preview.height), maxHeight: box.height, borderRadius: theme.radii.lg },
+                  : {
+                      width: box.width,
+                      height: box.width / (preview.width / preview.height),
+                      maxHeight: box.height,
+                      borderRadius: theme.radii.lg,
+                    },
               ]}
             />
           </View>
         ) : (
           <View style={styles.center}>
-            <View style={{ width: frame.width, height: frame.height, overflow: 'hidden', borderRadius: previewShape === 'circle' ? frame.width / 2 : 4 }}>
+            <View
+              style={{
+                width: frame.width,
+                height: frame.height,
+                overflow: 'hidden',
+                borderRadius: previewShape === 'circle' ? frame.width / 2 : 4,
+              }}
+            >
               <GestureDetector gesture={gestures}>
                 <View style={[StyleSheet.absoluteFill, styles.center]} collapsable={false}>
                   <Animated.View style={imageStyle}>
@@ -212,7 +246,10 @@ export function ImageEditorModal({ visible, source, aspects, previewShape = 'car
                   </Animated.View>
                 </View>
               </GestureDetector>
-              <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.grid, { borderRadius: previewShape === 'circle' ? frame.width / 2 : 4 }]} />
+              <View
+                pointerEvents="none"
+                style={[StyleSheet.absoluteFill, styles.grid, { borderRadius: previewShape === 'circle' ? frame.width / 2 : 4 }]}
+              />
             </View>
             <Text style={[theme.text('caption', '#ffffffaa'), { marginTop: 12 }]}>{t.imageEditor.hint}</Text>
           </View>

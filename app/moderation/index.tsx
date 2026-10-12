@@ -86,8 +86,18 @@ export default function ModerationScreen() {
                       });
                     }}
                   />
-                  <Button label={t.moderation.warnUser} size="sm" variant="outline" onPress={() => run(() => moderateReport(r.id, 'reviewed'))} />
-                  <Button label={t.moderation.dismiss} size="sm" variant="ghost" onPress={() => run(() => moderateReport(r.id, 'dismissed'))} />
+                  <Button
+                    label={t.moderation.warnUser}
+                    size="sm"
+                    variant="outline"
+                    onPress={() => run(() => moderateReport(r.id, 'reviewed'))}
+                  />
+                  <Button
+                    label={t.moderation.dismiss}
+                    size="sm"
+                    variant="ghost"
+                    onPress={() => run(() => moderateReport(r.id, 'dismissed'))}
+                  />
                 </View>
               ) : null}
             </View>

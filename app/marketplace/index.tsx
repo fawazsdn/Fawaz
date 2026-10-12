@@ -24,10 +24,7 @@ export default function MarketplaceScreen() {
   // src/features/home/HomeHeader.tsx for why.
   const allListings = useStore((s) => s.marketplaceListings);
   const listings = useMemo(
-    () =>
-      allListings
-        .filter((m) => m.neighborhoodId === neighborhoodId)
-        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    () => allListings.filter((m) => m.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
     [allListings, neighborhoodId],
   );
 

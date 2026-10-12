@@ -41,7 +41,10 @@ export default function HomeScreen() {
   const posts = useMemo(
     () =>
       allPosts
-        .filter((p) => p.neighborhoodId === neighborhood?.id && !blocked.includes(p.authorId) && (p.authorId === me || !muted.includes(p.authorId)))
+        .filter(
+          (p) =>
+            p.neighborhoodId === neighborhood?.id && !blocked.includes(p.authorId) && (p.authorId === me || !muted.includes(p.authorId)),
+        )
         .sort((a, b) => (a.pinned === b.pinned ? +new Date(b.createdAt) - +new Date(a.createdAt) : a.pinned ? -1 : 1)),
     [allPosts, neighborhood?.id, blocked, muted, me],
   );
@@ -118,7 +121,11 @@ export default function HomeScreen() {
           {upcoming.length > 0 ? (
             <View style={{ marginBottom: 20 }}>
               <SectionHeader title={t.events.title} onSeeAll={() => router.push('/events')} />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}
+              >
                 {upcoming.map((e) => (
                   <View key={e.id} style={{ width: 250 }}>
                     <EventCard event={e} compact />
@@ -139,7 +146,13 @@ export default function HomeScreen() {
       }
       ListEmptyComponent={
         !loading && !needsVerification ? (
-          <EmptyState icon={MessageSquareOff} title={t.emptyStates.noPosts} actionLabel={t.create.post} onAction={() => router.push('/create/post')} compact />
+          <EmptyState
+            icon={MessageSquareOff}
+            title={t.emptyStates.noPosts}
+            actionLabel={t.create.post}
+            onAction={() => router.push('/create/post')}
+            compact
+          />
         ) : null
       }
     />

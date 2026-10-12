@@ -68,7 +68,6 @@ export function HomeHeader() {
           ) : null}
         </View>
       </View>
-
     </View>
   );
 }

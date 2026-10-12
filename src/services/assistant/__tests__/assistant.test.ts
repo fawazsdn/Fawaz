@@ -67,40 +67,90 @@ describe('parseQuestion', () => {
 
 describe('composeAnswer (grounded, no invention)', () => {
   it('matches the requested English empty-state answer', async () => {
-    const text = await composeAnswer(parseQuestion("What's happening in my neighborhood today?"), { lang: 'en', neighborhoodName: ctxBase.neighborhoodName, now: NOW, source: source() });
+    const text = await composeAnswer(parseQuestion("What's happening in my neighborhood today?"), {
+      lang: 'en',
+      neighborhoodName: ctxBase.neighborhoodName,
+      now: NOW,
+      source: source(),
+    });
     expect(text).toMatch(/^There are currently no activities or events listed in Ajyal today/);
   });
 
   it('matches the requested Arabic empty-state answer', async () => {
-    const text = await composeAnswer(parseQuestion('وش فيه فعاليات اليوم في الحي؟'), { lang: 'ar', neighborhoodName: ctxBase.neighborhoodName, now: NOW, source: source() });
+    const text = await composeAnswer(parseQuestion('وش فيه فعاليات اليوم في الحي؟'), {
+      lang: 'ar',
+      neighborhoodName: ctxBase.neighborhoodName,
+      now: NOW,
+      source: source(),
+    });
     expect(text).toMatch(/^حالياً ما فيه فعاليات مسجلة في أجيال اليوم/);
   });
 
   it('lists only real events with real counts and 12-hour Saudi times', async () => {
     const src = source({
       events: async () => [
-        { title: 'Neighborhood football', kind: 'activity', category: 'football', startsAt: '2026-10-12T16:00:00Z', locationLabel: 'Ajyal park', going: 7, capacity: 10, cancelled: false },
+        {
+          title: 'Neighborhood football',
+          kind: 'activity',
+          category: 'football',
+          startsAt: '2026-10-12T16:00:00Z',
+          locationLabel: 'Ajyal park',
+          going: 7,
+          capacity: 10,
+          cancelled: false,
+        },
       ],
     });
-    const en = await composeAnswer(parseQuestion('Any football today?'), { lang: 'en', neighborhoodName: ctxBase.neighborhoodName, now: NOW, source: src });
+    const en = await composeAnswer(parseQuestion('Any football today?'), {
+      lang: 'en',
+      neighborhoodName: ctxBase.neighborhoodName,
+      now: NOW,
+      source: src,
+    });
     expect(en).toContain('"Neighborhood football" today at 7:00 PM at Ajyal park (7 going, 3 spots left)');
-    const ar = await composeAnswer(parseQuestion('فيه كورة اليوم؟'), { lang: 'ar', neighborhoodName: ctxBase.neighborhoodName, now: NOW, source: src });
+    const ar = await composeAnswer(parseQuestion('فيه كورة اليوم؟'), {
+      lang: 'ar',
+      neighborhoodName: ctxBase.neighborhoodName,
+      now: NOW,
+      source: src,
+    });
     expect(ar).toContain('اليوم الساعة ٧:٠٠ م');
     expect(ar).toContain('٧ مشارك و٣ مكان متاح');
   });
 
   it('ignores cancelled events', async () => {
     const src = source({
-      events: async () => [{ title: 'Cancelled walk', kind: 'activity', category: 'walking', startsAt: '2026-10-12T15:00:00Z', locationLabel: 'x', going: 1, capacity: 5, cancelled: true }],
+      events: async () => [
+        {
+          title: 'Cancelled walk',
+          kind: 'activity',
+          category: 'walking',
+          startsAt: '2026-10-12T15:00:00Z',
+          locationLabel: 'x',
+          going: 1,
+          capacity: 5,
+          cancelled: true,
+        },
+      ],
     });
-    const text = await composeAnswer(parseQuestion('What activities are there today?'), { lang: 'en', neighborhoodName: ctxBase.neighborhoodName, now: NOW, source: src });
+    const text = await composeAnswer(parseQuestion('What activities are there today?'), {
+      lang: 'en',
+      neighborhoodName: ctxBase.neighborhoodName,
+      now: NOW,
+      source: src,
+    });
     expect(text).not.toContain('Cancelled walk');
     expect(text).toMatch(/no activities or events/);
   });
 
   it('says it could not check (never "nothing") when data retrieval fails', async () => {
     const src = source({ events: async () => Promise.reject(new Error('network')) });
-    const text = await composeAnswer(parseQuestion('What is happening today?'), { lang: 'en', neighborhoodName: ctxBase.neighborhoodName, now: NOW, source: src });
+    const text = await composeAnswer(parseQuestion('What is happening today?'), {
+      lang: 'en',
+      neighborhoodName: ctxBase.neighborhoodName,
+      now: NOW,
+      source: src,
+    });
     expect(text).toMatch(/couldn't reach/);
     expect(text).not.toMatch(/no activities/);
   });

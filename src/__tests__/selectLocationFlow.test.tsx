@@ -21,8 +21,7 @@ jest.mock('@/components/BottomSheet', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factories can't reference out-of-scope imports
   const { View } = require('react-native');
   return {
-    BottomSheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
-      visible ? <View>{children}</View> : null,
+    BottomSheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) => (visible ? <View>{children}</View> : null),
   };
 });
 

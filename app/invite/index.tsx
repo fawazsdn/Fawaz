@@ -115,24 +115,14 @@ export default function InviteScreen() {
                   { borderColor: theme.colors.onPrimary + '55', opacity: pressed ? 0.8 : 1 },
                 ]}
               >
-                {copied ? (
-                  <CheckCircle2 size={17} color={theme.colors.onPrimary} />
-                ) : (
-                  <Copy size={17} color={theme.colors.onPrimary} />
-                )}
-                <Text style={theme.text('button', theme.colors.onPrimary)}>
-                  {copied ? t.invite.linkCopied : t.invite.copyLink}
-                </Text>
+                {copied ? <CheckCircle2 size={17} color={theme.colors.onPrimary} /> : <Copy size={17} color={theme.colors.onPrimary} />}
+                <Text style={theme.text('button', theme.colors.onPrimary)}>{copied ? t.invite.linkCopied : t.invite.copyLink}</Text>
               </Pressable>
             </View>
           </View>
 
           {inviteLink ? (
-            <Text
-              style={[theme.text('caption', theme.colors.onPrimary), { marginTop: 14, opacity: 0.8 }]}
-              numberOfLines={1}
-              selectable
-            >
+            <Text style={[theme.text('caption', theme.colors.onPrimary), { marginTop: 14, opacity: 0.8 }]} numberOfLines={1} selectable>
               {inviteLink}
             </Text>
           ) : null}
@@ -230,11 +220,7 @@ export default function InviteScreen() {
                       backgroundColor: reached ? theme.colors.successSurface : theme.colors.backgroundAlt,
                     }}
                   >
-                    {reached ? (
-                      <CheckCircle2 size={19} color={theme.colors.success} />
-                    ) : (
-                      <Users size={17} color={theme.colors.textMuted} />
-                    )}
+                    {reached ? <CheckCircle2 size={19} color={theme.colors.success} /> : <Users size={17} color={theme.colors.textMuted} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={theme.text('title', reached ? theme.colors.textPrimary : theme.colors.textSecondary)}>
@@ -256,7 +242,9 @@ export default function InviteScreen() {
           <Card>
             <Text style={theme.text('heading3')}>{t.invite.growthTitle}</Text>
             <View style={[theme.row(), { alignItems: 'baseline', gap: 6, marginTop: 8 }]}>
-              <Text style={theme.text('heading1', theme.colors.primary)}>{neighborhood.residentsCount == null ? '—' : localizeDigits(neighborhood.residentsCount, locale)}</Text>
+              <Text style={theme.text('heading1', theme.colors.primary)}>
+                {neighborhood.residentsCount == null ? '—' : localizeDigits(neighborhood.residentsCount, locale)}
+              </Text>
               <Text style={theme.text('bodySmall', theme.colors.textMuted)}>{t.invite.growthCurrentMembers}</Text>
             </View>
             <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginTop: 8 }]}>{t.invite.growthBody}</Text>

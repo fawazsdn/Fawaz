@@ -47,7 +47,14 @@ export const testNeighborhood: Neighborhood = {
 export function resetStoreForTests() {
   useStore.setState({
     ...emptyEntities(),
-    settings: { locale: 'ar', themeMode: 'system', ramadanMode: false, notificationsEnabled: true, whoCanMessage: 'neighbors', activityVisible: true },
+    settings: {
+      locale: 'ar',
+      themeMode: 'system',
+      ramadanMode: false,
+      notificationsEnabled: true,
+      whoCanMessage: 'neighbors',
+      activityVisible: true,
+    },
     session: {
       onboardingCompleted: false,
       profileCreated: false,
@@ -68,7 +75,16 @@ export function resetStoreForTests() {
 }
 
 /** A signed-in, verified resident of Ajyal with optional entities. */
-export function signInVerifiedForTests(extra: { posts?: Post[]; events?: CommunityEvent[]; polls?: Poll[]; conversations?: Conversation[]; messages?: Message[]; users?: User[] } = {}) {
+export function signInVerifiedForTests(
+  extra: {
+    posts?: Post[];
+    events?: CommunityEvent[];
+    polls?: Poll[];
+    conversations?: Conversation[];
+    messages?: Message[];
+    users?: User[];
+  } = {},
+) {
   resetStoreForTests();
   useStore.setState((s) => ({
     session: {

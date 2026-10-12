@@ -48,7 +48,11 @@ export default function CreateHelpRequestScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader title={t.create.help} fallbackRoute="/(tabs)/discover" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <ScrollView
+        contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.post.category}</Text>
         <View style={[theme.row(), styles.grid]}>
           {CATEGORIES.map((c) => (

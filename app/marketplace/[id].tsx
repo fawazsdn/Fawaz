@@ -107,9 +107,30 @@ export default function MarketplaceDetailScreen() {
           </View>
         ) : (
           <View style={[theme.row(), { marginTop: 16, gap: 8, flexWrap: 'wrap' }]}>
-            {listing.status !== 'sold' ? <Button label={t.marketplace.markSold} onPress={() => run(() => setListingStatus(listing.id, 'sold'))} variant="outline" size="sm" /> : null}
-            {listing.status === 'available' ? <Button label={t.marketplace.markReserved} onPress={() => run(() => setListingStatus(listing.id, 'reserved'))} variant="ghost" size="sm" /> : null}
-            {listing.status !== 'available' ? <Button label={t.marketplace.markAvailable} onPress={() => run(() => setListingStatus(listing.id, 'available'))} variant="ghost" size="sm" /> : null}
+            {listing.status !== 'sold' ? (
+              <Button
+                label={t.marketplace.markSold}
+                onPress={() => run(() => setListingStatus(listing.id, 'sold'))}
+                variant="outline"
+                size="sm"
+              />
+            ) : null}
+            {listing.status === 'available' ? (
+              <Button
+                label={t.marketplace.markReserved}
+                onPress={() => run(() => setListingStatus(listing.id, 'reserved'))}
+                variant="ghost"
+                size="sm"
+              />
+            ) : null}
+            {listing.status !== 'available' ? (
+              <Button
+                label={t.marketplace.markAvailable}
+                onPress={() => run(() => setListingStatus(listing.id, 'available'))}
+                variant="ghost"
+                size="sm"
+              />
+            ) : null}
           </View>
         )}
       </ScrollView>

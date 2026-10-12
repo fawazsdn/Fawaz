@@ -85,45 +85,47 @@ export default function SettingsScreen() {
             named for. Real store data only: stats/reputationTier/memberSince
             come straight off the User record, never fabricated. */}
         {user ? (
-        <Pressable
-          onPress={() => router.push(`/profile/${user.id}`)}
-          style={[
-            styles.profileCard,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t.settings.viewProfile}
-        >
-          <View style={[theme.row(), { alignItems: 'center', gap: 12 }]}>
-            <Avatar uri={user.avatarUrl} name={displayName(user)} size={56} ring />
-            <View style={{ flex: 1 }}>
-              <View style={[theme.row(), { alignItems: 'center', gap: 5 }]}>
-                <Text style={theme.text('heading3')} numberOfLines={1}>
-                  {displayName(user)}
+          <Pressable
+            onPress={() => router.push(`/profile/${user.id}`)}
+            style={[
+              styles.profileCard,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t.settings.viewProfile}
+          >
+            <View style={[theme.row(), { alignItems: 'center', gap: 12 }]}>
+              <Avatar uri={user.avatarUrl} name={displayName(user)} size={56} ring />
+              <View style={{ flex: 1 }}>
+                <View style={[theme.row(), { alignItems: 'center', gap: 5 }]}>
+                  <Text style={theme.text('heading3')} numberOfLines={1}>
+                    {displayName(user)}
+                  </Text>
+                  {user.verification === 'verified' ? <BadgeCheck size={16} color={theme.colors.primary} /> : null}
+                </View>
+                <Text style={theme.text('bodySmall', theme.colors.textSecondary)} numberOfLines={1}>
+                  {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
                 </Text>
-                {user.verification === 'verified' ? <BadgeCheck size={16} color={theme.colors.primary} /> : null}
+                <View style={[theme.row(), { alignItems: 'center', gap: 4, marginTop: 3 }]}>
+                  <Sparkles size={12} color={theme.colors.primary} />
+                  <Text style={theme.text('caption', theme.colors.textMuted)}>
+                    {t.reputation[user.reputationTier]} · {t.profile.memberSince} {new Date(user.memberSince).getFullYear()}
+                  </Text>
+                </View>
               </View>
-              <Text style={theme.text('bodySmall', theme.colors.textSecondary)} numberOfLines={1}>
-                {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
-              </Text>
-              <View style={[theme.row(), { alignItems: 'center', gap: 4, marginTop: 3 }]}>
-                <Sparkles size={12} color={theme.colors.primary} />
-                <Text style={theme.text('caption', theme.colors.textMuted)}>
-                  {t.reputation[user.reputationTier]} · {t.profile.memberSince} {new Date(user.memberSince).getFullYear()}
-                </Text>
-              </View>
+              <Chevron size={18} color={theme.colors.textMuted} />
             </View>
-            <Chevron size={18} color={theme.colors.textMuted} />
-          </View>
 
-          <View style={[theme.row(), styles.statsRow, { borderTopColor: theme.colors.divider }]}>
-            <MiniStat value={user.stats.neighborsHelped} label={t.profile.neighborsHelped} />
-            <MiniStat value={user.stats.eventsHosted} label={t.profile.eventsHosted} />
-            <MiniStat value={user.stats.thanksReceived} label={t.profile.thanksReceived} />
-          </View>
-        </Pressable>
+            <View style={[theme.row(), styles.statsRow, { borderTopColor: theme.colors.divider }]}>
+              <MiniStat value={user.stats.neighborsHelped} label={t.profile.neighborsHelped} />
+              <MiniStat value={user.stats.eventsHosted} label={t.profile.eventsHosted} />
+              <MiniStat value={user.stats.thanksReceived} label={t.profile.thanksReceived} />
+            </View>
+          </Pressable>
         ) : null}
-        {email ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4, writingDirection: 'ltr' }]}>{email}</Text> : null}
+        {email ? (
+          <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4, writingDirection: 'ltr' }]}>{email}</Text>
+        ) : null}
 
         <SectionLabel title={t.settings.myHaratna} />
         <Row
@@ -134,12 +136,7 @@ export default function SettingsScreen() {
           Chevron={Chevron}
         />
         <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${me}?tab=activity`)} Chevron={Chevron} />
-        <Row
-          icon={CalendarDays}
-          label={t.settings.myEvents}
-          onPress={() => router.push(`/profile/${me}?tab=events`)}
-          Chevron={Chevron}
-        />
+        <Row icon={CalendarDays} label={t.settings.myEvents} onPress={() => router.push(`/profile/${me}?tab=events`)} Chevron={Chevron} />
         <Row icon={Bookmark} label={t.settings.saved} onPress={() => router.push('/saved')} Chevron={Chevron} />
         {/* CommunityGroup has no per-user membership list in this model
             (only memberCount) — there's no real "groups I've joined" data
@@ -206,14 +203,18 @@ export default function SettingsScreen() {
 
         <Row icon={Info} label={t.settings.aboutHaratna} onPress={() => router.push('/settings/info/about')} Chevron={Chevron} />
 
-        {isStaff ? (
-          <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} />
-        ) : null}
+        {isStaff ? <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} /> : null}
 
         <SectionLabel title={t.settings.accountActions} />
         <Row icon={Share2} label={t.settings.shareHaratna} onPress={shareHaratna} Chevron={Chevron} />
         <Row icon={LogOut} label={t.settings.signOut} onPress={() => setSignOutOpen(true)} Chevron={Chevron} />
-        <Row icon={Trash2} label={pending ? t.common.loading : t.settings.deleteAccount} destructive onPress={() => !pending && setDeleteOpen(true)} Chevron={Chevron} />
+        <Row
+          icon={Trash2}
+          label={pending ? t.common.loading : t.settings.deleteAccount}
+          destructive
+          onPress={() => !pending && setDeleteOpen(true)}
+          Chevron={Chevron}
+        />
       </ScrollView>
 
       <BottomSheet visible={sheet === 'language'} onClose={() => setSheet(null)}>
@@ -263,7 +264,6 @@ export default function SettingsScreen() {
         />
       </BottomSheet>
 
-
       <ConfirmationModal
         visible={signOutOpen}
         title={t.settings.signOut}
@@ -290,7 +290,6 @@ export default function SettingsScreen() {
           if (res.ok) router.replace('/');
         }}
       />
-
     </View>
   );
 }

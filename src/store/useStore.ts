@@ -225,7 +225,10 @@ export function mergePersistedState(persistedState: unknown, currentState: AppSt
   const persisted = (persistedState ?? {}) as Partial<PersistedShape>;
   const merged: AppState = { ...currentState };
   if (persisted.settings) {
-    const { locale, themeMode, ramadanMode, notificationsEnabled, whoCanMessage, activityVisible } = { ...currentState.settings, ...persisted.settings };
+    const { locale, themeMode, ramadanMode, notificationsEnabled, whoCanMessage, activityVisible } = {
+      ...currentState.settings,
+      ...persisted.settings,
+    };
     merged.settings = { locale, themeMode, ramadanMode, notificationsEnabled, whoCanMessage, activityVisible };
   }
   if (persisted.session) {

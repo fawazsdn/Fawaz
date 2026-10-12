@@ -25,7 +25,9 @@ export default function CheckEmailScreen() {
     setPending(true);
     const res = await resendConfirmation(email);
     setPending(false);
-    setMessage(res.ok ? { text: t.auth.emailResent, ok: true } : { text: errorText(res.reason ?? 'unknown') ?? t.auth.signInError, ok: false });
+    setMessage(
+      res.ok ? { text: t.auth.emailResent, ok: true } : { text: errorText(res.reason ?? 'unknown') ?? t.auth.signInError, ok: false },
+    );
   };
 
   return (
@@ -38,7 +40,9 @@ export default function CheckEmailScreen() {
       <Text style={[theme.text('bodySmall', theme.colors.textMuted), styles.center, { marginTop: 12 }]}>{t.auth.checkEmailHint}</Text>
 
       {message ? (
-        <Text style={[theme.text('bodySmall', message.ok ? theme.colors.primary : theme.colors.danger), styles.center, { marginTop: 16 }]}>{message.text}</Text>
+        <Text style={[theme.text('bodySmall', message.ok ? theme.colors.primary : theme.colors.danger), styles.center, { marginTop: 16 }]}>
+          {message.text}
+        </Text>
       ) : null}
 
       <View style={{ gap: 10, marginTop: 24 }}>

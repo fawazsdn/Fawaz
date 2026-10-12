@@ -64,9 +64,7 @@ export default function SelectNeighborhoodScreen() {
   const filtered = useMemo(() => {
     const q = normalizeSearchQuery(query);
     if (!q) return neighborhoods;
-    return neighborhoods.filter(
-      (n) => normalizeForSearch(n.nameAr).includes(q) || normalizeForSearch(n.nameEn).includes(q),
-    );
+    return neighborhoods.filter((n) => normalizeForSearch(n.nameAr).includes(q) || normalizeForSearch(n.nameEn).includes(q));
   }, [neighborhoods, query]);
 
   const cityCenterLat = city?.centerLat ?? 24.7;
@@ -100,17 +98,19 @@ export default function SelectNeighborhoodScreen() {
 
   const submitNeighborhoodSuggestion = async () => {
     if (!regionId || !cityId || !suggestNameAr.trim()) return;
-    await geographyService.submitNeighborhoodSuggestion({
-      regionId,
-      cityId,
-      neighborhoodNameAr: suggestNameAr.trim(),
-      neighborhoodNameEn: suggestNameEn.trim() || undefined,
-      note: suggestNote.trim() || undefined,
-      submittedByUserId: useStore.getState().session.supabaseUserId ?? '',
-    }).then(
-      () => setSuggestSubmitted(true),
-      () => setSuggestError(true),
-    );
+    await geographyService
+      .submitNeighborhoodSuggestion({
+        regionId,
+        cityId,
+        neighborhoodNameAr: suggestNameAr.trim(),
+        neighborhoodNameEn: suggestNameEn.trim() || undefined,
+        note: suggestNote.trim() || undefined,
+        submittedByUserId: useStore.getState().session.supabaseUserId ?? '',
+      })
+      .then(
+        () => setSuggestSubmitted(true),
+        () => setSuggestError(true),
+      );
   };
 
   const closeSuggest = () => {
@@ -153,9 +153,7 @@ export default function SelectNeighborhoodScreen() {
 
       {!loaded ? null : neighborhoods.length === 0 ? (
         <View style={{ paddingHorizontal: 24, flex: 1 }}>
-          <Text style={[theme.text('body', theme.colors.textSecondary), { marginBottom: 16 }]}>
-            {t.neighborhood.noDistrictData}
-          </Text>
+          <Text style={[theme.text('body', theme.colors.textSecondary), { marginBottom: 16 }]}>{t.neighborhood.noDistrictData}</Text>
           <Button label={t.neighborhood.suggestLink} onPress={() => setSuggestOpen(true)} variant="primary" />
         </View>
       ) : view === 'map' ? (
@@ -212,9 +210,7 @@ export default function SelectNeighborhoodScreen() {
           ) : (
             <>
               <Text style={[theme.text('heading3'), { marginBottom: 6 }]}>{t.neighborhood.suggestTitle}</Text>
-              <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginBottom: 16 }]}>
-                {t.neighborhood.suggestBody}
-              </Text>
+              <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginBottom: 16 }]}>{t.neighborhood.suggestBody}</Text>
               <TextInput
                 value={suggestNameAr}
                 onChangeText={setSuggestNameAr}
@@ -237,7 +233,9 @@ export default function SelectNeighborhoodScreen() {
                 multiline
                 style={[theme.text('body'), styles.input, styles.noteInput, { borderColor: theme.colors.border }]}
               />
-              {suggestError ? <Text style={[theme.text('caption', theme.colors.danger), { marginBottom: 8 }]}>{t.errors.genericBody}</Text> : null}
+              {suggestError ? (
+                <Text style={[theme.text('caption', theme.colors.danger), { marginBottom: 8 }]}>{t.errors.genericBody}</Text>
+              ) : null}
               <Button
                 label={t.neighborhood.suggestSubmit}
                 onPress={submitNeighborhoodSuggestion}
@@ -253,7 +251,15 @@ export default function SelectNeighborhoodScreen() {
   );
 }
 
-function CantFindLink({ t, theme, onPress }: { t: ReturnType<typeof useI18n>['t']; theme: ReturnType<typeof useTheme>; onPress: () => void }) {
+function CantFindLink({
+  t,
+  theme,
+  onPress,
+}: {
+  t: ReturnType<typeof useI18n>['t'];
+  theme: ReturnType<typeof useTheme>;
+  onPress: () => void;
+}) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ alignItems: 'center', paddingVertical: 16 }}>
       <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{t.neighborhood.cantFind}</Text>
@@ -284,7 +290,9 @@ function NeighborhoodRow({ n, locale, onPress }: { n: SaudiNeighborhood; locale:
         <Text style={theme.text('title')} numberOfLines={1}>
           {primary}
         </Text>
-        {n.hasBoundary === false ? <Text style={theme.text('caption', theme.colors.warning)}>{t.neighborhood.boundaryUnavailable}</Text> : null}
+        {n.hasBoundary === false ? (
+          <Text style={theme.text('caption', theme.colors.warning)}>{t.neighborhood.boundaryUnavailable}</Text>
+        ) : null}
         {secondary ? (
           <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
             {secondary}

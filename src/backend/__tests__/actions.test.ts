@@ -22,7 +22,9 @@ describe('actions', () => {
     resetStoreForTests();
     useStore.getState().setSupabaseAuth(TEST_ME, 'email', null);
     useStore.getState().patchSession({ neighborhoodId: TEST_NEIGHBORHOOD_ID, verification: 'pending' });
-    await expect(createPost({ type: 'general', textAr: 'hi', localImages: [], audience: 'neighborhood' })).rejects.toMatchObject({ code: 'not_verified' });
+    await expect(createPost({ type: 'general', textAr: 'hi', localImages: [], audience: 'neighborhood' })).rejects.toMatchObject({
+      code: 'not_verified',
+    });
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
@@ -63,7 +65,11 @@ describe('actions', () => {
   it('wraps server errors as typed ActionErrors', async () => {
     signInVerifiedForTests();
     (supabase.from as jest.Mock).mockImplementationOnce(() => ({
-      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: { code: '42501', message: 'new row violates row-level security policy' } }) }) }),
+      insert: () => ({
+        select: () => ({
+          single: () => Promise.resolve({ data: null, error: { code: '42501', message: 'new row violates row-level security policy' } }),
+        }),
+      }),
     }));
     const err = await createPost({ type: 'general', textAr: 'x', localImages: [], audience: 'neighborhood' }).catch((e) => e);
     expect(err).toBeInstanceOf(ActionError);

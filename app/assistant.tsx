@@ -65,7 +65,10 @@ export default function AssistantScreen() {
           id: `a-${Date.now()}`,
           fromUser: false,
           lang,
-          text: lang === 'ar' ? 'صار خطأ وما قدرت أجاوب الحين. جرّب مرة ثانية.' : "Something went wrong and I couldn't answer. Please try again.",
+          text:
+            lang === 'ar'
+              ? 'صار خطأ وما قدرت أجاوب الحين. جرّب مرة ثانية.'
+              : "Something went wrong and I couldn't answer. Please try again.",
         },
       ]);
     } finally {
@@ -89,7 +92,10 @@ export default function AssistantScreen() {
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => (
-          <View style={{ alignSelf: item.fromUser ? 'flex-end' : 'flex-start', maxWidth: '82%', marginBottom: 10 }} accessibilityLanguage={item.lang}>
+          <View
+            style={{ alignSelf: item.fromUser ? 'flex-end' : 'flex-start', maxWidth: '82%', marginBottom: 10 }}
+            accessibilityLanguage={item.lang}
+          >
             <View
               style={[
                 styles.bubble,

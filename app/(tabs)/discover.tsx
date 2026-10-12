@@ -63,10 +63,7 @@ export default function DiscoverScreen() {
     () => allIssues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3),
     [allIssues, neighborhoodId],
   );
-  const listings = useMemo(
-    () => allListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4),
-    [allListings, neighborhoodId],
-  );
+  const listings = useMemo(() => allListings.filter((m) => m.neighborhoodId === neighborhoodId).slice(0, 4), [allListings, neighborhoodId]);
   const helpRequests = useMemo(
     () => allHelpRequests.filter((h) => h.neighborhoodId === neighborhoodId && h.status === 'open').slice(0, 3),
     [allHelpRequests, neighborhoodId],

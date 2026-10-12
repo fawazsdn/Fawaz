@@ -31,9 +31,7 @@ export default function MessagesScreen() {
   const allConversations = useStore((s) => s.conversations);
   const conversations = useMemo(
     () =>
-      allConversations
-        .filter((c) => c.participantIds.includes(me))
-        .sort((a, b) => +new Date(b.lastMessageAt) - +new Date(a.lastMessageAt)),
+      allConversations.filter((c) => c.participantIds.includes(me)).sort((a, b) => +new Date(b.lastMessageAt) - +new Date(a.lastMessageAt)),
     [allConversations, me],
   );
   const users = useStore((s) => s.users);
@@ -54,7 +52,10 @@ export default function MessagesScreen() {
     const q = normalizeForSearch(query);
     if (q) {
       list = list.filter((c) => {
-        const lastText = allMessages.filter((m) => m.conversationId === c.id).map((m) => m.text ?? '').join(' ');
+        const lastText = allMessages
+          .filter((m) => m.conversationId === c.id)
+          .map((m) => m.text ?? '')
+          .join(' ');
         if (c.isGroup) return normalizeForSearch(`${c.title ?? ''} ${lastText}`).includes(q);
         const other = users.find((u) => c.participantIds.includes(u.id) && u.id !== me);
         return normalizeForSearch(`${other ? `${other.firstName} ${other.lastName}` : ''} ${lastText}`).includes(q);
@@ -91,7 +92,9 @@ export default function MessagesScreen() {
         keyboardDismissMode="on-drag"
         renderItem={({ item }) => <ConversationRow conversation={item} />}
         ListHeaderComponent={<SyncNotice />}
-        ListEmptyComponent={<EmptyState icon={MessagesSquare} title={query || filter !== 'all' ? t.messages.noResults : t.messages.empty} />}
+        ListEmptyComponent={
+          <EmptyState icon={MessagesSquare} title={query || filter !== 'all' ? t.messages.noResults : t.messages.empty} />
+        }
       />
     </View>
   );

@@ -96,7 +96,14 @@ export default function IssueDetailScreen() {
             <HaratnaMap
               center={{ latitude: issue.approxLat as number, longitude: issue.approxLng as number }}
               delta={0.008}
-              markers={[{ id: issue.id, coordinate: { latitude: issue.approxLat as number, longitude: issue.approxLng as number }, title: issue.title, color: theme.colors.warning }]}
+              markers={[
+                {
+                  id: issue.id,
+                  coordinate: { latitude: issue.approxLat as number, longitude: issue.approxLng as number },
+                  title: issue.title,
+                  color: theme.colors.warning,
+                },
+              ]}
             />
           </View>
         ) : null}
@@ -159,7 +166,6 @@ export default function IssueDetailScreen() {
             </View>
           </View>
         ) : null}
-
       </ScrollView>
     </View>
   );

@@ -39,7 +39,9 @@ export default function BorrowDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title={item.title} fallbackRoute="/borrow" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
-        {item.image ? <Image source={{ uri: item.image }} style={{ width: '100%', height: 220, borderRadius: theme.radii.lg }} contentFit="cover" /> : null}
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={{ width: '100%', height: 220, borderRadius: theme.radii.lg }} contentFit="cover" />
+        ) : null}
         <View style={{ marginTop: 14 }}>
           <Badge label={item.available ? t.borrow.available : t.borrow.unavailable} tone={item.available ? 'success' : 'neutral'} />
           <Text style={[theme.text('heading2'), { marginTop: 10 }]}>{item.title}</Text>

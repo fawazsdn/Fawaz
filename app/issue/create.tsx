@@ -177,7 +177,18 @@ export default function CreateIssueScreen() {
                 <HaratnaMap
                   center={pin ?? { latitude: neighborhood.centerLat, longitude: neighborhood.centerLng }}
                   delta={0.02}
-                  markers={pin ? [{ id: 'pin', coordinate: pin, title: category ? t.issueCreate.categories[category] : '', color: theme.colors.warning }] : []}
+                  markers={
+                    pin
+                      ? [
+                          {
+                            id: 'pin',
+                            coordinate: pin,
+                            title: category ? t.issueCreate.categories[category] : '',
+                            color: theme.colors.warning,
+                          },
+                        ]
+                      : []
+                  }
                   onMapPress={(c) => setPin({ latitude: approximateCoordinate(c.latitude), longitude: approximateCoordinate(c.longitude) })}
                 />
               </View>

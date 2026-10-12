@@ -59,7 +59,20 @@ export function formatTimeRange(startIso: string, endIso: string, locale: Locale
 
 const EN_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const AR_WEEKDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-const EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const EN_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 const AR_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
 export function weekdayName(weekday: number, locale: Locale, short = false): string {
@@ -123,7 +136,11 @@ export function formatRelativeTime(iso: string, locale: Locale): string {
 export function formatTimeUntil(iso: string, locale: Locale): string {
   const sec = Math.max(0, (new Date(iso).getTime() - Date.now()) / 1000);
   const [n, en, ar] =
-    sec < 3600 ? [Math.max(1, Math.floor(sec / 60)), 'm', 'د'] : sec < 86400 ? [Math.floor(sec / 3600), 'h', 'س'] : [Math.floor(sec / 86400), 'd', 'ي'];
+    sec < 3600
+      ? [Math.max(1, Math.floor(sec / 60)), 'm', 'د']
+      : sec < 86400
+        ? [Math.floor(sec / 3600), 'h', 'س']
+        : [Math.floor(sec / 86400), 'd', 'ي'];
   return locale === 'ar' ? `${localizeDigits(n, 'ar')} ${ar}` : `${n}${en}`;
 }
 

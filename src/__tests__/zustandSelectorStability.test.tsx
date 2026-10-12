@@ -51,7 +51,16 @@ describe('Zustand selector snapshot stability', () => {
     act(() => {
       useStore.setState({
         conversations: [{ id: 'c1', kind: 'direct', participantIds: [TEST_ME, TEST_NEIGHBOR], lastMessageAt: new Date().toISOString() }],
-        messages: [{ id: 'm1', conversationId: 'c1', senderId: TEST_NEIGHBOR, text: 'hi', createdAt: new Date().toISOString(), readBy: [TEST_NEIGHBOR] }],
+        messages: [
+          {
+            id: 'm1',
+            conversationId: 'c1',
+            senderId: TEST_NEIGHBOR,
+            text: 'hi',
+            createdAt: new Date().toISOString(),
+            readBy: [TEST_NEIGHBOR],
+          },
+        ],
       });
     });
     expect(screen.getByText('Ajyal')).toBeTruthy();

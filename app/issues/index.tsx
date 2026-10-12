@@ -20,10 +20,7 @@ export default function IssuesListScreen() {
   // src/features/home/HomeHeader.tsx for why.
   const allIssues = useStore((s) => s.issues);
   const issues = useMemo(
-    () =>
-      allIssues
-        .filter((i) => i.neighborhoodId === neighborhoodId)
-        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    () => allIssues.filter((i) => i.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
     [allIssues, neighborhoodId],
   );
 

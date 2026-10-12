@@ -41,10 +41,7 @@ export default function SearchScreen() {
     () => allBusinesses.filter((b) => b.neighborhoodIds.includes(neighborhoodId ?? '')),
     [allBusinesses, neighborhoodId],
   );
-  const listings = useMemo(
-    () => allListings.filter((m) => m.neighborhoodId === neighborhoodId),
-    [allListings, neighborhoodId],
-  );
+  const listings = useMemo(() => allListings.filter((m) => m.neighborhoodId === neighborhoodId), [allListings, neighborhoodId]);
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('all');

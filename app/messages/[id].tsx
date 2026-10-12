@@ -125,9 +125,7 @@ export default function ConversationScreen() {
         renderItem={({ item, index }) => {
           const next = messages[index + 1];
           const showTail = !next || next.senderId !== item.senderId;
-          return (
-            <MessageBubble message={item} isOwn={item.senderId === me} read={item.readBy.length > 1} showTail={showTail} />
-          );
+          return <MessageBubble message={item} isOwn={item.senderId === me} read={item.readBy.length > 1} showTail={showTail} />;
         }}
         keyboardDismissMode="interactive"
         ListEmptyComponent={<EmptyState title={t.messages.startConversation} compact />}

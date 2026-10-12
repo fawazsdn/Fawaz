@@ -96,15 +96,36 @@ export default function MapScreen() {
     }
     for (const b of allBusinesses) {
       if (b.approxLat == null || b.approxLng == null) continue;
-      list.push({ id: b.id, kind: 'businesses', coordinate: { latitude: b.approxLat, longitude: b.approxLng }, color: theme.colors.accent, title: b.name, route: `/business/${b.id}` });
+      list.push({
+        id: b.id,
+        kind: 'businesses',
+        coordinate: { latitude: b.approxLat, longitude: b.approxLng },
+        color: theme.colors.accent,
+        title: b.name,
+        route: `/business/${b.id}`,
+      });
     }
     for (const p of allPosts) {
       if (p.approxLat == null || p.approxLng == null) continue;
-      list.push({ id: p.id, kind: 'community', coordinate: { latitude: p.approxLat, longitude: p.approxLng }, color: theme.colors.info, title: p.textAr.slice(0, 60) || t.map.post, route: `/post/${p.id}` });
+      list.push({
+        id: p.id,
+        kind: 'community',
+        coordinate: { latitude: p.approxLat, longitude: p.approxLng },
+        color: theme.colors.info,
+        title: p.textAr.slice(0, 60) || t.map.post,
+        route: `/post/${p.id}`,
+      });
     }
     for (const i of allIssues) {
       if (i.approxLat == null || i.approxLng == null || i.status === 'resolved') continue;
-      list.push({ id: i.id, kind: 'community', coordinate: { latitude: i.approxLat, longitude: i.approxLng }, color: theme.colors.warning, title: i.title, route: `/issue/${i.id}` });
+      list.push({
+        id: i.id,
+        kind: 'community',
+        coordinate: { latitude: i.approxLat, longitude: i.approxLng },
+        color: theme.colors.warning,
+        title: i.title,
+        route: `/issue/${i.id}`,
+      });
     }
     return list;
   }, [allEvents, allBusinesses, allPosts, allIssues, theme, t, now]);
@@ -182,10 +203,20 @@ export default function MapScreen() {
       <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 8, zIndex: 2 }}>
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.map.searchPlaceholder} />
         {places.length > 0 ? (
-          <View style={[styles.dropdown, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border, borderRadius: theme.radii.md }]}>
+          <View
+            style={[
+              styles.dropdown,
+              { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border, borderRadius: theme.radii.md },
+            ]}
+          >
             <Text style={[theme.text('caption', theme.colors.textMuted), { paddingHorizontal: 12, paddingTop: 8 }]}>{t.map.places}</Text>
             {places.map((r) => (
-              <Pressable key={`${r.kind}-${r.neighborhood?.id ?? r.city.id}`} onPress={() => goToPlace(r)} style={[styles.placeRow, theme.row()]} accessibilityRole="button">
+              <Pressable
+                key={`${r.kind}-${r.neighborhood?.id ?? r.city.id}`}
+                onPress={() => goToPlace(r)}
+                style={[styles.placeRow, theme.row()]}
+                accessibilityRole="button"
+              >
                 <MapPin size={14} color={theme.colors.primary} />
                 <Text style={[theme.text('bodySmall'), { flex: 1 }]} numberOfLines={1}>
                   {r.neighborhood ? (locale === 'ar' ? r.neighborhood.nameAr : r.neighborhood.nameEn) + ' · ' : ''}
@@ -213,7 +244,12 @@ export default function MapScreen() {
         />
 
         <View style={styles.fabColumn} pointerEvents="box-none">
-          <Pressable onPress={locateMe} style={[styles.fab, { backgroundColor: theme.colors.surfaceElevated }]} accessibilityRole="button" accessibilityLabel={t.map.myLocation}>
+          <Pressable
+            onPress={locateMe}
+            style={[styles.fab, { backgroundColor: theme.colors.surfaceElevated }]}
+            accessibilityRole="button"
+            accessibilityLabel={t.map.myLocation}
+          >
             <LocateFixed size={20} color={theme.colors.primary} />
           </Pressable>
           <Pressable
@@ -227,13 +263,19 @@ export default function MapScreen() {
         </View>
 
         {filtered.length === 0 ? (
-          <View pointerEvents="none" style={[styles.overlay, { backgroundColor: theme.colors.surfaceElevated + 'ee', borderRadius: theme.radii.md }]}>
+          <View
+            pointerEvents="none"
+            style={[styles.overlay, { backgroundColor: theme.colors.surfaceElevated + 'ee', borderRadius: theme.radii.md }]}
+          >
             <Text style={theme.text('title')}>{t.map.nothingOnMap}</Text>
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{t.map.nothingOnMapBody}</Text>
           </View>
         ) : null}
         {boundaryMissing || locNote ? (
-          <View pointerEvents="none" style={[styles.note, { backgroundColor: theme.colors.surfaceElevated + 'ee', borderRadius: theme.radii.sm }]}>
+          <View
+            pointerEvents="none"
+            style={[styles.note, { backgroundColor: theme.colors.surfaceElevated + 'ee', borderRadius: theme.radii.sm }]}
+          >
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{locNote ?? t.map.boundaryUnavailable}</Text>
           </View>
         ) : null}
@@ -267,7 +309,6 @@ export default function MapScreen() {
           </ScrollView>
         ) : null}
       </BottomSheet>
-
     </View>
   );
 
@@ -306,10 +347,30 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  dropdown: { position: 'absolute', top: 52, left: 16, right: 16, borderWidth: StyleSheet.hairlineWidth, paddingBottom: 6, elevation: 4, shadowOpacity: 0.12, shadowRadius: 8 },
+  dropdown: {
+    position: 'absolute',
+    top: 52,
+    left: 16,
+    right: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 6,
+    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+  },
   placeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10 },
   fabColumn: { position: 'absolute', top: 12, end: 12, gap: 10 },
-  fab: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.15, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
+  fab: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
   overlay: { position: 'absolute', left: 12, right: 12, bottom: 12, padding: 12, gap: 4 },
   note: { position: 'absolute', left: 12, right: 64, top: 12, padding: 8 },
   notice: { textAlign: 'center', paddingHorizontal: 16, paddingVertical: 8 },

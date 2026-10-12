@@ -36,7 +36,16 @@ describe('New/redesigned screens render correctly in Arabic (RTL default)', () =
     expect(useStore.getState().settings.locale).toBe('ar');
     await renderWithProvider(<CreateSheetScreen />);
 
-    for (const title of ['انشر شيئاً', 'اسأل الجيران', 'أنشئ فعالية', 'بلّغ عن مشكلة', 'أوصِ بمكان', 'بيع / تبرّع', 'مفقودات', 'اطلب مساعدة']) {
+    for (const title of [
+      'انشر شيئاً',
+      'اسأل الجيران',
+      'أنشئ فعالية',
+      'بلّغ عن مشكلة',
+      'أوصِ بمكان',
+      'بيع / تبرّع',
+      'مفقودات',
+      'اطلب مساعدة',
+    ]) {
       expect(screen.getByText(title)).toBeTruthy();
     }
   });

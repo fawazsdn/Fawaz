@@ -38,23 +38,92 @@ export default function CreateSheetScreen() {
   const safeBack = useSafeBack('/');
 
   const options: CreateOption[] = [
-    { key: 'post', icon: MessageSquarePlus, tone: theme.colors.primary, title: t.create.post, desc: t.create.postDesc, route: '/create/post' },
+    {
+      key: 'post',
+      icon: MessageSquarePlus,
+      tone: theme.colors.primary,
+      title: t.create.post,
+      desc: t.create.postDesc,
+      route: '/create/post',
+    },
     // Same composer as "Post something" — a distinct entry point, not a duplicate system.
-    { key: 'askNeighbors', icon: MessageCircleQuestion, tone: theme.colors.info, title: t.create.askNeighbors, desc: t.create.askNeighborsDesc, route: '/create/post' },
-    { key: 'activity', icon: Trophy, tone: theme.colors.primary, title: t.create.activity, desc: t.create.activityDesc, route: { pathname: '/event/create', params: { kind: 'activity' } } },
-    { key: 'event', icon: Calendar, tone: theme.colors.secondary, title: t.create.event, desc: t.create.eventDesc, route: { pathname: '/event/create', params: { kind: 'event' } } },
+    {
+      key: 'askNeighbors',
+      icon: MessageCircleQuestion,
+      tone: theme.colors.info,
+      title: t.create.askNeighbors,
+      desc: t.create.askNeighborsDesc,
+      route: '/create/post',
+    },
+    {
+      key: 'activity',
+      icon: Trophy,
+      tone: theme.colors.primary,
+      title: t.create.activity,
+      desc: t.create.activityDesc,
+      route: { pathname: '/event/create', params: { kind: 'activity' } },
+    },
+    {
+      key: 'event',
+      icon: Calendar,
+      tone: theme.colors.secondary,
+      title: t.create.event,
+      desc: t.create.eventDesc,
+      route: { pathname: '/event/create', params: { kind: 'event' } },
+    },
     { key: 'poll', icon: BarChart3, tone: theme.colors.primary, title: t.create.poll, desc: t.create.pollDesc, route: '/create/poll' },
-    { key: 'issue', icon: AlertTriangle, tone: theme.colors.warning, title: t.create.issue, desc: t.create.issueDesc, route: '/issue/create' },
-    { key: 'help', icon: HeartHandshake, tone: theme.colors.info, title: t.create.help, desc: t.create.helpDesc, route: '/help-request/create' },
-    { key: 'sell', icon: HandCoins, tone: theme.colors.secondary, title: t.create.sell, desc: t.create.sellDesc, route: '/marketplace/create' },
-    { key: 'lostFound', icon: PawPrint, tone: theme.colors.danger, title: t.create.lostFound, desc: t.create.lostFoundDesc, route: '/lost-found/create' },
+    {
+      key: 'issue',
+      icon: AlertTriangle,
+      tone: theme.colors.warning,
+      title: t.create.issue,
+      desc: t.create.issueDesc,
+      route: '/issue/create',
+    },
+    {
+      key: 'help',
+      icon: HeartHandshake,
+      tone: theme.colors.info,
+      title: t.create.help,
+      desc: t.create.helpDesc,
+      route: '/help-request/create',
+    },
+    {
+      key: 'sell',
+      icon: HandCoins,
+      tone: theme.colors.secondary,
+      title: t.create.sell,
+      desc: t.create.sellDesc,
+      route: '/marketplace/create',
+    },
+    {
+      key: 'lostFound',
+      icon: PawPrint,
+      tone: theme.colors.danger,
+      title: t.create.lostFound,
+      desc: t.create.lostFoundDesc,
+      route: '/lost-found/create',
+    },
     // Recommendations belong to a specific business, so this opens the businesses list to pick one.
-    { key: 'recommend', icon: Star, tone: theme.colors.primary, title: t.create.recommend, desc: t.create.recommendDesc, route: '/recommendations' },
+    {
+      key: 'recommend',
+      icon: Star,
+      tone: theme.colors.primary,
+      title: t.create.recommend,
+      desc: t.create.recommendDesc,
+      route: '/recommendations',
+    },
   ];
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <View style={[theme.row(), styles.header, { paddingTop: insets.top + 12, paddingHorizontal: theme.spacing.md, borderBottomColor: theme.colors.divider }]}>
+      <View
+        style={[
+          theme.row(),
+          styles.header,
+          { paddingTop: insets.top + 12, paddingHorizontal: theme.spacing.md, borderBottomColor: theme.colors.divider },
+        ]}
+      >
         <Text style={theme.text('heading2')}>{t.create.sheetTitle}</Text>
         <IconButton accessibilityLabel={t.common.close} variant="surface" onPress={safeBack}>
           <X size={18} color={theme.colors.textPrimary} />
@@ -75,7 +144,12 @@ export default function CreateSheetScreen() {
             style={({ pressed }) => [
               theme.row(),
               styles.row,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg, opacity: pressed ? 0.85 : 1 },
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                borderRadius: theme.radii.lg,
+                opacity: pressed ? 0.85 : 1,
+              },
             ]}
             accessibilityRole="button"
             accessibilityLabel={opt.title}

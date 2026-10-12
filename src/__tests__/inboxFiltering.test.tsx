@@ -16,7 +16,15 @@ const renderWithProvider = (ui: React.ReactElement) => render(<SafeAreaProvider 
 const now = new Date().toISOString();
 const conversations: Conversation[] = [
   { id: 'c-direct', kind: 'direct', participantIds: [TEST_ME, TEST_NEIGHBOR], lastMessageAt: now, lastReadAt: now },
-  { id: 'c-event', kind: 'event', participantIds: [TEST_ME, TEST_NEIGHBOR], eventId: 'e1', isGroup: true, title: 'Test Event Chat', lastMessageAt: now },
+  {
+    id: 'c-event',
+    kind: 'event',
+    participantIds: [TEST_ME, TEST_NEIGHBOR],
+    eventId: 'e1',
+    isGroup: true,
+    title: 'Test Event Chat',
+    lastMessageAt: now,
+  },
   { id: 'c-group', kind: 'group', participantIds: [TEST_ME, TEST_NEIGHBOR], isGroup: true, title: 'Test Group Chat', lastMessageAt: now },
 ];
 const messages: Message[] = [

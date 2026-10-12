@@ -22,10 +22,7 @@ export default function LostFoundScreen() {
   // src/features/home/HomeHeader.tsx for why.
   const allLostFound = useStore((s) => s.lostFound);
   const items = useMemo(
-    () =>
-      allLostFound
-        .filter((l) => l.neighborhoodId === neighborhoodId)
-        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    () => allLostFound.filter((l) => l.neighborhoodId === neighborhoodId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
     [allLostFound, neighborhoodId],
   );
 

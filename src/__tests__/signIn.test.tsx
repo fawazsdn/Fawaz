@@ -27,7 +27,11 @@ jest.mock('expo-apple-authentication', () => ({
 }));
 jest.mock('expo-auth-session', () => ({ makeRedirectUri: () => 'haratna://auth/callback' }));
 jest.mock('expo-web-browser', () => ({ maybeCompleteAuthSession: jest.fn(), openAuthSessionAsync: jest.fn() }));
-jest.mock('expo-crypto', () => ({ getRandomBytes: () => new Uint8Array(32), digestStringAsync: jest.fn(), CryptoDigestAlgorithm: { SHA256: 'sha256' } }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: () => new Uint8Array(32),
+  digestStringAsync: jest.fn(),
+  CryptoDigestAlgorithm: { SHA256: 'sha256' },
+}));
 
 const insetsFrame = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
 const renderWithProvider = (ui: React.ReactElement) => render(<SafeAreaProvider initialMetrics={insetsFrame}>{ui}</SafeAreaProvider>);
@@ -64,7 +68,10 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
   });
 
   it('signs in with real email/password and stores the real Supabase user id', async () => {
-    signInWithPassword.mockResolvedValue({ data: { user: { id: 'real-user-1', email: 'a@example.test', app_metadata: { provider: 'email' } } }, error: null });
+    signInWithPassword.mockResolvedValue({
+      data: { user: { id: 'real-user-1', email: 'a@example.test', app_metadata: { provider: 'email' } } },
+      error: null,
+    });
     await renderWithProvider(<SignInScreen />);
     await fireEvent.changeText(screen.getByLabelText('Email address'), ' A@Example.test ');
     await fireEvent.changeText(screen.getByLabelText('Password'), 'secret123');
@@ -76,7 +83,10 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
   });
 
   it('wrong password: clear error, not authenticated', async () => {
-    signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: 'invalid_credentials', message: 'Invalid login credentials' } });
+    signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { code: 'invalid_credentials', message: 'Invalid login credentials' },
+    });
     await renderWithProvider(<SignInScreen />);
     await fireEvent.changeText(screen.getByLabelText('Email address'), 'a@example.test');
     await fireEvent.changeText(screen.getByLabelText('Password'), 'wrong');

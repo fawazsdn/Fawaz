@@ -63,7 +63,14 @@ export function NeighborhoodIdentityCard({ neighborhoodId }: { neighborhoodId: s
       <View
         style={[
           theme.row(),
-          { alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.onPrimary + '22' },
+          {
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 12,
+            paddingTop: 12,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.onPrimary + '22',
+          },
         ]}
       >
         <Text style={[theme.text('bodySmall', theme.colors.onPrimary), { opacity: 0.9 }]}>

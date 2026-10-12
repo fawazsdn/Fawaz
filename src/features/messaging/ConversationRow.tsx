@@ -22,10 +22,7 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
   // Raw state + useMemo, not filter() inside the selector — see HomeHeader
   // for why (getSnapshot must return a stable reference across renders).
   const allMessages = useStore((s) => s.messages);
-  const messages = useMemo(
-    () => allMessages.filter((m) => m.conversationId === conversation.id),
-    [allMessages, conversation.id],
-  );
+  const messages = useMemo(() => allMessages.filter((m) => m.conversationId === conversation.id), [allMessages, conversation.id]);
   const lastMessage = messages[messages.length - 1];
   const unreadCount = messages.filter((m) => m.senderId !== me && !m.readBy.includes(me)).length;
   const unread = unreadCount > 0;
@@ -54,15 +51,26 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
             </Text>
             <Badge label={contextLabel} tone={conversation.isGroup ? (conversation.eventId ? 'primary' : 'info') : 'neutral'} />
           </View>
-          <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(lastMessage?.createdAt ?? conversation.lastMessageAt, locale)}</Text>
+          <Text style={theme.text('caption', theme.colors.textMuted)}>
+            {formatRelativeTime(lastMessage?.createdAt ?? conversation.lastMessageAt, locale)}
+          </Text>
         </View>
         <View style={[theme.row(), { justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }]}>
           <Text style={theme.text('bodySmall', unread ? theme.colors.textPrimary : theme.colors.textMuted)} numberOfLines={1}>
-            {lastMessage ? (lastMessage.image && !lastMessage.text ? `📷 ${t.messages.photo}` : lastMessage.text) : t.messages.noMessagesYet}
+            {lastMessage
+              ? lastMessage.image && !lastMessage.text
+                ? `📷 ${t.messages.photo}`
+                : lastMessage.text
+              : t.messages.noMessagesYet}
           </Text>
           {unread ? (
-            <View style={[styles.badge, { backgroundColor: theme.colors.primary }]} accessibilityLabel={`${unreadCount} ${t.messages.unread}`}>
-              <Text style={[theme.text('caption', theme.colors.onPrimary), { fontSize: 11 }]}>{localizeDigits(unreadCount > 99 ? '99+' : unreadCount, locale)}</Text>
+            <View
+              style={[styles.badge, { backgroundColor: theme.colors.primary }]}
+              accessibilityLabel={`${unreadCount} ${t.messages.unread}`}
+            >
+              <Text style={[theme.text('caption', theme.colors.onPrimary), { fontSize: 11 }]}>
+                {localizeDigits(unreadCount > 99 ? '99+' : unreadCount, locale)}
+              </Text>
             </View>
           ) : null}
         </View>

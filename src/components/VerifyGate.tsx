@@ -42,7 +42,12 @@ export function SyncNotice() {
   const status = useStore((s) => s.sync.status);
   if (status !== 'offline' && status !== 'error') return null;
   return (
-    <EmptyState icon={WifiOff} title={status === 'offline' ? t.errors.offlineTitle : t.errors.syncFailed} body={status === 'offline' ? t.errors.offlineBody : t.errors.genericBody} compact />
+    <EmptyState
+      icon={WifiOff}
+      title={status === 'offline' ? t.errors.offlineTitle : t.errors.syncFailed}
+      body={status === 'offline' ? t.errors.offlineBody : t.errors.genericBody}
+      compact
+    />
   );
 }
 

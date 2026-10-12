@@ -69,7 +69,13 @@ export const HaratnaMap = forwardRef<HaratnaMapHandle, HaratnaMapProps>(function
       accessibilityLabel="map"
     >
       {polygons.map((coords, i) => (
-        <Polygon key={`poly-${i}`} coordinates={coords} strokeColor={theme.colors.primary} strokeWidth={2} fillColor={theme.colors.primary + '14'} />
+        <Polygon
+          key={`poly-${i}`}
+          coordinates={coords}
+          strokeColor={theme.colors.primary}
+          strokeWidth={2}
+          fillColor={theme.colors.primary + '14'}
+        />
       ))}
       {markers.map((m) => (
         <Marker

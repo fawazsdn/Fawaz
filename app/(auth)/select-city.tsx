@@ -161,10 +161,7 @@ export default function SelectCityScreen() {
           ? item.neighborhood.nameAr
           : item.neighborhood.nameEn
         : cityLabel(item.city);
-    const context =
-      item.kind === 'neighborhood'
-        ? `${cityLabel(item.city)} · ${regionLabel(item.region)}`
-        : regionLabel(item.region);
+    const context = item.kind === 'neighborhood' ? `${cityLabel(item.city)} · ${regionLabel(item.region)}` : regionLabel(item.region);
     return (
       <Pressable
         onPress={() => chooseSearchResult(item)}
@@ -284,7 +281,9 @@ export default function SelectCityScreen() {
                     loading={locating}
                     icon={<LocateFixed size={16} color={theme.colors.primary} />}
                   />
-                  {locationNote ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{locationNote}</Text> : null}
+                  {locationNote ? (
+                    <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{locationNote}</Text>
+                  ) : null}
                 </View>
               );
             }
@@ -323,11 +322,7 @@ export default function SelectCityScreen() {
                       <Text style={[theme.text('title'), { flex: 1 }]} numberOfLines={1}>
                         {regionLabel(region)}
                       </Text>
-                      <ChevronLeft
-                        size={18}
-                        color={theme.colors.textMuted}
-                        style={locale === 'en' ? styles.flip : undefined}
-                      />
+                      <ChevronLeft size={18} color={theme.colors.textMuted} style={locale === 'en' ? styles.flip : undefined} />
                     </Pressable>
                   ))}
                 </View>

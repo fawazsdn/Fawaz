@@ -3,9 +3,7 @@ import * as Location from 'expo-location';
 import { supabase } from '@/lib/supabase';
 
 export type LocateResult =
-  | { status: 'ok'; lat: number; lng: number }
-  | { status: 'denied'; canAskAgain: boolean }
-  | { status: 'unavailable' };
+  { status: 'ok'; lat: number; lng: number } | { status: 'denied'; canAskAgain: boolean } | { status: 'unavailable' };
 
 const TIMEOUT_MS = 15000;
 

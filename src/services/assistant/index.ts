@@ -10,7 +10,6 @@ export { parseQuestion } from './intent';
 export { composeAnswer } from './engine';
 export type { ReplyLanguage } from './language';
 
-
 function rows<T>(res: { data: T[] | null; error: { message: string } | null }): T[] {
   if (res.error) throw new Error(res.error.message);
   return res.data ?? [];
@@ -44,7 +43,13 @@ export function supabaseAssistantSource(neighborhoodId: string): AssistantDataSo
     },
     async openIssues() {
       const data = rows<any>(
-        await supabase.from('issues').select('title, category, status, created_at').eq('neighborhood_id', neighborhoodId).neq('status', 'resolved').order('created_at', { ascending: false }).limit(50),
+        await supabase
+          .from('issues')
+          .select('title, category, status, created_at')
+          .eq('neighborhood_id', neighborhoodId)
+          .neq('status', 'resolved')
+          .order('created_at', { ascending: false })
+          .limit(50),
       );
       return data.map((i) => ({ title: i.title, category: i.category, status: i.status, createdAt: i.created_at }));
     },
@@ -64,25 +69,48 @@ export function supabaseAssistantSource(neighborhoodId: string): AssistantDataSo
     },
     async listings() {
       const data = rows<any>(
-        await supabase.from('marketplace_listings').select('title, listing_type, price').eq('neighborhood_id', neighborhoodId).eq('status', 'available').order('created_at', { ascending: false }).limit(50),
+        await supabase
+          .from('marketplace_listings')
+          .select('title, listing_type, price')
+          .eq('neighborhood_id', neighborhoodId)
+          .eq('status', 'available')
+          .order('created_at', { ascending: false })
+          .limit(50),
       );
       return data.map((l) => ({ title: l.title, listingType: l.listing_type, price: l.price ?? undefined }));
     },
     async openHelpRequests() {
       const data = rows<any>(
-        await supabase.from('help_requests').select('title').eq('neighborhood_id', neighborhoodId).eq('status', 'open').order('created_at', { ascending: false }).limit(50),
+        await supabase
+          .from('help_requests')
+          .select('title')
+          .eq('neighborhood_id', neighborhoodId)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(50),
       );
       return data.map((h) => ({ title: h.title }));
     },
     async openPolls() {
       const data = rows<any>(
-        await supabase.from('polls').select('question, total_votes, closes_at').eq('neighborhood_id', neighborhoodId).gt('closes_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(20),
+        await supabase
+          .from('polls')
+          .select('question, total_votes, closes_at')
+          .eq('neighborhood_id', neighborhoodId)
+          .gt('closes_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(20),
       );
       return data.map((p) => ({ question: p.question, totalVotes: p.total_votes ?? 0, closesAt: p.closes_at }));
     },
     async lostFound() {
       const data = rows<any>(
-        await supabase.from('lost_found_posts').select('title, status, kind').eq('neighborhood_id', neighborhoodId).order('created_at', { ascending: false }).limit(50),
+        await supabase
+          .from('lost_found_posts')
+          .select('title, status, kind')
+          .eq('neighborhood_id', neighborhoodId)
+          .order('created_at', { ascending: false })
+          .limit(50),
       );
       return data.map((l) => ({ title: l.title, status: l.status, kind: l.kind }));
     },

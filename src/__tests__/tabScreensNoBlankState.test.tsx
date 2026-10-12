@@ -103,7 +103,10 @@ describe('Home / Explore / Map show a recovery screen (not blank) when no neighb
   });
 
   it('Home also recovers from a stale neighborhoodId that no longer resolves (not just a missing one)', async () => {
-    useStore.setState((s) => ({ session: { ...s.session, neighborhoodId: 'old-scheme-id-that-does-not-exist' }, sync: { ...s.sync, status: 'ready' } }));
+    useStore.setState((s) => ({
+      session: { ...s.session, neighborhoodId: 'old-scheme-id-that-does-not-exist' },
+      sync: { ...s.sync, status: 'ready' },
+    }));
     await renderWithProvider(<HomeScreen />);
     expect(screen.getByText(/couldn.t load your neighborhood/i)).toBeTruthy();
   });

@@ -66,10 +66,7 @@ export default function VerificationScreen() {
 
     let position: Location.LocationObject;
     try {
-      position = await withTimeout(
-        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-        LOCATION_TIMEOUT_MS,
-      );
+      position = await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), LOCATION_TIMEOUT_MS);
     } catch {
       setStatus('location_unavailable');
       return;
@@ -152,7 +149,13 @@ export default function VerificationScreen() {
       ) : null}
 
       {status === 'permission_denied' ? (
-        <Button label={t.verification.tryAgain} onPress={startCheck} fullWidth size="lg" icon={<MapPinned size={17} color={theme.colors.onPrimary} />} />
+        <Button
+          label={t.verification.tryAgain}
+          onPress={startCheck}
+          fullWidth
+          size="lg"
+          icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
+        />
       ) : null}
 
       {status === 'permission_denied_forever' ? (
@@ -160,7 +163,13 @@ export default function VerificationScreen() {
       ) : null}
 
       {status === 'location_unavailable' ? (
-        <Button label={t.verification.tryAgain} onPress={startCheck} fullWidth size="lg" icon={<MapPinned size={17} color={theme.colors.onPrimary} />} />
+        <Button
+          label={t.verification.tryAgain}
+          onPress={startCheck}
+          fullWidth
+          size="lg"
+          icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
+        />
       ) : null}
 
       {status === 'boundary_unavailable' ? <Button label={t.verification.continueToApp} onPress={goToApp} fullWidth size="lg" /> : null}
@@ -190,7 +199,11 @@ function StatusCard({ status }: { status: LocalStatus }) {
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value * 360}deg` }] }));
 
   const map: Record<LocalStatus, { icon: React.ReactNode; label: string; body?: string; tone: string }> = {
-    not_started: { icon: <ShieldQuestion size={26} color={theme.colors.textMuted} />, label: t.verification.notStarted, tone: theme.colors.textMuted },
+    not_started: {
+      icon: <ShieldQuestion size={26} color={theme.colors.textMuted} />,
+      label: t.verification.notStarted,
+      tone: theme.colors.textMuted,
+    },
     checking: {
       icon: (
         <Animated.View style={spinStyle}>
@@ -200,8 +213,18 @@ function StatusCard({ status }: { status: LocalStatus }) {
       label: t.verification.checking,
       tone: theme.colors.info,
     },
-    verified: { icon: <BadgeCheck size={26} color={theme.colors.success} />, label: t.verification.verified, body: t.verification.verifiedBody, tone: theme.colors.success },
-    outside_boundary: { icon: <ShieldAlert size={26} color={theme.colors.warning} />, label: t.verification.outsideTitle, body: t.verification.outsideBody, tone: theme.colors.warning },
+    verified: {
+      icon: <BadgeCheck size={26} color={theme.colors.success} />,
+      label: t.verification.verified,
+      body: t.verification.verifiedBody,
+      tone: theme.colors.success,
+    },
+    outside_boundary: {
+      icon: <ShieldAlert size={26} color={theme.colors.warning} />,
+      label: t.verification.outsideTitle,
+      body: t.verification.outsideBody,
+      tone: theme.colors.warning,
+    },
     permission_denied: {
       icon: <ShieldAlert size={26} color={theme.colors.warning} />,
       label: t.verification.permissionDeniedTitle,
@@ -226,8 +249,18 @@ function StatusCard({ status }: { status: LocalStatus }) {
       body: t.verification.boundaryUnavailableBody,
       tone: theme.colors.textMuted,
     },
-    rate_limited: { icon: <ShieldAlert size={26} color={theme.colors.warning} />, label: t.verification.failed, body: t.verification.rateLimitedBody, tone: theme.colors.warning },
-    error: { icon: <ShieldAlert size={26} color={theme.colors.danger} />, label: t.verification.failed, body: t.verification.failedBody, tone: theme.colors.danger },
+    rate_limited: {
+      icon: <ShieldAlert size={26} color={theme.colors.warning} />,
+      label: t.verification.failed,
+      body: t.verification.rateLimitedBody,
+      tone: theme.colors.warning,
+    },
+    error: {
+      icon: <ShieldAlert size={26} color={theme.colors.danger} />,
+      label: t.verification.failed,
+      body: t.verification.failedBody,
+      tone: theme.colors.danger,
+    },
   };
 
   const entry = map[status];

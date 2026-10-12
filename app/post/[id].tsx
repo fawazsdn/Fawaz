@@ -72,7 +72,11 @@ export default function PostDetailScreen() {
       keyboardVerticalOffset={0}
     >
       <AppHeader title={t.post.commentsTitle} fallbackRoute="/" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ padding: theme.spacing.md }}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+      >
         <PostCard post={post} onPress={() => {}} />
         <Text style={[theme.text('title'), { marginTop: 20, marginBottom: 4 }]}>
           {t.post.commentsTitle} {comments.length > 0 ? `(${comments.length})` : ''}
