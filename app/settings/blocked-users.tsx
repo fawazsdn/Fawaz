@@ -8,13 +8,15 @@ import { AppHeader } from '@/components/AppHeader';
 import { UserRow } from '@/components/UserRow';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { useAction } from '@/hooks/useAction';
+import { toggleBlockUser } from '@/backend/actions';
 
 export default function BlockedUsersScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const blockedUserIds = useStore((s) => s.blockedUserIds);
   const users = useStore((s) => s.users);
-  const toggleBlockUser = useStore((s) => s.toggleBlockUser);
+  const { run } = useAction();
 
   const blocked = users.filter((u) => blockedUserIds.includes(u.id));
 
@@ -28,7 +30,7 @@ export default function BlockedUsersScreen() {
         renderItem={({ item }) => (
           <UserRow
             user={item}
-            right={<Button label={t.common.unblock} size="sm" variant="outline" onPress={() => toggleBlockUser(item.id)} />}
+            right={<Button label={t.common.unblock} size="sm" variant="outline" onPress={() => run(() => toggleBlockUser(item.id))} />}
           />
         )}
         ListEmptyComponent={<EmptyState icon={UserX} title={t.emptyStates.noResults} />}

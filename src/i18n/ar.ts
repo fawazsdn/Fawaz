@@ -353,7 +353,7 @@ const ar = {
   help: {
     iCanHelp: 'أقدر أساعد',
     offered: 'عرضت المساعدة',
-    offerConfirmed: 'عرض مساعدتك للجار',
+    offerConfirmed: 'شكراً! وصل عرضك للمساعدة إلى جارك.',
     categories: {
       car: 'سيارة',
       borrow_item: 'استعارة غرض',
@@ -362,6 +362,7 @@ const ar = {
       home: 'المنزل',
       other: 'أخرى',
     },
+    markResolved: 'تم حل الطلب',
   },
   events: {
     title: 'الأنشطة والفعاليات',
@@ -563,6 +564,9 @@ const ar = {
     },
     posted: 'نُشر',
     priceLabel: 'السعر (ر.س)',
+    markSold: 'تم البيع',
+    markReserved: 'محجوز',
+    markAvailable: 'متاح',
   },
   borrow: {
     title: 'استعارة من الجيران',

@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MapPin } from 'lucide-react-native';
+import {  } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
-import { displayName, formatDistance, formatRelativeTime } from '@/utils/format';
+import { useStore, useCurrentUserId } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { useUser } from '@/hooks/useNeighborhood';
+import { getOrCreateDirectConversation, offerHelp, resolveHelpRequest } from '@/backend/actions';
+import { formatRelativeTime } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
-import { messageService } from '@/services';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -24,13 +26,14 @@ export default function HelpRequestDetailScreen() {
   const router = useRouter();
 
   const request = useStore((s) => s.helpRequests.find((h) => h.id === id));
-  const requester = useStore((s) => s.getUser(request?.requesterId ?? ''));
-  const offerHelp = useStore((s) => s.offerHelp);
+  const requester = useUser(request?.requesterId);
   const users = useStore((s) => s.users);
+  const me = useCurrentUserId();
+  const { run, pending } = useAction();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  if (!request || !requester) {
+  if (!request) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader title="" fallbackRoute="/(tabs)/discover" />
@@ -39,18 +42,19 @@ export default function HelpRequestDetailScreen() {
     );
   }
 
-  const offered = request.offeredBy.includes(CURRENT_USER_ID);
-  const isOwn = request.requesterId === CURRENT_USER_ID;
+  const offered = request.offeredBy.includes(me);
+  const isOwn = request.requesterId === me;
 
-  const onOffer = () => {
+  const onOffer = async () => {
     haptics.medium();
-    offerHelp(request.id);
-    setConfirmOpen(true);
+    const res = await run(() => offerHelp(request.id));
+    if (res.ok) setConfirmOpen(true);
   };
 
   const messageRequester = async () => {
-    const convo = await messageService.getOrCreateConversation(requester.id);
-    router.push(`/messages/${convo.id}`);
+    setConfirmOpen(false);
+    const res = await run(() => getOrCreateDirectConversation(request.requesterId));
+    if (res.ok) router.push(`/messages/${res.value}`);
   };
 
   return (
@@ -63,20 +67,29 @@ export default function HelpRequestDetailScreen() {
 
         <View style={{ marginTop: 12, gap: 4 }}>
           <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(request.createdAt, locale)}</Text>
-          <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
-            <MapPin size={12} color={theme.colors.textMuted} />
-            <Text style={theme.text('caption', theme.colors.textMuted)}>{formatDistance(request.approxDistanceM, locale)}</Text>
-          </View>
         </View>
 
-        <Card style={{ marginTop: 16 }}>
-          <UserRow user={requester} onPress={() => router.push(`/profile/${requester.id}`)} />
-        </Card>
+        {requester ? (
+          <Card style={{ marginTop: 16 }}>
+            <UserRow user={requester} onPress={() => router.push(`/profile/${requester.id}`)} />
+          </Card>
+        ) : null}
 
         {!isOwn ? (
           <View style={{ marginTop: 16, gap: 10 }}>
-            <Button label={offered ? t.help.offered : t.help.iCanHelp} onPress={onOffer} disabled={offered} fullWidth size="lg" />
+            <Button
+              label={offered ? t.help.offered : t.help.iCanHelp}
+              onPress={onOffer}
+              disabled={offered || pending || request.status === 'resolved'}
+              loading={pending}
+              fullWidth
+              size="lg"
+            />
             <Button label={t.common.message} onPress={messageRequester} variant="outline" fullWidth />
+          </View>
+        ) : request.status !== 'resolved' ? (
+          <View style={{ marginTop: 16 }}>
+            <Button label={t.help.markResolved} onPress={() => run(() => resolveHelpRequest(request.id))} variant="outline" fullWidth />
           </View>
         ) : null}
 
@@ -93,7 +106,7 @@ export default function HelpRequestDetailScreen() {
 
       <ConfirmationModal
         visible={confirmOpen}
-        title={`${displayName(useStore.getState().currentUser())} ${t.help.offerConfirmed}`}
+        title={t.help.offerConfirmed}
         confirmLabel={t.common.ok}
         cancelLabel={t.common.message}
         onCancel={messageRequester}

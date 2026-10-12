@@ -4,8 +4,10 @@ import { useRouter } from 'expo-router';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
-import { helpRequestService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { useIsVerified } from '@/hooks/useNeighborhood';
+import { createHelpRequest } from '@/backend/actions';
+import { VerifyGate } from '@/components/VerifyGate';
 import type { HelpCategory } from '@/models';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
@@ -16,28 +18,29 @@ export default function CreateHelpRequestScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
-  const neighborhoodId = useStore((s) => s.session.neighborhoodId);
+  const verified = useIsVerified();
+  const { run, pending: submitting } = useAction();
 
   const [category, setCategory] = useState<HelpCategory | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = category !== null && title.trim().length > 3;
 
   const onSubmit = async () => {
-    if (!category || !neighborhoodId) return;
-    setSubmitting(true);
-    const req = await helpRequestService.createHelpRequest({
-      title: title.trim(),
-      category,
-      description: description.trim(),
-      neighborhoodId,
-      approxDistanceM: Math.round(150 + Math.random() * 700),
-    });
-    setSubmitting(false);
-    router.replace(`/help-request/${req.id}`);
+    if (!category) return;
+    const res = await run(() => createHelpRequest({ title: title.trim(), category, description: description.trim() || title.trim() }));
+    if (res.ok) router.replace(`/help-request/${res.value}`);
   };
+
+  if (!verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.create.help} fallbackRoute="/(tabs)/discover" />
+        <VerifyGate />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -45,7 +48,7 @@ export default function CreateHelpRequestScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader title={t.create.help} fallbackRoute="/(tabs)/discover" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.post.category}</Text>
         <View style={[theme.row(), styles.grid]}>
           {CATEGORIES.map((c) => (

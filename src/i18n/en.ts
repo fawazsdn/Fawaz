@@ -355,7 +355,7 @@ const en: typeof ar = {
   help: {
     iCanHelp: 'I can help',
     offered: 'Offered to help',
-    offerConfirmed: 'has offered to help',
+    offerConfirmed: 'Thanks! Your offer to help was sent to your neighbor.',
     categories: {
       car: 'Car',
       borrow_item: 'Borrow item',
@@ -364,6 +364,7 @@ const en: typeof ar = {
       home: 'Home',
       other: 'Other',
     },
+    markResolved: 'Mark as resolved',
   },
   events: {
     title: 'Activities & events',
@@ -565,6 +566,9 @@ const en: typeof ar = {
     },
     posted: 'Posted',
     priceLabel: 'Price (SAR)',
+    markSold: 'Mark as sold',
+    markReserved: 'Mark as reserved',
+    markAvailable: 'Mark as available',
   },
   borrow: {
     title: 'Borrow from a neighbor',

@@ -1,19 +1,24 @@
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { ImagePlus, X } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
-import { issueService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { useIsVerified } from '@/hooks/useNeighborhood';
+import { approximateCoordinate, createIssue } from '@/backend/actions';
+import { locateOnce } from '@/backend/location';
+import { VerifyGate } from '@/components/VerifyGate';
+import { HaratnaMap, type MapCoordinate } from '@/components/HaratnaMap';
+import { useImagePicker } from '@/components/imageEditor/useImagePicker';
 import type { IssueCategory } from '@/models';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { MapPlaceholder } from '@/components/MapPlaceholder';
 
 const CATEGORIES: IssueCategory[] = [
   'streetlight',
@@ -34,12 +39,16 @@ export default function CreateIssueScreen() {
   const router = useRouter();
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
   const safeBack = useSafeBack('/issues');
+  const verified = useIsVerified();
+  const { run, pending: submitting } = useAction();
+  const { pickImage: pickEdited, editor } = useImagePicker({ aspects: ['classic', 'square', 'portrait', 'wide'] });
+  const [pin, setPin] = useState<MapCoordinate | null>(null);
+  const [locNote, setLocNote] = useState<string | null>(null);
 
   const [step, setStep] = useState(0);
   const [category, setCategory] = useState<IssueCategory | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [description, setDescription] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const stepTitles = [
     t.issueCreate.stepCategory,
@@ -52,35 +61,47 @@ export default function CreateIssueScreen() {
   const canProceed = [category !== null, true, true, description.trim().length > 4, true][step];
 
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-      selectionLimit: 3 - images.length,
-    });
-    if (!result.canceled) setImages((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 3));
+    if (images.length >= 3) return;
+    const uri = await pickEdited();
+    if (uri) setImages((prev) => [...prev, uri].slice(0, 3));
+  };
+
+  const useMyLocation = async () => {
+    setLocNote(null);
+    const loc = await locateOnce();
+    if (loc.status !== 'ok') {
+      setLocNote(loc.status === 'denied' ? t.map.locationDenied : t.verification.locationUnavailableBody);
+      return;
+    }
+    setPin({ latitude: approximateCoordinate(loc.lat), longitude: approximateCoordinate(loc.lng) });
   };
 
   const onNext = () => (step < STEPS.length - 1 ? setStep(step + 1) : onSubmit());
   const onBack = () => (step > 0 ? setStep(step - 1) : safeBack());
 
   const onSubmit = async () => {
-    if (!category || !neighborhood) return;
-    setSubmitting(true);
-    const issue = await issueService.createIssue({
-      title: t.issueCreate.categories[category],
-      category,
-      description: description.trim(),
-      images,
-      neighborhoodId: neighborhood.id,
-      approxLat: neighborhood.centerLat,
-      approxLng: neighborhood.centerLng,
-    });
-    setSubmitting(false);
-    router.replace(`/issue/${issue.id}`);
+    if (!category) return;
+    const res = await run(() =>
+      createIssue({
+        title: t.issueCreate.categories[category],
+        category,
+        description: description.trim(),
+        localImages: images,
+        // Only a location the resident explicitly pinned — never a made-up default.
+        coordinate: pin ? { lat: pin.latitude, lng: pin.longitude } : undefined,
+      }),
+    );
+    if (res.ok) router.replace(`/issue/${res.value}`);
   };
+
+  if (!verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.issueCreate.title} fallbackRoute="/issues" />
+        <VerifyGate />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -129,7 +150,7 @@ export default function CreateIssueScreen() {
             <View style={[theme.row(), { gap: 8, flexWrap: 'wrap' }]}>
               {images.map((uri, i) => (
                 <View key={uri} style={styles.imageWrap}>
-                  <Image source={{ uri }} style={styles.image} />
+                  <Image source={{ uri }} style={styles.image} contentFit="cover" />
                   <Pressable
                     style={[styles.removeBtn, { backgroundColor: theme.colors.overlay }]}
                     onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
@@ -150,14 +171,22 @@ export default function CreateIssueScreen() {
 
         {step === 2 ? (
           <View>
+            <Text style={[theme.text('caption', theme.colors.textMuted), { marginBottom: 8 }]}>{t.eventCreate.pinLocationHint}</Text>
             {neighborhood ? (
-              <MapPlaceholder
-                centerLat={neighborhood.centerLat}
-                centerLng={neighborhood.centerLng}
-                pins={[{ id: 'x', lat: neighborhood.centerLat, lng: neighborhood.centerLng }]}
-                height={220}
-              />
+              <View style={{ height: 240, borderRadius: theme.radii.md, overflow: 'hidden' }}>
+                <HaratnaMap
+                  center={pin ?? { latitude: neighborhood.centerLat, longitude: neighborhood.centerLng }}
+                  delta={0.02}
+                  markers={pin ? [{ id: 'pin', coordinate: pin, title: category ? t.issueCreate.categories[category] : '', color: theme.colors.warning }] : []}
+                  onMapPress={(c) => setPin({ latitude: approximateCoordinate(c.latitude), longitude: approximateCoordinate(c.longitude) })}
+                />
+              </View>
             ) : null}
+            <View style={[theme.row(), { gap: 8, marginTop: 8, flexWrap: 'wrap' }]}>
+              <Button label={t.eventCreate.useMyLocation} onPress={useMyLocation} variant="outline" size="sm" />
+              {pin ? <Button label={t.eventCreate.removePin} onPress={() => setPin(null)} variant="ghost" size="sm" /> : null}
+            </View>
+            {locNote ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{locNote}</Text> : null}
             <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 10 }]}>{t.map.approxNotice}</Text>
           </View>
         ) : null}
@@ -195,6 +224,7 @@ export default function CreateIssueScreen() {
           size="lg"
         />
       </View>
+      {editor}
     </KeyboardAvoidingView>
   );
 }

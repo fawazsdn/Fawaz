@@ -4,7 +4,7 @@ import { Bookmark } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useStore, useCurrentUserId } from '@/store/useStore';
 import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { EmptyState } from '@/components/EmptyState';
@@ -28,10 +28,11 @@ export default function SavedScreen() {
 
   // Raw state + useMemo, not filter() inside the selector — see
   // src/features/home/HomeHeader.tsx for why.
+  const me = useCurrentUserId();
   const allPosts = useStore((s) => s.posts);
   const allListings = useStore((s) => s.marketplaceListings);
-  const savedPosts = useMemo(() => allPosts.filter((p) => p.savedBy.includes(CURRENT_USER_ID)), [allPosts]);
-  const savedListings = useMemo(() => allListings.filter((l) => l.savedBy.includes(CURRENT_USER_ID)), [allListings]);
+  const savedPosts = useMemo(() => allPosts.filter((p) => p.savedBy.includes(me)), [allPosts, me]);
+  const savedListings = useMemo(() => allListings.filter((l) => l.savedBy.includes(me)), [allListings, me]);
 
   const [filter, setFilter] = useState<Filter>('all');
 

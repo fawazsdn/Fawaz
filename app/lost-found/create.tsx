@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { ImagePlus } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
-import { lostFoundService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { useIsVerified } from '@/hooks/useNeighborhood';
+import { createLostFound } from '@/backend/actions';
+import { VerifyGate } from '@/components/VerifyGate';
+import { useImagePicker } from '@/components/imageEditor/useImagePicker';
 import type { LostFoundStatus } from '@/models';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
@@ -17,38 +20,38 @@ export default function CreateLostFoundScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
-  const neighborhoodId = useStore((s) => s.session.neighborhoodId);
+  const verified = useIsVerified();
+  const { run, pending: submitting } = useAction();
+  const { pickImage: pickEdited, editor } = useImagePicker({ aspects: ['square', 'classic', 'portrait'] });
 
   const [kind, setKind] = useState<'pet' | 'item'>('item');
   const [status, setStatus] = useState<LostFoundStatus>('lost');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<string | undefined>();
-  const [submitting, setSubmitting] = useState(false);
 
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-    if (!result.canceled && result.assets[0]) setImage(result.assets[0].uri);
+    const uri = await pickEdited();
+    if (uri) setImage(uri);
   };
 
-  const canSubmit = title.trim().length > 2 && !!image;
+  const canSubmit = title.trim().length > 2;
 
   const onSubmit = async () => {
-    if (!neighborhoodId || !image) return;
-    setSubmitting(true);
-    const post = await lostFoundService.create({
-      kind,
-      title: title.trim(),
-      description: description.trim(),
-      image,
-      neighborhoodId,
-      status,
-    });
-    setSubmitting(false);
-    router.replace(`/lost-found/${post.id}`);
+    const res = await run(() =>
+      createLostFound({ kind, title: title.trim(), description: description.trim() || title.trim(), localImage: image, status }),
+    );
+    if (res.ok) router.replace(`/lost-found/${res.value}`);
   };
+
+  if (!verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.lostFound.report} fallbackRoute="/lost-found" />
+        <VerifyGate />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -56,7 +59,7 @@ export default function CreateLostFoundScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader title={t.lostFound.report} fallbackRoute="/lost-found" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <Pressable onPress={pickImage} style={[styles.imagePicker, { borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}>
           {image ? <Image source={{ uri: image }} style={styles.image} /> : <ImagePlus size={26} color={theme.colors.primary} />}
         </Pressable>
@@ -88,6 +91,7 @@ export default function CreateLostFoundScreen() {
         <View style={{ height: 24 }} />
         <Button label={t.post.publish} onPress={onSubmit} disabled={!canSubmit} loading={submitting} fullWidth size="lg" />
       </ScrollView>
+      {editor}
     </KeyboardAvoidingView>
   );
 }

@@ -4,12 +4,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useStore, useCurrentUserId } from '@/store/useStore';
 import { AppHeader } from '@/components/AppHeader';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { UserRow } from '@/components/UserRow';
+import { useAction } from '@/hooks/useAction';
+import { requestBorrow } from '@/backend/actions';
 
 export default function BorrowDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,7 +21,8 @@ export default function BorrowDetailScreen() {
 
   const item = useStore((s) => s.borrowItems.find((b) => b.id === id));
   const owner = useStore((s) => s.getUser(item?.ownerId ?? ''));
-  const requestBorrow = useStore((s) => s.requestBorrow);
+  const me = useCurrentUserId();
+  const { run, pending } = useAction();
 
   if (!item || !owner) {
     return (
@@ -30,7 +33,7 @@ export default function BorrowDetailScreen() {
     );
   }
 
-  const requested = item.requests.some((r) => r.userId === CURRENT_USER_ID);
+  const requested = item.requests.some((r) => r.userId === me);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -45,11 +48,12 @@ export default function BorrowDetailScreen() {
         <View style={{ marginTop: 16 }}>
           <UserRow user={owner} subtitle={t.borrow.owner} onPress={() => router.push(`/profile/${owner.id}`)} />
         </View>
-        {item.ownerId !== CURRENT_USER_ID ? (
+        {item.ownerId !== me ? (
           <View style={{ marginTop: 16 }}>
             <Button
               label={requested ? t.borrow.requested : t.borrow.requestToBorrow}
-              onPress={() => requestBorrow(item.id)}
+              onPress={() => run(() => requestBorrow(item.id))}
+              loading={pending}
               disabled={requested || !item.available}
               fullWidth
               size="lg"

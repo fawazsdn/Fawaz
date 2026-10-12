@@ -10,6 +10,8 @@ import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { FilterBar } from '@/components/FilterBar';
+import { useAction } from '@/hooks/useAction';
+import { moderateReport, removeContent } from '@/backend/actions';
 
 const TONE = { open: 'warning', reviewed: 'info', dismissed: 'neutral', actioned: 'success' } as const;
 
@@ -17,8 +19,7 @@ export default function ModerationScreen() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const reports = useStore((s) => s.reports);
-  const moderateReport = useStore((s) => s.moderateReport);
-  const removeContent = useStore((s) => s.removeContent);
+  const { run } = useAction();
   const posts = useStore((s) => s.posts);
   const comments = useStore((s) => s.comments);
   const users = useStore((s) => s.users);
@@ -79,12 +80,14 @@ export default function ModerationScreen() {
                     size="sm"
                     variant="danger"
                     onPress={() => {
-                      removeContent(r.targetType, r.targetId);
-                      moderateReport(r.id, 'actioned');
+                      run(async () => {
+                        await removeContent(r.targetType, r.targetId);
+                        await moderateReport(r.id, 'actioned');
+                      });
                     }}
                   />
-                  <Button label={t.moderation.warnUser} size="sm" variant="outline" onPress={() => moderateReport(r.id, 'reviewed')} />
-                  <Button label={t.moderation.dismiss} size="sm" variant="ghost" onPress={() => moderateReport(r.id, 'dismissed')} />
+                  <Button label={t.moderation.warnUser} size="sm" variant="outline" onPress={() => run(() => moderateReport(r.id, 'reviewed'))} />
+                  <Button label={t.moderation.dismiss} size="sm" variant="ghost" onPress={() => run(() => moderateReport(r.id, 'dismissed'))} />
                 </View>
               ) : null}
             </View>

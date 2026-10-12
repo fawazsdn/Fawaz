@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { addComment, loadComments } from '@/backend/actions';
+import { SkeletonCardRow } from '@/components/Skeleton';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Composer } from '@/components/Composer';
@@ -26,8 +29,17 @@ export default function PostDetailScreen() {
     () => allComments.filter((c) => c.postId === id).sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
     [allComments, id],
   );
-  const addComment = useStore((s) => s.addComment);
   const getUser = useStore((s) => s.getUser);
+  const syncStatus = useStore((s) => s.sync.status);
+  const { run, pending } = useAction();
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    loadComments(id)
+      .catch(() => {})
+      .finally(() => setCommentsLoaded(true));
+  }, [id]);
 
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
@@ -35,29 +47,39 @@ export default function PostDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader title={t.post.commentsTitle} fallbackRoute="/" />
-        <EmptyState title={t.errors.genericTitle} />
+        {syncStatus === 'loading' ? (
+          <View style={{ padding: theme.spacing.md }}>
+            <SkeletonCardRow count={2} />
+          </View>
+        ) : (
+          <EmptyState title={t.errors.genericTitle} body={t.errors.genericBody} />
+        )}
       </View>
     );
   }
 
-  const onSend = (text: string) => {
-    addComment(post.id, text, replyingTo?.id);
+  const onSend = async (text: string) => {
+    if (pending) return;
+    const parent = replyingTo?.id;
     setReplyingTo(null);
+    await run(() => addComment(post.id, text, parent));
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: theme.colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
+      keyboardVerticalOffset={0}
     >
       <AppHeader title={t.post.commentsTitle} fallbackRoute="/" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
+      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }} keyboardDismissMode="interactive" keyboardShouldPersistTaps="handled">
         <PostCard post={post} onPress={() => {}} />
         <Text style={[theme.text('title'), { marginTop: 20, marginBottom: 4 }]}>
           {t.post.commentsTitle} {comments.length > 0 ? `(${comments.length})` : ''}
         </Text>
-        {comments.length === 0 ? (
+        {!commentsLoaded ? (
+          <SkeletonCardRow count={1} />
+        ) : comments.length === 0 ? (
           <EmptyState title={t.post.noComments} compact />
         ) : (
           comments.map((c) => <CommentRow key={c.id} comment={c} onReply={setReplyingTo} />)
@@ -68,7 +90,10 @@ export default function PostDetailScreen() {
         onSend={onSend}
         replyingTo={
           replyingTo
-            ? `${t.post.reply} ${displayName(getUser(replyingTo.authorId) ?? { firstName: '', lastName: '', namePrivacy: 'first_only' })}`
+            ? `${t.post.reply} ${(() => {
+                const u = getUser(replyingTo.authorId);
+                return u ? displayName(u) : t.common.neighbor;
+              })()}`
             : undefined
         }
         onCancelReply={() => setReplyingTo(null)}

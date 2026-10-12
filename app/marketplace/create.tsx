@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { ImagePlus, X } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
-import { marketplaceService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { useIsVerified } from '@/hooks/useNeighborhood';
+import { createListing } from '@/backend/actions';
+import { VerifyGate } from '@/components/VerifyGate';
+import { useImagePicker } from '@/components/imageEditor/useImagePicker';
 import type { ListingCondition, ListingType } from '@/models';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
@@ -20,7 +23,9 @@ export default function CreateListingScreen() {
   const theme = useTheme();
   const { t } = useI18n();
   const router = useRouter();
-  const neighborhoodId = useStore((s) => s.session.neighborhoodId);
+  const verified = useIsVerified();
+  const { run, pending: submitting } = useAction();
+  const { pickImage: pickEdited, editor } = useImagePicker({ aspects: ['square', 'classic', 'portrait'] });
 
   const [images, setImages] = useState<string[]>([]);
   const [title, setTitle] = useState('');
@@ -29,39 +34,38 @@ export default function CreateListingScreen() {
   const [listingType, setListingType] = useState<ListingType>('sale');
   const [price, setPrice] = useState('');
   const [condition, setCondition] = useState<ListingCondition>('good');
-  const [submitting, setSubmitting] = useState(false);
 
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-      selectionLimit: 4 - images.length,
-    });
-    if (!result.canceled) setImages((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 4));
+    if (images.length >= 4) return;
+    const uri = await pickEdited();
+    if (uri) setImages((prev) => [...prev, uri].slice(0, 4));
   };
 
   const canSubmit = title.trim().length > 2 && (listingType !== 'sale' || Number(price) > 0);
 
   const onSubmit = async () => {
-    if (!neighborhoodId) return;
-    setSubmitting(true);
-    const listing = await marketplaceService.createListing({
-      title: title.trim(),
-      description: description.trim(),
-      images,
-      category,
-      listingType,
-      price: listingType === 'sale' ? Number(price) : undefined,
-      condition,
-      neighborhoodId,
-      approxDistanceM: Math.round(100 + Math.random() * 900),
-    });
-    setSubmitting(false);
-    router.replace(`/marketplace/${listing.id}`);
+    const res = await run(() =>
+      createListing({
+        title: title.trim(),
+        description: description.trim(),
+        localImages: images,
+        category,
+        listingType,
+        price: listingType === 'sale' ? Number(price) : undefined,
+        condition,
+      }),
+    );
+    if (res.ok) router.replace(`/marketplace/${res.value}`);
   };
+
+  if (!verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader title={t.create.sell} fallbackRoute="/marketplace" />
+        <VerifyGate />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -146,6 +150,7 @@ export default function CreateListingScreen() {
         <View style={{ height: 12 }} />
         <Button label={t.post.publish} onPress={onSubmit} disabled={!canSubmit} loading={submitting} fullWidth size="lg" />
       </ScrollView>
+      {editor}
     </KeyboardAvoidingView>
   );
 }

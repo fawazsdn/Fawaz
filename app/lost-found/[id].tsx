@@ -11,6 +11,8 @@ import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
 import { UserRow } from '@/components/UserRow';
+import { useAction } from '@/hooks/useAction';
+import { markLostFoundStatus } from '@/backend/actions';
 
 const STATUS_TONE = { lost: 'danger', found: 'info', reunited: 'success' } as const;
 
@@ -22,7 +24,7 @@ export default function LostFoundDetailScreen() {
 
   const item = useStore((s) => s.lostFound.find((l) => l.id === id));
   const author = useStore((s) => s.getUser(item?.authorId ?? ''));
-  const markLostFoundStatus = useStore((s) => s.markLostFoundStatus);
+  const { run } = useAction();
 
   if (!item || !author) {
     return (
@@ -54,7 +56,7 @@ export default function LostFoundDetailScreen() {
         {item.status !== 'reunited' ? (
           <View style={{ marginTop: 20, gap: 10 }}>
             <Button label={t.common.message} onPress={() => router.push(`/profile/${author.id}`)} fullWidth size="lg" />
-            <Button label={t.lostFound.reunited} onPress={() => markLostFoundStatus(item.id, 'reunited')} variant="outline" fullWidth />
+            <Button label={t.lostFound.reunited} onPress={() => run(() => markLostFoundStatus(item.id, 'reunited'))} variant="outline" fullWidth />
           </View>
         ) : null}
       </ScrollView>

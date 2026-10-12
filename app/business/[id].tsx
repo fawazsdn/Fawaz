@@ -16,6 +16,8 @@ import { Badge } from '@/components/Badge';
 import { EmptyState } from '@/components/EmptyState';
 import { IconButton } from '@/components/IconButton';
 import { BottomSheet } from '@/components/BottomSheet';
+import { useAction } from '@/hooks/useAction';
+import { recommendBusiness } from '@/backend/actions';
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,7 +36,7 @@ export default function BusinessDetailScreen() {
     [allRecommendations, id],
   );
   const users = useStore((s) => s.users);
-  const recommendBusiness = useStore((s) => s.recommendBusiness);
+  const { run, pending: recommending } = useAction();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [text, setText] = useState('');
@@ -48,9 +50,10 @@ export default function BusinessDetailScreen() {
     );
   }
 
-  const submit = () => {
-    if (!text.trim()) return;
-    recommendBusiness(business.id, text.trim());
+  const submit = async () => {
+    if (!text.trim() || recommending) return;
+    const res = await run(() => recommendBusiness(business.id, text.trim()));
+    if (!res.ok) return;
     setText('');
     setSheetOpen(false);
   };
@@ -71,7 +74,7 @@ export default function BusinessDetailScreen() {
         }
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
+        {business.coverImage ? <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" /> : <View style={{ height: 80 }} />}
         <View style={{ padding: theme.spacing.md }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={theme.text('heading1')}>{business.name}</Text>
