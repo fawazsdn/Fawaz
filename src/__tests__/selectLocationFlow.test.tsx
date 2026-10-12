@@ -1,4 +1,7 @@
-import { resetStoreForTests } from '@/testing/fixtures';
+import { resetStoreForTests, TEST_ME } from '@/testing/fixtures';
+
+// Isolate the UI flow from the post-selection server refresh.
+jest.mock('@/backend/sync', () => ({ requestSync: jest.fn(async () => {}) }));
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -31,6 +34,7 @@ function renderWithProvider(ui: React.ReactElement) {
 
 beforeEach(() => {
   resetStoreForTests();
+  useStore.getState().setSupabaseAuth(TEST_ME, 'email', 'resident.a@example.test');
   mockPush.mockClear();
 });
 

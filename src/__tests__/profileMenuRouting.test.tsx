@@ -1,8 +1,8 @@
-import { resetStoreForTests } from '@/testing/fixtures';
+import { signInVerifiedForTests, TEST_ME } from '@/testing/fixtures';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useStore } from '@/store/useStore';
 import SettingsScreen from '../../app/settings/index';
 
 const mockPush = jest.fn();
@@ -30,16 +30,16 @@ function renderWithProvider(ui: React.ReactElement) {
 
 beforeEach(() => {
   mockPush.mockClear();
-  resetStoreForTests();
+  signInVerifiedForTests();
   useStore.getState().setLocale('en');
 });
 
 describe('Profile & Settings menu', () => {
   it('renders the top profile card with the current user’s real stats, not follower/following counts', async () => {
     await renderWithProvider(<SettingsScreen />);
-    const user = useStore.getState().getUser(CURRENT_USER_ID)!;
+    const user = useStore.getState().getUser(TEST_ME)!;
 
-    expect(screen.getByText(`${user.stats.neighborsHelped}`)).toBeTruthy();
+    expect(screen.getAllByText(`${user.stats.neighborsHelped}`).length).toBe(3); // real zero counts for a new resident, not seeded numbers
     expect(screen.getByText('neighbors helped')).toBeTruthy();
     expect(screen.queryByText(/followers/i)).toBeNull();
     expect(screen.queryByText(/following/i)).toBeNull();
@@ -48,13 +48,13 @@ describe('Profile & Settings menu', () => {
   it('routes "My Posts" to the profile screen with the activity tab', async () => {
     await renderWithProvider(<SettingsScreen />);
     await fireEvent.press(screen.getByText('My Posts'));
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(`/profile/${CURRENT_USER_ID}?tab=activity`));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(`/profile/${TEST_ME}?tab=activity`));
   });
 
   it('routes "My Events" to the profile screen with the events tab', async () => {
     await renderWithProvider(<SettingsScreen />);
     await fireEvent.press(screen.getByText('My Events'));
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(`/profile/${CURRENT_USER_ID}?tab=events`));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(`/profile/${TEST_ME}?tab=events`));
   });
 
   it('routes "Saved" to the new saved-items screen', async () => {
