@@ -7,6 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { chooseNeighborhood } from '@/backend/actions';
+import { locateOnce, resolveNeighborhoodAt } from '@/backend/location';
 import { geographyService } from '@/services/geography';
 import { normalizeForSearch } from '@/utils/searchNormalize';
 import { SearchBar } from '@/components/SearchBar';
@@ -26,7 +29,8 @@ export default function SelectCityScreen() {
   const insets = useSafeAreaInsets();
 
   const selectCity = useStore((s) => s.selectCity);
-  const selectNeighborhood = useStore((s) => s.selectNeighborhood);
+  const { run } = useAction();
+  const [locationNote, setLocationNote] = useState<string | null>(null);
   const addRecentCity = useStore((s) => s.addRecentCity);
   const recentCityIds = useStore((s) => s.recentCityIds);
 
@@ -52,7 +56,7 @@ export default function SelectCityScreen() {
   }, [recentCityIds]);
 
   // Debounced national search across cities + neighborhoods (Arabic/English,
-  // normalization-tolerant) — see src/services/geography/MockGeographyService.ts.
+  // normalization-tolerant) — see src/services/geography/StaticGeographyService.ts.
   useEffect(() => {
     const q = query.trim();
     if (!q) {
@@ -90,22 +94,41 @@ export default function SelectCityScreen() {
     selectCity({ regionId: result.region.id, cityId: result.city.id });
     addRecentCity(result.city.id);
     if (result.kind === 'neighborhood' && result.neighborhood) {
-      selectNeighborhood(result.neighborhood.id);
-      router.push('/(auth)/verification');
+      const id = result.neighborhood.id;
+      run(() => chooseNeighborhood(id)).then((res) => res.ok && router.push('/(auth)/verification'));
     } else {
       router.push('/(auth)/select-neighborhood');
     }
   };
 
-  // Demo-only affordance: approximates a city from a fixed coordinate, via
-  // the same haversine-nearest-city logic a real GPS reading would use.
-  // Deliberately city-level only — see GeographyService.resolveApproxCityFromCoordinates.
+  // Real device location (asked only on tap): official district polygon
+  // lookup on the server first; if the point isn't inside any known
+  // district, fall back to the nearest city so the resident can pick.
   const useMyLocation = async () => {
     setLocating(true);
-    const DEMO_COORDS = { lat: 26.29, lng: 50.21 };
-    const resolved = await geographyService.resolveApproxCityFromCoordinates(DEMO_COORDS.lat, DEMO_COORDS.lng);
-    setLocating(false);
-    if (resolved) chooseCity(resolved.city);
+    setLocationNote(null);
+    try {
+      const loc = await locateOnce();
+      if (loc.status !== 'ok') {
+        setLocationNote(loc.status === 'denied' ? t.verification.permissionDeniedBody : t.verification.locationUnavailableBody);
+        return;
+      }
+      const hood = await resolveNeighborhoodAt(loc.lat, loc.lng).catch(() => null);
+      if (hood) {
+        const n = await geographyService.getNeighborhood(hood.id);
+        if (n) {
+          selectCity({ regionId: n.regionId, cityId: n.cityId });
+          addRecentCity(n.cityId);
+          const res = await run(() => chooseNeighborhood(n.id));
+          if (res.ok) router.push('/(auth)/verification');
+          return;
+        }
+      }
+      const resolved = await geographyService.resolveApproxCityFromCoordinates(loc.lat, loc.lng);
+      if (resolved) chooseCity(resolved.city);
+    } finally {
+      setLocating(false);
+    }
   };
 
   const cityLabel = (c: SaudiCity) => (locale === 'ar' ? c.nameAr : c.nameEn);
@@ -261,6 +284,7 @@ export default function SelectCityScreen() {
                     loading={locating}
                     icon={<LocateFixed size={16} color={theme.colors.primary} />}
                   />
+                  {locationNote ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{locationNote}</Text> : null}
                 </View>
               );
             }

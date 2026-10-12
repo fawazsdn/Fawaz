@@ -31,5 +31,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     autoRefreshToken: !isServer,
     persistSession: !isServer,
     detectSessionInUrl: false,
+    // PKCE: email-confirmation, password-reset and OAuth links come back to
+    // the app as haratna://...?code=..., which only the device that started
+    // the flow can exchange (the code verifier never leaves this device).
+    flowType: 'pkce',
   },
 });

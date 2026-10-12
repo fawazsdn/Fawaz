@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Camera } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -11,19 +10,21 @@ import { Button } from '@/components/Button';
 import { Avatar } from '@/components/Avatar';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
-import { profileService } from '@/services';
+import { useAction } from '@/hooks/useAction';
+import { saveProfile } from '@/backend/actions';
+import { useImagePicker } from '@/components/imageEditor/useImagePicker';
+import { routeAfterAuth } from '@/features/auth/routeAfterAuth';
 import { profileSchema, type ProfileFormValues } from '@/models/schemas';
 import type { NamePrivacy } from '@/models';
 
 export default function ProfileSetupScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
-  const createProfile = useStore((s) => s.createProfile);
+  const { run, pending: submitting } = useAction();
+  const { pickImage: pickAvatar, editor } = useImagePicker({ aspects: ['square'], previewShape: 'circle' });
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
-  const [submitting, setSubmitting] = useState(false);
 
   const {
     control,
@@ -46,25 +47,22 @@ export default function ProfileSetupScreen() {
   ];
 
   const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1] });
-    if (!result.canceled && result.assets[0]) setAvatarUrl(result.assets[0].uri);
+    const uri = await pickAvatar();
+    if (uri) setAvatarUrl(uri);
   };
 
   const onSubmit = async (values: ProfileFormValues) => {
-    setSubmitting(true);
-    const input = {
-      firstName: values.firstName.trim(),
-      lastName: (values.lastName ?? '').trim(),
-      namePrivacy: values.namePrivacy,
-      bio: values.bio?.trim() || undefined,
-      avatarUrl,
-    };
-    await profileService.updateProfile(input);
-    createProfile(input);
-    setSubmitting(false);
-    router.replace('/(auth)/select-city');
+    const res = await run(() =>
+      saveProfile({
+        firstName: values.firstName.trim(),
+        lastName: (values.lastName ?? '').trim(),
+        namePrivacy: values.namePrivacy,
+        bio: values.bio?.trim() || undefined,
+        localAvatarUri: avatarUrl,
+        locale,
+      }),
+    );
+    if (res.ok) router.replace(await routeAfterAuth());
   };
 
   return (
@@ -144,6 +142,7 @@ export default function ProfileSetupScreen() {
         />
       </Field>
 
+      {editor}
       <Text style={[theme.text('title'), { marginTop: 8, marginBottom: 10 }]}>{t.profileSetup.displayPreference}</Text>
       <Controller
         control={control}

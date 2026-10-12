@@ -6,13 +6,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useStore } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { chooseNeighborhood } from '@/backend/actions';
+import { locateOnce, resolveNeighborhoodAt } from '@/backend/location';
 import { geographyService } from '@/services/geography';
-import { supabase } from '@/lib/supabase';
-import { normalizeForSearch } from '@/utils/searchNormalize';
+import { normalizeForSearch, normalizeSearchQuery } from '@/utils/searchNormalize';
 import { SearchBar } from '@/components/SearchBar';
 import { Chip } from '@/components/Chip';
-import { MapPlaceholder } from '@/components/MapPlaceholder';
+import { HaratnaMap } from '@/components/HaratnaMap';
 import { Button } from '@/components/Button';
 import { BottomSheet } from '@/components/BottomSheet';
 import type { SaudiCity, SaudiNeighborhood } from '@/types/geography';
@@ -33,7 +35,8 @@ export default function SelectNeighborhoodScreen() {
 
   const regionId = useStore((s) => s.session.regionId);
   const cityId = useStore((s) => s.session.cityId);
-  const selectNeighborhood = useStore((s) => s.selectNeighborhood);
+  const { run } = useAction();
+  const [locationNote, setLocationNote] = useState<string | null>(null);
 
   const [city, setCity] = useState<SaudiCity | null>(null);
   const [neighborhoods, setNeighborhoods] = useState<SaudiNeighborhood[]>([]);
@@ -47,6 +50,7 @@ export default function SelectNeighborhoodScreen() {
   const [suggestNameEn, setSuggestNameEn] = useState('');
   const [suggestNote, setSuggestNote] = useState('');
   const [suggestSubmitted, setSuggestSubmitted] = useState(false);
+  const [suggestError, setSuggestError] = useState(false);
 
   useEffect(() => {
     if (!cityId) return;
@@ -58,7 +62,7 @@ export default function SelectNeighborhoodScreen() {
   }, [cityId]);
 
   const filtered = useMemo(() => {
-    const q = normalizeForSearch(query);
+    const q = normalizeSearchQuery(query);
     if (!q) return neighborhoods;
     return neighborhoods.filter(
       (n) => normalizeForSearch(n.nameAr).includes(q) || normalizeForSearch(n.nameEn).includes(q),
@@ -68,29 +72,30 @@ export default function SelectNeighborhoodScreen() {
   const cityCenterLat = city?.centerLat ?? 24.7;
   const cityCenterLng = city?.centerLng ?? 46.7;
 
-  const onSelect = (n: SaudiNeighborhood) => {
-    selectNeighborhood(n.id);
-    // Creates/reactivates the real (server-side, pending) membership row that
-    // verify_neighborhood_location requires — best-effort here; verification.tsx
-    // also calls it defensively before verifying, so a transient failure here
-    // (e.g. offline) doesn't strand the user.
-    supabase.rpc('select_neighborhood', { target_neighborhood_id: n.id }).then(
-      () => {},
-      () => {},
-    );
-    router.push('/(auth)/verification');
+  // Creates/reactivates the real (pending) membership row on the server,
+  // then asks the resident to verify by location.
+  const onSelect = async (n: SaudiNeighborhood) => {
+    const res = await run(() => chooseNeighborhood(n.id));
+    if (res.ok) router.push('/(auth)/verification');
   };
 
-  const continueWithCityOnly = () => router.push('/(auth)/verification');
-
-  // Demo-only: re-resolves the same city from a fixed coordinate (mirrors
-  // select-city's "use my location"), since this frontend has no real
-  // point-in-polygon capability to pick a neighborhood from coordinates.
+  // Real GPS -> official polygon lookup on the server. Never guesses.
   const useMyLocation = async () => {
     setLocating(true);
-    const DEMO_COORDS = { lat: 26.29, lng: 50.21 };
-    await geographyService.resolveApproxCityFromCoordinates(DEMO_COORDS.lat, DEMO_COORDS.lng);
-    setLocating(false);
+    setLocationNote(null);
+    try {
+      const loc = await locateOnce();
+      if (loc.status !== 'ok') {
+        setLocationNote(loc.status === 'denied' ? t.verification.permissionDeniedBody : t.verification.locationUnavailableBody);
+        return;
+      }
+      const hood = await resolveNeighborhoodAt(loc.lat, loc.lng).catch(() => null);
+      const match = hood ? neighborhoods.find((n) => n.id === hood.id) : undefined;
+      if (match) await onSelect(match);
+      else setLocationNote(t.neighborhood.notInThisCity);
+    } finally {
+      setLocating(false);
+    }
   };
 
   const submitNeighborhoodSuggestion = async () => {
@@ -101,9 +106,11 @@ export default function SelectNeighborhoodScreen() {
       neighborhoodNameAr: suggestNameAr.trim(),
       neighborhoodNameEn: suggestNameEn.trim() || undefined,
       note: suggestNote.trim() || undefined,
-      submittedByUserId: CURRENT_USER_ID,
-    });
-    setSuggestSubmitted(true);
+      submittedByUserId: useStore.getState().session.supabaseUserId ?? '',
+    }).then(
+      () => setSuggestSubmitted(true),
+      () => setSuggestError(true),
+    );
   };
 
   const closeSuggest = () => {
@@ -112,6 +119,7 @@ export default function SelectNeighborhoodScreen() {
     setSuggestNameEn('');
     setSuggestNote('');
     setSuggestSubmitted(false);
+    setSuggestError(false);
   };
 
   return (
@@ -140,6 +148,7 @@ export default function SelectNeighborhoodScreen() {
           loading={locating}
           icon={<LocateFixed size={16} color={theme.colors.primary} />}
         />
+        {locationNote ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{locationNote}</Text> : null}
       </View>
 
       {!loaded ? null : neighborhoods.length === 0 ? (
@@ -147,25 +156,26 @@ export default function SelectNeighborhoodScreen() {
           <Text style={[theme.text('body', theme.colors.textSecondary), { marginBottom: 16 }]}>
             {t.neighborhood.noDistrictData}
           </Text>
-          <Button label={t.neighborhood.continueWithCityOnly} onPress={continueWithCityOnly} variant="primary" />
+          <Button label={t.neighborhood.suggestLink} onPress={() => setSuggestOpen(true)} variant="primary" />
         </View>
       ) : view === 'map' ? (
         <View style={{ paddingHorizontal: 24, flex: 1 }}>
-          <MapPlaceholder
-            centerLat={cityCenterLat}
-            centerLng={cityCenterLng}
-            spanDegrees={0.08}
-            pins={filtered.map((n) => ({
-              id: n.id,
-              lat: n.centerLat ?? cityCenterLat,
-              lng: n.centerLng ?? cityCenterLng,
-              label: n.nameAr,
-            }))}
-            onPressPin={(id) => {
+          <HaratnaMap
+            center={{ latitude: cityCenterLat, longitude: cityCenterLng }}
+            delta={0.12}
+            markers={filtered
+              .filter((n) => n.centerLat != null && n.centerLng != null)
+              .map((n) => ({
+                id: n.id,
+                coordinate: { latitude: n.centerLat as number, longitude: n.centerLng as number },
+                title: locale === 'ar' ? n.nameAr : n.nameEn,
+                color: theme.colors.primary,
+              }))}
+            onMarkerPress={(id) => {
               const n = filtered.find((x) => x.id === id);
               if (n) onSelect(n);
             }}
-            height={340}
+            style={{ height: 340, borderRadius: theme.radii.lg }}
           />
           <FlatList
             data={filtered}
@@ -227,6 +237,7 @@ export default function SelectNeighborhoodScreen() {
                 multiline
                 style={[theme.text('body'), styles.input, styles.noteInput, { borderColor: theme.colors.border }]}
               />
+              {suggestError ? <Text style={[theme.text('caption', theme.colors.danger), { marginBottom: 8 }]}>{t.errors.genericBody}</Text> : null}
               <Button
                 label={t.neighborhood.suggestSubmit}
                 onPress={submitNeighborhoodSuggestion}
@@ -253,6 +264,7 @@ function CantFindLink({ t, theme, onPress }: { t: ReturnType<typeof useI18n>['t'
 
 function NeighborhoodRow({ n, locale, onPress }: { n: SaudiNeighborhood; locale: 'ar' | 'en'; onPress: () => void }) {
   const theme = useTheme();
+  const { t } = useI18n();
   const primary = locale === 'ar' ? n.nameAr : n.nameEn;
   const secondary = locale === 'ar' ? n.nameEn : n.nameAr;
   return (
@@ -272,6 +284,7 @@ function NeighborhoodRow({ n, locale, onPress }: { n: SaudiNeighborhood; locale:
         <Text style={theme.text('title')} numberOfLines={1}>
           {primary}
         </Text>
+        {n.hasBoundary === false ? <Text style={theme.text('caption', theme.colors.warning)}>{t.neighborhood.boundaryUnavailable}</Text> : null}
         {secondary ? (
           <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
             {secondary}
