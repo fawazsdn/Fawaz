@@ -7,7 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "primaryColor": "#1F5D45",
     "backgroundColor": "#FAF6EF",
     "plugins": [
