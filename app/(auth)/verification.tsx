@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { BadgeCheck, Loader2, MapPinned, ShieldAlert, ShieldQuestion } from 'lucide-react-native';
@@ -10,6 +10,7 @@ import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { supabase } from '@/lib/supabase';
+import { requestSync } from '@/backend/sync';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 
@@ -104,6 +105,8 @@ export default function VerificationScreen() {
       case 'verified':
         setStatus('verified');
         setVerification('verified');
+        // Membership is now verified server-side: load the neighborhood content RLS just unlocked.
+        void requestSync();
         break;
       case 'outside_boundary':
         setStatus('outside_boundary');
@@ -126,7 +129,10 @@ export default function VerificationScreen() {
   const openSettings = () => Linking.openSettings();
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top + 24, paddingHorizontal: 24 }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      contentContainerStyle={{ paddingTop: insets.top + 24, paddingHorizontal: 24, paddingBottom: insets.bottom + 32 }}
+    >
       <Text style={theme.text('heading1')}>{t.verification.title}</Text>
       <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 8, marginBottom: 24 }]}>{t.verification.body}</Text>
 
@@ -166,7 +172,7 @@ export default function VerificationScreen() {
           {t.verification.skipForNow}
         </Text>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
