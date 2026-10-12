@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -15,7 +16,7 @@ function renderWithProvider(ui: React.ReactElement) {
 }
 
 beforeEach(() => {
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
   useStore.getState().setLocale('en');
 });
 

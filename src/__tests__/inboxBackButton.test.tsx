@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -27,7 +28,7 @@ beforeEach(() => {
   mockBack.mockClear();
   mockReplace.mockClear();
   mockCanGoBack.mockReset();
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
   useStore.getState().setLocale('en');
 });
 

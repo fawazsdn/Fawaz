@@ -1,22 +1,69 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
-import { PollBlock } from '@/features/polls/PollBlock';
-import { useStore } from '@/store/useStore';
+import { PollBlock, pollPercent } from '@/features/polls/PollBlock';
+import { supabase } from '@/lib/supabase';
+import type { Poll } from '@/models';
+import { signInVerifiedForTests } from '@/testing/fixtures';
+
+const future = new Date(Date.now() + 86400000).toISOString();
+const past = new Date(Date.now() - 60000).toISOString();
+
+function poll(extra: Partial<Poll> = {}): Poll {
+  return {
+    id: 'poll-1',
+    postId: 'post-1',
+    question: 'Test question?',
+    neighborhoodId: 'sa-district-10500227013',
+    closesAt: future,
+    allowChange: true,
+    options: [
+      { id: 'opt-a', textAr: 'Option A', votes: 3 },
+      { id: 'opt-b', textAr: 'Option B', votes: 1 },
+    ],
+    totalVotes: 4,
+    ...extra,
+  };
+}
 
 beforeEach(() => {
-  useStore.getState().resetDemoData();
+  signInVerifiedForTests();
+  (supabase.rpc as jest.Mock).mockClear();
+});
+
+describe('pollPercent', () => {
+  it('computes percentages from server counts', () => {
+    expect(pollPercent(3, 4)).toBe(75);
+    expect(pollPercent(0, 0)).toBe(0);
+  });
 });
 
 describe('PollBlock', () => {
-  it('lets the user vote once and then shows results', async () => {
-    const poll = useStore.getState().createPoll({ question: 'أفضل يوم؟', options: ['الخميس', 'الجمعة'], closesInHours: 48 });
+  it('hides results until the resident votes', async () => {
+    await render(<PollBlock poll={poll()} />);
+    expect(screen.queryByText('٧٥%')).toBeNull();
+  });
 
-    await render(<PollBlock poll={useStore.getState().polls.find((p) => p.id === poll.id)!} />);
+  it('shows real percentages after voting and highlights my choice', async () => {
+    await render(<PollBlock poll={poll({ myOptionId: 'opt-a' })} />);
+    expect(screen.getByText('٧٥%')).toBeTruthy(); // Arabic UI: Arabic-Indic digits
+    expect(screen.getByLabelText(/Option A, 75%/)).toBeTruthy();
+  });
 
-    fireEvent.press(screen.getByText('الخميس'));
+  it('lets the resident change their vote via the atomic server RPC', async () => {
+    await render(<PollBlock poll={poll({ myOptionId: 'opt-a' })} />);
+    fireEvent.press(screen.getByLabelText(/Option B/));
+    await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('vote_in_poll', { target_poll_id: 'poll-1', target_option_id: 'opt-b' }));
+  });
 
-    const updated = useStore.getState().polls.find((p) => p.id === poll.id)!;
-    const totalVotes = updated.options.reduce((sum, o) => sum + o.votes.length, 0);
-    expect(totalVotes).toBe(1);
+  it('does not call the server when tapping the option already chosen', async () => {
+    await render(<PollBlock poll={poll({ myOptionId: 'opt-a' })} />);
+    fireEvent.press(screen.getByLabelText(/Option A/));
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('blocks voting and changes once the poll is closed', async () => {
+    await render(<PollBlock poll={poll({ closesAt: past, myOptionId: 'opt-a' })} />);
+    fireEvent.press(screen.getByLabelText(/Option B/));
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });

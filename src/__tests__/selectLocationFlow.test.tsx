@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -29,7 +30,7 @@ function renderWithProvider(ui: React.ReactElement) {
 }
 
 beforeEach(() => {
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
   mockPush.mockClear();
 });
 

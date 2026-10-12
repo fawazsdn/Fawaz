@@ -1,145 +1,81 @@
-import { CURRENT_USER_ID, useStore } from '@/store/useStore';
+import { mergePersistedState, useStore } from '@/store/useStore';
+import { resetStoreForTests, signInVerifiedForTests, TEST_ME } from '@/testing/fixtures';
 
-// Each test starts from a clean slate of the seeded mock data.
-beforeEach(() => {
-  useStore.getState().resetDemoData();
-});
+beforeEach(() => resetStoreForTests());
 
-describe('posts', () => {
-  it('creates a post and prepends it to the feed', () => {
-    const before = useStore.getState().posts.length;
-    const post = useStore.getState().createPost({ type: 'general', textAr: 'مرحبا بالحي', images: [], audience: 'neighborhood' });
-    const state = useStore.getState();
-    expect(state.posts.length).toBe(before + 1);
-    expect(state.posts[0]!.id).toBe(post.id);
-    expect(post.authorId).toBe(CURRENT_USER_ID);
-  });
-
-  it('toggles a reaction on and off', () => {
-    const postId = useStore.getState().posts[0]!.id;
-    useStore.getState().toggleReaction(postId, 'like');
-    expect(
-      useStore
-        .getState()
-        .posts.find((p) => p.id === postId)!
-        .reactions.some((r) => r.userId === CURRENT_USER_ID),
-    ).toBe(true);
-    useStore.getState().toggleReaction(postId, 'like');
-    expect(
-      useStore
-        .getState()
-        .posts.find((p) => p.id === postId)!
-        .reactions.some((r) => r.userId === CURRENT_USER_ID),
-    ).toBe(false);
+describe('store contains no seeded content', () => {
+  it('starts with every entity list empty (no demo posts, events, people or messages)', () => {
+    const s = useStore.getState();
+    for (const key of ['users', 'posts', 'events', 'polls', 'conversations', 'messages', 'notifications', 'marketplaceListings', 'businesses', 'alerts'] as const) {
+      expect(s[key]).toEqual([]);
+    }
+    expect(s.referral.joinedCount).toBeNull();
   });
 });
 
-describe('events', () => {
-  it('waitlists a user who joins a full event', () => {
-    // Seed event "e6" is hosted by another resident and already has 4/4 going,
-    // so the current user (not yet an attendee) should be waitlisted on join.
-    const before = useStore.getState().events.find((e) => e.id === 'e6')!;
-    expect(before.attendees.filter((a) => a.status === 'going').length).toBe(before.capacity);
-    expect(before.attendees.some((a) => a.userId === CURRENT_USER_ID)).toBe(false);
-
-    useStore.getState().joinEvent('e6');
-    const mine = useStore
-      .getState()
-      .events.find((e) => e.id === 'e6')!
-      .attendees.find((a) => a.userId === CURRENT_USER_ID);
-    expect(mine?.status).toBe('waitlisted');
+describe('session', () => {
+  it('only becomes authenticated with a real Supabase user id', () => {
+    useStore.getState().setSupabaseAuth(TEST_ME, 'email', 'a@example.test');
+    const { session } = useStore.getState();
+    expect(session.isAuthenticated).toBe(true);
+    expect(session.supabaseUserId).toBe(TEST_ME);
+    expect(session.authProvider).toBe('email');
   });
 
-  it('joins an event with open capacity as going', () => {
-    const event = useStore.getState().createEvent({
-      title: 'اختبار',
-      category: 'football',
-      coverImage: 'x',
-      description: '',
-      neighborhoodId: 'n1',
-      startsAt: new Date().toISOString(),
-      endsAt: new Date().toISOString(),
-      locationLabel: 'x',
-      approxLat: 0,
-      approxLng: 0,
-      capacity: 5,
-      audience: 'neighborhood',
-      recurring: false,
-    });
-    // createEvent already seats the host (current user) as "going".
-    const mine = useStore
-      .getState()
-      .events.find((e) => e.id === event.id)!
-      .attendees.find((a) => a.userId === CURRENT_USER_ID);
-    expect(mine?.status).toBe('going');
+  it('clears all loaded content when a different account signs in', () => {
+    signInVerifiedForTests();
+    expect(useStore.getState().users.length).toBeGreaterThan(0);
+    useStore.getState().setSupabaseAuth('00000000-0000-4000-8000-0000000000ff', 'email', 'b@example.test');
+    expect(useStore.getState().users).toEqual([]);
+    expect(useStore.getState().session.neighborhoodId).toBeNull();
   });
 
-  it('promotes a waitlisted attendee when someone leaves', () => {
-    const event = useStore.getState().createEvent({
-      title: 'اختبار الانتظار',
-      category: 'padel',
-      coverImage: 'x',
-      description: '',
-      neighborhoodId: 'n1',
-      startsAt: new Date().toISOString(),
-      endsAt: new Date().toISOString(),
-      locationLabel: 'x',
-      approxLat: 0,
-      approxLng: 0,
-      capacity: 1,
-      audience: 'neighborhood',
-      recurring: false,
-    });
-    useStore.setState((s) => ({
-      events: s.events.map((e) =>
-        e.id === event.id
-          ? { ...e, attendees: [...e.attendees, { userId: 'u2', status: 'waitlisted', joinedAt: new Date().toISOString() }] }
-          : e,
-      ),
-    }));
-    useStore.getState().leaveEvent(event.id);
-    const updated = useStore.getState().events.find((e) => e.id === event.id)!;
-    expect(updated.attendees.find((a) => a.userId === 'u2')?.status).toBe('going');
+  it('sign out clears content and the session but remembers onboarding', () => {
+    signInVerifiedForTests();
+    useStore.getState().signOut();
+    const s = useStore.getState();
+    expect(s.session.isAuthenticated).toBe(false);
+    expect(s.session.supabaseUserId).toBeNull();
+    expect(s.session.onboardingCompleted).toBe(true);
+    expect(s.users).toEqual([]);
+  });
+
+  it('tracks recently-selected cities, most recent first, deduplicated', () => {
+    useStore.getState().addRecentCity('sa-city-31');
+    useStore.getState().addRecentCity('sa-city-227');
+    useStore.getState().addRecentCity('sa-city-31');
+    expect(useStore.getState().recentCityIds).toEqual(['sa-city-31', 'sa-city-227']);
   });
 });
 
-describe('polls', () => {
-  it('records exactly one vote per user', () => {
-    const poll = useStore.getState().createPoll({ question: 'سؤال؟', options: ['أ', 'ب'], closesInHours: 24 });
-    const firstOption = poll.options[0]!.id;
-    const secondOption = poll.options[1]!.id;
-    useStore.getState().voteInPoll(poll.id, firstOption);
-    useStore.getState().voteInPoll(poll.id, secondOption);
-    const updated = useStore.getState().polls.find((p) => p.id === poll.id)!;
-    const totalVotes = updated.options.reduce((sum, o) => sum + o.votes.length, 0);
-    expect(totalVotes).toBe(1);
-    expect(updated.options.find((o) => o.id === firstOption)!.votes).toContain(CURRENT_USER_ID);
-  });
-});
+describe('mergePersistedState', () => {
+  const current = () => useStore.getState();
 
-describe('trust & safety', () => {
-  it('blocks and unblocks a user', () => {
-    useStore.getState().toggleBlockUser('u2');
-    expect(useStore.getState().blockedUserIds).toContain('u2');
-    useStore.getState().toggleBlockUser('u2');
-    expect(useStore.getState().blockedUserIds).not.toContain('u2');
+  it('ignores seeded demo entities persisted by older builds', () => {
+    const merged = mergePersistedState({ posts: [{ id: 'p1' }], users: [{ id: 'u1' }], session: {}, settings: {} }, current());
+    expect(merged.posts).toEqual([]);
+    expect(merged.users).toEqual([]);
   });
 
-  it('increments thanksReceived when a neighbor is thanked', () => {
-    const before = useStore.getState().getUser('u2')!.stats.thanksReceived;
-    useStore.getState().thankUser('u2', 'ساعدني');
-    expect(useStore.getState().getUser('u2')!.stats.thanksReceived).toBe(before + 1);
+  it('drops an old phone/OTP "authenticated" session that has no real Supabase user', () => {
+    const merged = mergePersistedState({ session: { isAuthenticated: true, otpVerified: true, phone: '+966500000000', authProvider: 'phone' } }, current());
+    expect(merged.session.isAuthenticated).toBe(false);
+    expect(merged.session.authProvider).toBeNull();
+    expect((merged.session as unknown as Record<string, unknown>).phone).toBeUndefined();
   });
-});
 
-describe('help requests', () => {
-  it('marks a request in_progress once someone offers to help', () => {
-    const req = useStore
-      .getState()
-      .createHelpRequest({ title: 'مساعدة', category: 'other', description: '', neighborhoodId: 'n1', approxDistanceM: 100 });
-    useStore.getState().offerHelp(req.id);
-    const updated = useStore.getState().helpRequests.find((h) => h.id === req.id)!;
-    expect(updated.status).toBe('in_progress');
-    expect(updated.offeredBy).toContain(CURRENT_USER_ID);
+  it('keeps preferences and a real session', () => {
+    const merged = mergePersistedState(
+      { settings: { locale: 'en', demoRole: 'moderator' }, session: { isAuthenticated: true, supabaseUserId: TEST_ME, authProvider: 'email' } },
+      current(),
+    );
+    expect(merged.settings.locale).toBe('en');
+    expect((merged.settings as unknown as Record<string, unknown>).demoRole).toBeUndefined();
+    expect(merged.session.supabaseUserId).toBe(TEST_ME);
+    expect(merged.session.isAuthenticated).toBe(true);
+  });
+
+  it('falls back to current state when nothing is persisted', () => {
+    expect(mergePersistedState(undefined, current()).session).toEqual(current().session);
   });
 });

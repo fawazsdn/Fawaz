@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -33,7 +34,7 @@ beforeEach(() => {
   mockGetCurrentPosition.mockReset();
   mockRpc.mockReset();
   mockRpc.mockResolvedValue({ data: null, error: null });
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
   useStore.getState().setLocale('en');
   const realId = useStore.getState().neighborhoods[0]!.id;
   useStore.getState().selectNeighborhood(realId);

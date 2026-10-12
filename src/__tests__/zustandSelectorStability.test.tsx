@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -40,7 +41,7 @@ describe('Zustand selector snapshot stability', () => {
   let errorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    useStore.getState().resetDemoData();
+    resetStoreForTests();
     // Put the demo user in a real, real-geography-backed neighborhood/city
     // so HomeHeader's neighborhood-switcher selector has data to filter.
     useStore.getState().selectCity({ regionId: 'sa-region-5', cityId: 'sa-city-31' }); // Khobar

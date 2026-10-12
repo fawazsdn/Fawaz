@@ -1,10 +1,11 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { act, renderHook } from '@testing-library/react-native';
 
 import { useStore } from '@/store/useStore';
 import { useI18n } from '@/i18n/useI18n';
 
 beforeEach(() => {
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
 });
 
 describe('useI18n', () => {

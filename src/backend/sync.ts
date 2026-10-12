@@ -119,8 +119,11 @@ export async function syncAll(): Promise<void> {
     const myProfile = profileRes.data as Row | null;
     const membership = membershipRes.data as Membership | null;
 
-    const neighborhoodId = membership?.neighborhood_id ?? store.session.neighborhoodId;
-    const verification = membership ? membershipToVerification(membership.verification_status) : store.session.verification;
+    // The active membership row is the only source of truth for "my
+    // neighborhood" — a local pointer without a server membership is stale.
+    if (membershipRes.error) throw new Error(`membership: ${membershipRes.error.message}`);
+    const neighborhoodId = membership?.neighborhood_id ?? null;
+    const verification: VerificationStatus = membership ? membershipToVerification(membership.verification_status) : 'not_started';
     useStore.getState().patchSession({
       neighborhoodId: neighborhoodId ?? null,
       verification,

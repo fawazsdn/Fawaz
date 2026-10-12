@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -18,7 +19,7 @@ function renderWithProvider(ui: React.ReactElement) {
 
 beforeEach(() => {
   mockPush.mockClear();
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
   // English copy, for readable assertions — the same option list renders
   // in Arabic when the app locale is Arabic (see i18n/ar.ts `create`).
   useStore.getState().setLocale('en');

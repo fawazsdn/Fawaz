@@ -1,3 +1,4 @@
+import { resetStoreForTests } from '@/testing/fixtures';
 import { render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -24,7 +25,7 @@ function renderWithProvider(ui: React.ReactElement) {
 }
 
 beforeEach(() => {
-  useStore.getState().resetDemoData();
+  resetStoreForTests();
 });
 
 // The app defaults to Arabic/RTL (see src/i18n/__tests__/useI18n.test.ts) —
