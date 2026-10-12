@@ -52,13 +52,13 @@ describe('Inbox back button', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it('falls back to "/" when there is no history (direct URL open or a refresh)', async () => {
+  it('falls back to Home when there is no history (direct URL open or a refresh)', async () => {
     mockCanGoBack.mockReturnValue(false);
     await renderWithProvider(<MessagesScreen />);
 
     fireEvent.press(screen.getByLabelText('Back'));
 
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/'));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
     expect(mockBack).not.toHaveBeenCalled();
   });
 });

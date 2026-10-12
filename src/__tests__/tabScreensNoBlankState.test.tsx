@@ -1,4 +1,4 @@
-import { resetStoreForTests } from '@/testing/fixtures';
+import { resetStoreForTests, signInVerifiedForTests } from '@/testing/fixtures';
 import { render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -9,6 +9,7 @@ import MapScreen from '../../app/(tabs)/map';
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
+  useLocalSearchParams: () => ({}),
 }));
 
 // react-native-gesture-handler isn't available in this test environment
@@ -45,8 +46,8 @@ beforeEach(() => {
 // <NoNeighborhoodState /> instead.
 describe('Home / Explore / Map do not render blank when a neighborhood is selected', () => {
   beforeEach(() => {
-    const realId = useStore.getState().neighborhoods[0]!.id;
-    useStore.getState().selectNeighborhood(realId);
+    signInVerifiedForTests();
+    useStore.getState().setLocale('en');
   });
 
   it('Home renders real, visible primary content (greeting, Quick Actions)', async () => {
@@ -55,6 +56,8 @@ describe('Home / Explore / Map do not render blank when a neighborhood is select
     expect(screen.getByText('Create event')).toBeTruthy();
     expect(screen.getByText('Report issue')).toBeTruthy();
     expect(screen.queryByText(/couldn.t load your neighborhood/i)).toBeNull();
+    // No fake posts: an honest empty feed.
+    expect(screen.getByText('Nothing has been posted here yet.')).toBeTruthy();
   });
 
   it('Explore renders real, visible primary content (search + category grid)', async () => {
@@ -67,7 +70,10 @@ describe('Home / Explore / Map do not render blank when a neighborhood is select
 
   it('Map renders real, visible primary content (search, filters, placeholder)', async () => {
     await renderWithProvider(<MapScreen />);
-    expect(screen.getByPlaceholderText(/search the map/i)).toBeTruthy();
+    expect(screen.getByPlaceholderText(/search neighborhoods or places/i)).toBeTruthy();
+    expect(screen.getByTestId('map-view')).toBeTruthy();
+    // No invented markers when there are no pinned records.
+    expect(screen.getByText('Nothing on the map here yet.')).toBeTruthy();
     expect(screen.queryByText(/couldn.t load your neighborhood/i)).toBeNull();
   });
 });
@@ -97,7 +103,7 @@ describe('Home / Explore / Map show a recovery screen (not blank) when no neighb
   });
 
   it('Home also recovers from a stale neighborhoodId that no longer resolves (not just a missing one)', async () => {
-    useStore.setState((s) => ({ session: { ...s.session, neighborhoodId: 'old-scheme-id-that-does-not-exist' } }));
+    useStore.setState((s) => ({ session: { ...s.session, neighborhoodId: 'old-scheme-id-that-does-not-exist' }, sync: { ...s.sync, status: 'ready' } }));
     await renderWithProvider(<HomeScreen />);
     expect(screen.getByText(/couldn.t load your neighborhood/i)).toBeTruthy();
   });

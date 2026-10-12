@@ -1,59 +1,71 @@
-import { resetStoreForTests } from '@/testing/fixtures';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { resetStoreForTests, signInVerifiedForTests, TEST_ME, TEST_NEIGHBOR } from '@/testing/fixtures';
 import { useStore } from '@/store/useStore';
+import type { Conversation, Message } from '@/models';
 import MessagesScreen from '../../app/messages/index';
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }),
 }));
 
 const insetsFrame = { frame: { x: 0, y: 0, width: 320, height: 640 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
+const renderWithProvider = (ui: React.ReactElement) => render(<SafeAreaProvider initialMetrics={insetsFrame}>{ui}</SafeAreaProvider>);
 
-function renderWithProvider(ui: React.ReactElement) {
-  return render(<SafeAreaProvider initialMetrics={insetsFrame}>{ui}</SafeAreaProvider>);
-}
+const now = new Date().toISOString();
+const conversations: Conversation[] = [
+  { id: 'c-direct', kind: 'direct', participantIds: [TEST_ME, TEST_NEIGHBOR], lastMessageAt: now, lastReadAt: now },
+  { id: 'c-event', kind: 'event', participantIds: [TEST_ME, TEST_NEIGHBOR], eventId: 'e1', isGroup: true, title: 'Test Event Chat', lastMessageAt: now },
+  { id: 'c-group', kind: 'group', participantIds: [TEST_ME, TEST_NEIGHBOR], isGroup: true, title: 'Test Group Chat', lastMessageAt: now },
+];
+const messages: Message[] = [
+  { id: 'm1', conversationId: 'c-event', senderId: TEST_NEIGHBOR, text: 'unread hello', createdAt: now, readBy: [TEST_NEIGHBOR] },
+  { id: 'm2', conversationId: 'c-direct', senderId: TEST_ME, text: 'my message', createdAt: now, readBy: [TEST_ME] },
+];
 
 beforeEach(() => {
-  resetStoreForTests();
+  signInVerifiedForTests({ conversations, messages });
   useStore.getState().setLocale('en');
 });
 
-// Regresses a real bug fixed this session: the "Events" filter used to
-// include every group conversation (isGroup), not just ones actually
-// linked to an event (isGroup && eventId) — so a plain community group
-// chat like conv5 would wrongly show up under "Events". FlatList applies
-// data changes on the next tick in this test environment, hence waitFor.
 describe('Inbox filtering', () => {
-  it('"All" shows every conversation the current user is in', async () => {
+  it('"All" shows every real conversation the resident is in', async () => {
     await renderWithProvider(<MessagesScreen />);
-    // conv4 (event group) and conv5 (plain community group) both have titles.
-    expect(screen.getByText('مباراة كرة قدم مسائية')).toBeTruthy();
-    expect(screen.getByText('لجنة أهالي الحي')).toBeTruthy();
+    expect(screen.getByText('Test Event Chat')).toBeTruthy();
+    expect(screen.getByText('Test Group Chat')).toBeTruthy();
   });
 
-  it('"Groups" shows plain community groups but not event-linked groups', async () => {
+  it('"Groups" excludes event-linked chats; "Events" shows only them', async () => {
     await renderWithProvider(<MessagesScreen />);
     fireEvent.press(screen.getByText('Groups'));
+    await waitFor(() => expect(screen.queryByText('Test Event Chat')).toBeNull());
+    expect(screen.getByText('Test Group Chat')).toBeTruthy();
 
-    await waitFor(() => expect(screen.queryByText('مباراة كرة قدم مسائية')).toBeNull());
-    expect(screen.getByText('لجنة أهالي الحي')).toBeTruthy();
-  });
-
-  it('"Events" shows only event-linked group conversations', async () => {
-    await renderWithProvider(<MessagesScreen />);
     fireEvent.press(screen.getByText('Events'));
-
-    await waitFor(() => expect(screen.queryByText('لجنة أهالي الحي')).toBeNull());
-    expect(screen.getByText('مباراة كرة قدم مسائية')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('Test Group Chat')).toBeNull());
+    expect(screen.getByText('Test Event Chat')).toBeTruthy();
   });
 
-  it('"Neighbors" excludes every group conversation', async () => {
+  it('"Unread" shows only conversations with unread messages from others, with a real count', async () => {
     await renderWithProvider(<MessagesScreen />);
-    fireEvent.press(screen.getByText('Neighbors'));
+    fireEvent.press(screen.getByText('Unread'));
+    await waitFor(() => expect(screen.queryByText('Test Group Chat')).toBeNull());
+    expect(screen.getByText('Test Event Chat')).toBeTruthy();
+    expect(screen.getByLabelText('1 unread')).toBeTruthy();
+  });
 
-    await waitFor(() => expect(screen.queryByText('مباراة كرة قدم مسائية')).toBeNull());
-    expect(screen.queryByText('لجنة أهالي الحي')).toBeNull();
+  it('search matches message text', async () => {
+    await renderWithProvider(<MessagesScreen />);
+    fireEvent.changeText(screen.getByPlaceholderText(/Search/i), 'unread hello');
+    await waitFor(() => expect(screen.queryByText('Test Group Chat')).toBeNull());
+    expect(screen.getByText('Test Event Chat')).toBeTruthy();
+  });
+
+  it('shows an honest empty state (no fictional conversations) for a new resident', async () => {
+    resetStoreForTests();
+    useStore.getState().setLocale('en');
+    await renderWithProvider(<MessagesScreen />);
+    expect(screen.getByText(/No conversations yet/)).toBeTruthy();
   });
 });
