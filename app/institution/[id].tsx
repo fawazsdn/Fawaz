@@ -32,15 +32,18 @@ export default function InstitutionDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title="" transparent fallbackRoute="/community" />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <Image source={{ uri: institution.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
+        {institution.coverImage ? (
+          <Image source={{ uri: institution.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
+        ) : (
+          <View style={{ height: 72 }} />
+        )}
         <View style={{ padding: theme.spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={[theme.row(), { alignItems: 'center', gap: 6 }]}>
             <Text style={theme.text('heading1')}>{institution.name}</Text>
             {institution.verified ? <BadgeCheck size={20} color={theme.colors.primary} /> : null}
           </View>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+          <View style={[theme.row(), { gap: 8, marginTop: 8 }]}>
             <Badge label={t.institutions[institution.type]} tone="neutral" />
-            <Badge label={t.institutions.demoLabel} tone="info" />
           </View>
 
           {institution.announcements.length > 0 ? (

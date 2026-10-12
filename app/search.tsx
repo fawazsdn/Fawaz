@@ -96,7 +96,7 @@ export default function SearchScreen() {
         <View style={{ padding: theme.spacing.md }}>
           {searchHistory.length > 0 ? (
             <>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+              <View style={{ ...theme.row(), justifyContent: 'space-between', marginBottom: 10 }}>
                 <Text style={theme.text('title')}>{t.search.recent}</Text>
                 <Pressable onPress={clearSearchHistory}>
                   <Text style={theme.text('bodySmall', theme.colors.primary)}>{t.search.clear}</Text>
@@ -106,7 +106,7 @@ export default function SearchScreen() {
                 <Pressable
                   key={h}
                   onPress={() => setQuery(h)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 }}
+                  style={{ ...theme.row(), alignItems: 'center', gap: 10, paddingVertical: 10 }}
                 >
                   <Clock size={15} color={theme.colors.textMuted} />
                   <Text style={theme.text('body')}>{h}</Text>
@@ -158,7 +158,7 @@ export default function SearchScreen() {
               ) : null}
               {(tab === 'all' || tab === 'marketplace') && results!.marketplace.length > 0 ? (
                 <ResultGroup title={t.search.tabs.marketplace}>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' }}>
+                  <View style={{ ...theme.row(), flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' }}>
                     {results!.marketplace.map((m) => (
                       <MarketplaceCard key={m.id} listing={m} />
                     ))}

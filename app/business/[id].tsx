@@ -76,7 +76,7 @@ export default function BusinessDetailScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {business.coverImage ? <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" /> : <View style={{ height: 80 }} />}
         <View style={{ padding: theme.spacing.md }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ ...theme.row(), alignItems: 'center', gap: 6 }}>
             <Text style={theme.text('heading1')}>{business.name}</Text>
             {business.communityVerified ? <BadgeCheck size={20} color={theme.colors.primary} /> : null}
           </View>
@@ -89,11 +89,11 @@ export default function BusinessDetailScreen() {
           <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 12 }]}>{business.description}</Text>
 
           <View style={{ marginTop: 12, gap: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
               <Clock size={15} color={theme.colors.textMuted} />
               <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{business.hours}</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
               <Phone size={15} color={theme.colors.textMuted} />
               <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{business.phoneMasked}</Text>
             </View>

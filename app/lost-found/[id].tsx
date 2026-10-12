@@ -39,7 +39,7 @@ export default function LostFoundDetailScreen() {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title={t.lostFound.title} fallbackRoute="/lost-found" />
       <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
-        <Image source={{ uri: item.image }} style={{ width: '100%', height: 240, borderRadius: theme.radii.lg }} contentFit="cover" />
+        {item.image ? <Image source={{ uri: item.image }} style={{ width: '100%', height: 240, borderRadius: theme.radii.lg }} contentFit="cover" /> : null}
         <View style={{ marginTop: 14 }}>
           <Badge label={t.lostFound[item.status]} tone={STATUS_TONE[item.status]} />
           <Text style={[theme.text('heading2'), { marginTop: 10 }]}>{item.title}</Text>

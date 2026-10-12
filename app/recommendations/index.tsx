@@ -75,7 +75,7 @@ export default function RecommendationsScreen() {
               padding: 14,
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
               <Text style={theme.text('title')}>{item.name}</Text>
               {item.communityVerified ? <Star size={13} color={theme.colors.warning} fill={theme.colors.warning} /> : null}
             </View>

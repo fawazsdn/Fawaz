@@ -57,7 +57,7 @@ export default function MarketplaceScreen() {
       <Pressable
         onPress={() => router.push('/borrow')}
         style={{
-          flexDirection: 'row',
+          ...theme.row(),
           alignItems: 'center',
           gap: 10,
           marginHorizontal: theme.spacing.md,

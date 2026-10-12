@@ -18,10 +18,16 @@ export function LostFoundCard({ item }: { item: LostFoundPost }) {
   return (
     <Pressable
       onPress={() => router.push(`/lost-found/${item.id}`)}
-      style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
+      style={[styles.card, theme.row(), { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg }]}
       accessibilityRole="button"
     >
-      <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" />
+      {item.image ? (
+        <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" />
+      ) : (
+        <View style={[styles.image, { alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.backgroundAlt }]}>
+          <Text style={{ fontSize: 30 }}>{item.kind === 'pet' ? '🐾' : '🔎'}</Text>
+        </View>
+      )}
       <View style={{ flex: 1, padding: 10 }}>
         <Badge label={t.lostFound[item.status]} tone={STATUS_TONE[item.status]} />
         <Text style={[theme.text('bodySmall'), { marginTop: 6 }]} numberOfLines={2}>

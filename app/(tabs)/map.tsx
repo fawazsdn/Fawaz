@@ -185,7 +185,7 @@ export default function MapScreen() {
           <View style={[styles.dropdown, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border, borderRadius: theme.radii.md }]}>
             <Text style={[theme.text('caption', theme.colors.textMuted), { paddingHorizontal: 12, paddingTop: 8 }]}>{t.map.places}</Text>
             {places.map((r) => (
-              <Pressable key={`${r.kind}-${r.neighborhood?.id ?? r.city.id}`} onPress={() => goToPlace(r)} style={styles.placeRow} accessibilityRole="button">
+              <Pressable key={`${r.kind}-${r.neighborhood?.id ?? r.city.id}`} onPress={() => goToPlace(r)} style={[styles.placeRow, theme.row()]} accessibilityRole="button">
                 <MapPin size={14} color={theme.colors.primary} />
                 <Text style={[theme.text('bodySmall'), { flex: 1 }]} numberOfLines={1}>
                   {r.neighborhood ? (locale === 'ar' ? r.neighborhood.nameAr : r.neighborhood.nameEn) + ' · ' : ''}

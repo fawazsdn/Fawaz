@@ -65,7 +65,7 @@ export default function ModerationScreen() {
                 padding: 14,
               }}
             >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <View style={{ ...theme.row(), justifyContent: 'space-between', marginBottom: 6 }}>
                 <Badge label={t.report.reasons[r.reasonType]} tone={TONE[r.status]} />
                 <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(r.createdAt, locale)}</Text>
               </View>
@@ -74,7 +74,7 @@ export default function ModerationScreen() {
               </Text>
               {r.note ? <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>{r.note}</Text> : null}
               {r.status === 'open' ? (
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                <View style={{ ...theme.row(), gap: 8, marginTop: 10 }}>
                   <Button
                     label={t.moderation.removeContent}
                     size="sm"

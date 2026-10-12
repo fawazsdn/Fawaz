@@ -60,7 +60,7 @@ export default function MarketplaceDetailScreen() {
         title=""
         fallbackRoute="/marketplace"
         right={
-          <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={{ ...theme.row(), gap: 6 }}>
             <IconButton accessibilityLabel={t.common.save} onPress={() => run(() => toggleSaveListing(listing.id))}>
               <Bookmark
                 size={19}

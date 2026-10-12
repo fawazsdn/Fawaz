@@ -45,7 +45,7 @@ export default function BorrowScreen() {
                 { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.lg },
               ]}
             >
-              <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" />
+              {item.image ? <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" /> : null}
               <View style={{ padding: 10 }}>
                 <Text style={theme.text('title')} numberOfLines={1}>
                   {item.title}
