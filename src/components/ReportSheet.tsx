@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { submitReport } from '@/backend/actions';
 import { haptics } from '@/utils/haptics';
 import type { ReportReason, ReportTargetType } from '@/models';
 import { BottomSheet } from './BottomSheet';
@@ -31,14 +32,15 @@ const REASONS: ReportReason[] = [
 export function ReportSheet({ visible, onClose, targetType, targetId, onSubmitted }: ReportSheetProps) {
   const theme = useTheme();
   const { t } = useI18n();
-  const submitReport = useStore((s) => s.submitReport);
+  const { run, pending } = useAction();
   const [selected, setSelected] = useState<ReportReason | null>(null);
   const [note, setNote] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const submit = () => {
-    if (!selected) return;
-    submitReport(targetType, targetId, selected, note.trim() || undefined);
+  const submit = async () => {
+    if (!selected || pending) return;
+    const res = await run(() => submitReport(targetType, targetId, selected, note.trim() || undefined));
+    if (!res.ok) return;
     haptics.success();
     setSubmitted(true);
     setTimeout(() => {
@@ -87,7 +89,7 @@ export function ReportSheet({ visible, onClose, targetType, targetId, onSubmitte
               multiline
             />
             <View style={{ marginTop: 14 }}>
-              <Button label={t.common.submit} onPress={submit} disabled={!selected} fullWidth />
+              <Button label={t.common.submit} onPress={submit} disabled={!selected} loading={pending} fullWidth />
             </View>
           </>
         )}

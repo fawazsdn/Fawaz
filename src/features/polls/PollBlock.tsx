@@ -1,27 +1,56 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Check } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
 import type { Poll } from '@/models';
-import { formatRelativeTime } from '@/utils/format';
+import { formatTimeUntil, localizeDigits } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
+import { useAction } from '@/hooks/useAction';
+import { voteInPoll } from '@/backend/actions';
 
 interface PollBlockProps {
   poll: Poll;
 }
 
+/** Percent of total, rounded; 0 when nobody has voted. Exported for tests. */
+export function pollPercent(votes: number, total: number): number {
+  return total === 0 ? 0 : Math.round((votes / total) * 100);
+}
+
+/**
+ * Residents vote once and can move their vote to another option until the
+ * poll closes. The server RPC (vote_in_poll) keeps exactly one row per voter,
+ * so changing A → B never counts twice; counts shown here come from the
+ * server aggregate (get_poll_results), not from the client.
+ */
 export function PollBlock({ poll }: PollBlockProps) {
   const theme = useTheme();
   const { t, locale } = useI18n();
-  const voteInPoll = useStore((s) => s.voteInPoll);
+  const { run, pending } = useAction();
+  // Optimistic highlight of the tapped option while the RPC is in flight.
+  const [optimistic, setOptimistic] = useState<string | null>(null);
 
-  const totalVotes = poll.options.reduce((sum, o) => sum + o.votes.length, 0);
-  const hasVoted = poll.options.some((o) => o.votes.includes(CURRENT_USER_ID));
-  const closed = new Date(poll.closesAt).getTime() < Date.now();
+  const closed = new Date(poll.closesAt).getTime() <= Date.now();
+  const selectedId = optimistic ?? poll.myOptionId;
+  const hasVoted = !!poll.myOptionId;
   const showResults = hasVoted || closed;
+  const canChange = !closed && poll.allowChange;
+
+  useEffect(() => {
+    if (optimistic && poll.myOptionId === optimistic) setOptimistic(null);
+  }, [poll.myOptionId, optimistic]);
+
+  const onSelect = async (optionId: string) => {
+    if (closed || pending || optionId === poll.myOptionId) return;
+    if (hasVoted && !poll.allowChange) return;
+    haptics.selection();
+    setOptimistic(optionId);
+    const res = await run(() => voteInPoll(poll.id, optionId));
+    if (!res.ok) setOptimistic(null);
+  };
 
   return (
     <View style={{ gap: 8 }}>
@@ -31,49 +60,49 @@ export function PollBlock({ poll }: PollBlockProps) {
           <PollOptionRow
             key={option.id}
             label={option.textAr}
-            votes={option.votes.length}
-            totalVotes={totalVotes}
-            selected={option.votes.includes(CURRENT_USER_ID)}
+            pct={pollPercent(option.votes, poll.totalVotes)}
+            selected={selectedId === option.id}
             showResults={showResults}
-            disabled={hasVoted || closed}
-            onPress={() => {
-              haptics.selection();
-              voteInPoll(poll.id, option.id);
-            }}
+            disabled={closed || pending || (hasVoted && !poll.allowChange)}
+            onPress={() => onSelect(option.id)}
+            yourVoteLabel={t.polls.yourVote}
+            locale={locale}
           />
         ))}
       </View>
       <Text style={theme.text('caption', theme.colors.textMuted)}>
-        {totalVotes} {t.polls.votes} ·{' '}
-        {closed ? t.polls.closed : `${t.polls.closesIn} ${formatRelativeTime(poll.closesAt, locale).replace('قبل', '').trim()}`}
+        {localizeDigits(poll.totalVotes, locale)} {t.polls.votes} ·{' '}
+        {closed ? t.polls.closed : `${t.polls.closesIn} ${formatTimeUntil(poll.closesAt, locale)}`}
       </Text>
+      {hasVoted && canChange ? <Text style={theme.text('caption', theme.colors.textMuted)}>{t.polls.changeHint}</Text> : null}
     </View>
   );
 }
 
 function PollOptionRow({
   label,
-  votes,
-  totalVotes,
+  pct,
   selected,
   showResults,
   disabled,
   onPress,
+  yourVoteLabel,
+  locale,
 }: {
   label: string;
-  votes: number;
-  totalVotes: number;
+  pct: number;
   selected: boolean;
   showResults: boolean;
   disabled: boolean;
   onPress: () => void;
+  yourVoteLabel: string;
+  locale: 'ar' | 'en';
 }) {
   const theme = useTheme();
-  const pct = totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100);
   const width = useSharedValue(0);
 
   useEffect(() => {
-    if (showResults) width.value = withTiming(pct, { duration: 500 });
+    width.value = withTiming(showResults ? pct : 0, { duration: 450 });
   }, [showResults, pct, width]);
 
   const barStyle = useAnimatedStyle(() => ({ width: `${width.value}%` }));
@@ -90,16 +119,19 @@ function PollOptionRow({
           backgroundColor: theme.colors.surface,
         },
       ]}
-      accessibilityRole="button"
+      accessibilityRole="radio"
+      accessibilityState={{ selected, disabled }}
+      accessibilityLabel={showResults ? `${label}, ${pct}%${selected ? `, ${yourVoteLabel}` : ''}` : label}
     >
       {showResults ? (
-        <Animated.View
-          style={[StyleSheet.absoluteFill, barStyle, { backgroundColor: theme.colors.successSurface, borderRadius: theme.radii.sm }]}
-        />
+        <Animated.View style={[StyleSheet.absoluteFill, barStyle, { backgroundColor: theme.colors.successSurface, borderRadius: theme.radii.sm }]} />
       ) : null}
       <View style={[theme.row(), styles.optionContent]}>
-        <Text style={theme.text('bodySmall')}>{label}</Text>
-        {showResults ? <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{pct}%</Text> : null}
+        <View style={[theme.row(), { alignItems: 'center', gap: 6, flex: 1 }]}>
+          {selected ? <Check size={14} color={theme.colors.primary} /> : null}
+          <Text style={[theme.text('bodySmall'), { flexShrink: 1 }]}>{label}</Text>
+        </View>
+        {showResults ? <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{localizeDigits(`${pct}%`, locale)}</Text> : null}
       </View>
     </Pressable>
   );
@@ -107,5 +139,5 @@ function PollOptionRow({
 
 const styles = StyleSheet.create({
   optionWrap: { borderWidth: 1.5, overflow: 'hidden' },
-  optionContent: { justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 12 },
+  optionContent: { justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, gap: 8 },
 });

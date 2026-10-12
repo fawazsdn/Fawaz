@@ -361,7 +361,7 @@ export interface Institution {
 export type ReportReason =
   'spam' | 'scam' | 'harassment' | 'privacy_violation' | 'inappropriate' | 'misinformation' | 'impersonation' | 'other';
 
-export type ReportTargetType = 'post' | 'comment' | 'user' | 'listing';
+export type ReportTargetType = 'post' | 'comment' | 'user' | 'listing' | 'message' | 'event' | 'group' | 'business';
 
 export interface Report {
   id: string;

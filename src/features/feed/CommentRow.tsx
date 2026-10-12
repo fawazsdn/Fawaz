@@ -5,7 +5,11 @@ import { Heart, MoreHorizontal } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useCurrentUserId } from '@/store/useStore';
+import { useUser } from '@/hooks/useNeighborhood';
+import { useAction } from '@/hooks/useAction';
+import { deleteComment, editComment, toggleCommentLike } from '@/backend/actions';
+import { ReportSheet } from '@/components/ReportSheet';
 import type { Comment } from '@/models';
 import { displayName, formatRelativeTime } from '@/utils/format';
 import { Avatar } from '@/components/Avatar';
@@ -21,36 +25,36 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const author = useStore((s) => s.getUser(comment.authorId));
-  const toggleCommentLike = useStore((s) => s.toggleCommentLike);
-  const editComment = useStore((s) => s.editComment);
-  const deleteComment = useStore((s) => s.deleteComment);
+  const me = useCurrentUserId();
+  const author = useUser(comment.authorId);
+  const { run } = useAction();
+  const [reportOpen, setReportOpen] = useState(false);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.textAr);
 
-  if (!author) return null;
-  const isOwn = comment.authorId === CURRENT_USER_ID;
-  const liked = comment.likedBy.includes(CURRENT_USER_ID);
+  const authorName = author ? displayName(author) : t.common.neighbor;
+  const isOwn = comment.authorId === me;
+  const liked = comment.likedBy.includes(me);
 
   const menuItems: ActionSheetItem[] = isOwn
     ? [
         { key: 'edit', label: t.common.edit, onPress: () => setEditing(true) },
         { key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) },
       ]
-    : [{ key: 'report', label: t.common.report, onPress: () => {} }];
+    : [{ key: 'report', label: t.common.report, onPress: () => setReportOpen(true) }];
 
   return (
     <View style={[theme.row(), styles.wrap]}>
-      <Pressable onPress={() => router.push(`/profile/${author.id}`)}>
-        <Avatar uri={author.avatarUrl} name={displayName(author)} size={32} />
+      <Pressable onPress={() => author && router.push(`/profile/${author.id}`)}>
+        <Avatar uri={author?.avatarUrl} name={authorName} size={32} />
       </Pressable>
       <View style={{ flex: 1 }}>
         <View style={[styles.bubble, { backgroundColor: theme.colors.backgroundAlt, borderRadius: theme.radii.md }]}>
           <View style={[theme.row(), { alignItems: 'center', gap: 6 }]}>
-            <Text style={theme.text('bodySmall')}>{displayName(author)}</Text>
+            <Text style={theme.text('bodySmall')}>{authorName}</Text>
           </View>
           {editing ? (
             <View style={{ marginTop: 4 }}>
@@ -58,8 +62,9 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
               <View style={[theme.row(), { gap: 12, marginTop: 6 }]}>
                 <Text
                   onPress={() => {
-                    editComment(comment.id, draft.trim() || comment.textAr);
+                    const text = draft.trim();
                     setEditing(false);
+                    if (text && text !== comment.textAr) run(() => editComment(comment.id, comment.postId, text));
                   }}
                   style={theme.text('caption', theme.colors.primary)}
                 >
@@ -82,7 +87,7 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
           <Pressable onPress={() => onReply(comment)}>
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{t.post.reply}</Text>
           </Pressable>
-          <Pressable onPress={() => toggleCommentLike(comment.id)} style={[theme.row(), { alignItems: 'center', gap: 3 }]}>
+          <Pressable onPress={() => run(() => toggleCommentLike(comment.id, comment.postId))} style={[theme.row(), { alignItems: 'center', gap: 3 }]}>
             <Heart
               size={12}
               color={liked ? theme.colors.danger : theme.colors.textMuted}
@@ -99,14 +104,15 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
       </Pressable>
 
       <ActionSheet visible={menuOpen} onClose={() => setMenuOpen(false)} items={menuItems} />
+      <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} targetType="comment" targetId={comment.id} />
       <ConfirmationModal
         visible={deleteOpen}
         title={t.common.delete}
         destructive
         onCancel={() => setDeleteOpen(false)}
         onConfirm={() => {
-          deleteComment(comment.id);
           setDeleteOpen(false);
+          run(() => deleteComment(comment.id, comment.postId));
         }}
       />
     </View>

@@ -1,12 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useCurrentUserId } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { offerHelp } from '@/backend/actions';
 import type { HelpRequest } from '@/models';
-import { formatDistance, formatRelativeTime } from '@/utils/format';
+import { formatRelativeTime } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
@@ -15,8 +16,10 @@ export function HelpRequestCard({ request }: { request: HelpRequest }) {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const offerHelp = useStore((s) => s.offerHelp);
-  const offered = request.offeredBy.includes(CURRENT_USER_ID);
+  const me = useCurrentUserId();
+  const { run, pending } = useAction();
+  const offered = request.offeredBy.includes(me);
+  const isOwn = request.requesterId === me;
 
   return (
     // accessibilityRole="link", not "button" — react-native-web renders
@@ -37,20 +40,16 @@ export function HelpRequestCard({ request }: { request: HelpRequest }) {
         {request.title}
       </Text>
       <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 4 }]}>{formatRelativeTime(request.createdAt, locale)}</Text>
-      <View style={[theme.row(), { alignItems: 'center', gap: 4, marginTop: 4 }]}>
-        <MapPin size={12} color={theme.colors.textMuted} />
-        <Text style={theme.text('caption', theme.colors.textMuted)}>{formatDistance(request.approxDistanceM, locale)}</Text>
-      </View>
 
       <View style={[theme.row(), styles.actions]}>
         <Button
           label={offered ? t.help.offered : t.help.iCanHelp}
           size="sm"
-          disabled={offered || request.status === 'resolved'}
+          disabled={offered || isOwn || request.status === 'resolved' || pending}
           onPress={(e) => {
             e?.stopPropagation?.();
             haptics.medium();
-            offerHelp(request.id);
+            run(() => offerHelp(request.id));
           }}
         />
         <Button

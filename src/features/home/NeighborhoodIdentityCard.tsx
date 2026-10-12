@@ -5,6 +5,7 @@ import { Users } from 'lucide-react-native';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { localizeDigits } from '@/utils/format';
 import { geographyService } from '@/services/geography';
 import type { SaudiCity } from '@/types/geography';
 import { Card } from '@/components/Card';
@@ -53,7 +54,7 @@ export function NeighborhoodIdentityCard({ neighborhoodId }: { neighborhoodId: s
           <View style={[theme.row(), { alignItems: 'center', gap: 5, marginTop: 4 }]}>
             <Users size={13} color={theme.colors.onPrimary} />
             <Text style={[theme.text('caption', theme.colors.onPrimary), { opacity: 0.9 }]}>
-              {neighborhood.residentsCount.toLocaleString()} {t.home.neighborsLabel}
+              {neighborhood.residentsCount == null ? '—' : localizeDigits(neighborhood.residentsCount, locale)} {t.home.neighborsLabel}
             </Text>
           </View>
         </View>
@@ -69,7 +70,7 @@ export function NeighborhoodIdentityCard({ neighborhoodId }: { neighborhoodId: s
           {t.home.todayIn} {name}
         </Text>
         <Text style={theme.text('title', theme.colors.onPrimary)}>
-          {total > 0 ? `${total} ${t.home.thingsHappening}` : t.home.nothingHappeningToday}
+          {total > 0 ? `${localizeDigits(total, locale)} ${t.home.thingsHappening}` : t.home.nothingHappeningToday}
         </Text>
       </View>
     </Card>

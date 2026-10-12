@@ -5,7 +5,10 @@ import { Bookmark, Megaphone, MessageCircle, MoreHorizontal, Share2, ThumbsUp, T
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useStore, useCurrentUserId } from '@/store/useStore';
+import { useUser } from '@/hooks/useNeighborhood';
+import { useAction } from '@/hooks/useAction';
+import { deletePost, toggleBlockUser, toggleReaction, toggleSavePost } from '@/backend/actions';
 import type { Post } from '@/models';
 import { displayName, formatRelativeTime } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
@@ -31,23 +34,20 @@ export function PostCard({ post, onPress }: PostCardProps) {
   const { t, locale, isRTL } = useI18n();
   const router = useRouter();
 
-  const author = useStore((s) => s.getUser(post.authorId));
+  const me = useCurrentUserId();
+  const author = useUser(post.authorId);
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === post.neighborhoodId));
   const poll = useStore((s) => (post.type === 'poll' ? s.polls.find((p) => p.id === post.linkedEntityId) : undefined));
-  const toggleReaction = useStore((s) => s.toggleReaction);
-  const toggleSavePost = useStore((s) => s.toggleSavePost);
-  const deletePost = useStore((s) => s.deletePost);
-  const toggleBlockUser = useStore((s) => s.toggleBlockUser);
+  const { run } = useAction();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  if (!author) return null;
-
-  const isOwn = post.authorId === CURRENT_USER_ID;
-  const liked = post.reactions.some((r) => r.userId === CURRENT_USER_ID);
-  const saved = post.savedBy.includes(CURRENT_USER_ID);
+  const authorName = author ? displayName(author) : t.common.neighbor;
+  const isOwn = post.authorId === me;
+  const liked = post.reactions.some((r) => r.userId === me);
+  const saved = post.savedBy.includes(me);
   const reactionType = post.type === 'alert' ? 'helpful' : 'like';
 
   const goToDetail = () => (onPress ? onPress() : router.push(`/post/${post.id}`));
@@ -55,10 +55,9 @@ export function PostCard({ post, onPress }: PostCardProps) {
   const menuItems: ActionSheetItem[] = isOwn
     ? [{ key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) }]
     : [
-        { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => toggleSavePost(post.id) },
+        { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => run(() => toggleSavePost(post.id)) },
         { key: 'report', label: t.common.report, onPress: () => setReportOpen(true) },
-        { key: 'hide', label: t.common.hide, onPress: () => {} },
-        { key: 'block', label: t.common.block, destructive: true, onPress: () => toggleBlockUser(post.authorId) },
+                { key: 'block', label: t.common.block, destructive: true, onPress: () => run(() => toggleBlockUser(post.authorId)) },
       ];
 
   return (
@@ -68,16 +67,16 @@ export function PostCard({ post, onPress }: PostCardProps) {
           <Pressable
             onPress={(e) => {
               e.stopPropagation?.();
-              router.push(`/profile/${author.id}`);
+              if (author) router.push(`/profile/${author.id}`);
             }}
             accessibilityRole="button"
           >
-            <Avatar uri={author.avatarUrl} name={displayName(author)} size={42} />
+            <Avatar uri={author?.avatarUrl} name={authorName} size={42} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
               <Text style={theme.text('title')} numberOfLines={1}>
-                {displayName(author)}
+                {authorName}
               </Text>
             </View>
             <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
@@ -129,7 +128,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
             onPress={(e) => {
               e.stopPropagation?.();
               haptics.light();
-              toggleReaction(post.id, reactionType);
+              run(() => toggleReaction(post.id, reactionType));
             }}
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
@@ -152,7 +151,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
           <Pressable
             onPress={(e) => {
               e.stopPropagation?.();
-              toggleSavePost(post.id);
+              run(() => toggleSavePost(post.id));
             }}
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
@@ -185,8 +184,8 @@ export function PostCard({ post, onPress }: PostCardProps) {
         destructive
         onCancel={() => setDeleteOpen(false)}
         onConfirm={() => {
-          deletePost(post.id);
           setDeleteOpen(false);
+          run(() => deletePost(post.id));
         }}
       />
     </>

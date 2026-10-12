@@ -4,7 +4,8 @@ import { PartyPopper } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { thankUser } from '@/backend/actions';
 import { haptics } from '@/utils/haptics';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
@@ -18,7 +19,7 @@ interface ThankSheetProps {
 export function ThankSheet({ visible, onClose, userId }: ThankSheetProps) {
   const theme = useTheme();
   const { t } = useI18n();
-  const thankUser = useStore((s) => s.thankUser);
+  const { run, pending } = useAction();
 
   const reasons = [
     t.thanks.reasonHelpfulAdvice,
@@ -32,9 +33,10 @@ export function ThankSheet({ visible, onClose, userId }: ThankSheetProps) {
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
 
-  const submit = () => {
-    if (!selected) return;
-    thankUser(userId, selected, message.trim() || undefined);
+  const submit = async () => {
+    if (!selected || pending) return;
+    const res = await run(() => thankUser(userId, selected, message.trim() || undefined));
+    if (!res.ok) return;
     haptics.success();
     setSent(true);
     setTimeout(() => {

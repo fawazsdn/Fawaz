@@ -5,17 +5,20 @@ import { Bookmark } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore, CURRENT_USER_ID } from '@/store/useStore';
+import { useCurrentUserId } from '@/store/useStore';
+import { useAction } from '@/hooks/useAction';
+import { toggleSaveListing } from '@/backend/actions';
 import type { MarketplaceListing } from '@/models';
-import { formatDistance, formatSAR } from '@/utils/format';
+import { formatRelativeTime, formatSAR } from '@/utils/format';
 import { Badge } from '@/components/Badge';
 
 export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const toggleSaveListing = useStore((s) => s.toggleSaveListing);
-  const saved = listing.savedBy.includes(CURRENT_USER_ID);
+  const me = useCurrentUserId();
+  const { run } = useAction();
+  const saved = listing.savedBy.includes(me);
 
   const priceLabel =
     listing.listingType === 'sale'
@@ -45,7 +48,7 @@ export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
         <Pressable
           onPress={(e) => {
             e.stopPropagation?.();
-            toggleSaveListing(listing.id);
+            run(() => toggleSaveListing(listing.id));
           }}
           style={[styles.saveBtn, { backgroundColor: theme.colors.overlay }]}
           accessibilityRole="button"
@@ -67,7 +70,7 @@ export function MarketplaceCard({ listing }: { listing: MarketplaceListing }) {
           {listing.title}
         </Text>
         <View style={[theme.row(), { justifyContent: 'space-between', marginTop: 6, alignItems: 'center' }]}>
-          <Text style={theme.text('caption', theme.colors.textMuted)}>{formatDistance(listing.approxDistanceM, locale)}</Text>
+          <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(listing.createdAt, locale)}</Text>
           <Badge label={t.marketplace.condition[listing.condition]} tone="neutral" />
         </View>
       </View>
