@@ -30,12 +30,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "sa.haratna.app",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "حارتنا يستخدم الصور لمشاركة المنشورات والفعاليات مع جيرانك.",
         "NSCameraUsageDescription": "حارتنا يستخدم الكاميرا لالتقاط صور للمنشورات والبلاغات.",
-        "NSLocationWhenInUseUsageDescription": "حارتنا يستخدم موقعك التقريبي لتأكيد أنك داخل حيّك عند طلبك ذلك — لا نتتبع موقعك باستمرار."
+        "NSLocationWhenInUseUsageDescription": "حارتنا يستخدم موقعك التقريبي لتأكيد أنك داخل حيّك عند طلبك ذلك — لا نتتبع موقعك باستمرار.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -53,6 +54,13 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "static"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2475da56-1dcf-4fc7-b16b-2cd3bf9efa11"
+      }
+    },
+    "owner": "fawazsdn"
   }
 }
