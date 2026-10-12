@@ -31,7 +31,6 @@ import type {
 } from '@/models';
 import { resolveMediaUrls } from './media';
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- PostgREST rows are mapped field-by-field below */
 type Row = Record<string, any>;
 
 const CONTENT_LIMIT = 200;

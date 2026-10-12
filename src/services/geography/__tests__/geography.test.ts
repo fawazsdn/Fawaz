@@ -214,3 +214,30 @@ describe('search performance', () => {
     expect(results.length).toBeLessThanOrEqual(25);
   });
 });
+
+describe('Ajyal (Dhahran) neighborhood', () => {
+  const { geographyService } = jest.requireActual('@/services/geography') as typeof import('@/services/geography');
+  const AJYAL = 'sa-district-10500227013';
+
+  it.each(['Ajyal', 'ajyal', 'أجيال', 'اجيال', 'حي أجيال', 'Ajyal District'])('search "%s" finds Ajyal', async (q) => {
+    const results = await geographyService.search(q, { limit: 10 });
+    expect(results.some((r) => r.neighborhood?.id === AJYAL)).toBe(true);
+  });
+
+  it('has the correct hierarchy: Saudi Arabia → Eastern Province → Dhahran → Ajyal, with an official boundary', async () => {
+    const loc = await geographyService.resolveLocation({ neighborhoodId: AJYAL });
+    expect(loc?.neighborhood?.nameEn).toBe('Ajyal');
+    expect(loc?.neighborhood?.nameAr).toBe('أجيال');
+    expect(loc?.city.nameEn).toBe('Dhahran');
+    expect(loc?.city.nameAr).toBe('الظهران');
+    expect(loc?.region.nameEn).toBe('Eastern Province');
+    expect(loc?.region.nameAr).toBe('المنطقة الشرقية');
+    expect(loc?.neighborhood?.hasBoundary).toBe(true);
+  });
+
+  it('exists exactly once (no duplicate records)', async () => {
+    const all = await geographyService.getNeighborhoods('sa-city-227');
+    expect(all.filter((n) => n.nameEn === 'Ajyal')).toHaveLength(1);
+    expect(all.map((n) => n.id)).toContain(AJYAL);
+  });
+});

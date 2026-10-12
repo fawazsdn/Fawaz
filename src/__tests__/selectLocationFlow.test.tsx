@@ -1,13 +1,13 @@
 import { resetStoreForTests, TEST_ME } from '@/testing/fixtures';
 
-// Isolate the UI flow from the post-selection server refresh.
-jest.mock('@/backend/sync', () => ({ requestSync: jest.fn(async () => {}) }));
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useStore } from '@/store/useStore';
 import SelectCityScreen from '../../app/(auth)/select-city';
 import SelectNeighborhoodScreen from '../../app/(auth)/select-neighborhood';
+// Isolate the UI flow from the post-selection server refresh.
+jest.mock('@/backend/sync', () => ({ requestSync: jest.fn(async () => {}) }));
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({

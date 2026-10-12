@@ -42,7 +42,7 @@ export function combineEnd(start: Date, endTime: Date): Date {
 
 export default function CreateEventScreen() {
   const theme = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ kind?: string }>();

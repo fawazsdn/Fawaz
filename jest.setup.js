@@ -135,6 +135,7 @@ jest.mock('react-native-maps', () => {
     React.useImperativeHandle(ref, () => ({ animateToRegion: jest.fn() }));
     return React.createElement(View, { testID: 'map-view' }, props.children);
   });
+  MapView.displayName = 'MockMapView';
   const Marker = (props) => React.createElement(View, { testID: `marker-${props.identifier}`, accessibilityLabel: props.title });
   const Polygon = () => null;
   return { __esModule: true, default: MapView, Marker, Polygon };

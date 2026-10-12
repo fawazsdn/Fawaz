@@ -5,9 +5,8 @@ import { MessageSquareOff } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
+import { useStore, useCurrentUserId } from '@/store/useStore';
 import { requestSync } from '@/backend/sync';
-import { useCurrentUserId } from '@/store/useStore';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { NeighborhoodIdentityCard } from '@/features/home/NeighborhoodIdentityCard';
 import { QuickActions } from '@/features/home/QuickActions';

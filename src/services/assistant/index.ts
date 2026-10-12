@@ -10,7 +10,6 @@ export { parseQuestion } from './intent';
 export { composeAnswer } from './engine';
 export type { ReplyLanguage } from './language';
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- PostgREST rows */
 
 function rows<T>(res: { data: T[] | null; error: { message: string } | null }): T[] {
   if (res.error) throw new Error(res.error.message);
