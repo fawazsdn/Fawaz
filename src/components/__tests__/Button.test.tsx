@@ -11,14 +11,14 @@ describe('Button', () => {
   it('calls onPress when tapped', async () => {
     const onPress = jest.fn();
     await render(<Button label="متابعة" onPress={onPress} />);
-    fireEvent.press(screen.getByText('متابعة'));
+    await fireEvent.press(screen.getByText('متابعة'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('does not call onPress when disabled', async () => {
     const onPress = jest.fn();
     await render(<Button label="متابعة" onPress={onPress} disabled />);
-    fireEvent.press(screen.getByText('متابعة'));
+    await fireEvent.press(screen.getByText('متابعة'));
     expect(onPress).not.toHaveBeenCalled();
   });
 });

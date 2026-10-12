@@ -47,25 +47,25 @@ describe('Profile & Settings menu', () => {
 
   it('routes "My Posts" to the profile screen with the activity tab', async () => {
     await renderWithProvider(<SettingsScreen />);
-    fireEvent.press(screen.getByText('My Posts'));
+    await fireEvent.press(screen.getByText('My Posts'));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith(`/profile/${CURRENT_USER_ID}?tab=activity`));
   });
 
   it('routes "My Events" to the profile screen with the events tab', async () => {
     await renderWithProvider(<SettingsScreen />);
-    fireEvent.press(screen.getByText('My Events'));
+    await fireEvent.press(screen.getByText('My Events'));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith(`/profile/${CURRENT_USER_ID}?tab=events`));
   });
 
   it('routes "Saved" to the new saved-items screen', async () => {
     await renderWithProvider(<SettingsScreen />);
-    fireEvent.press(screen.getByText('Saved'));
+    await fireEvent.press(screen.getByText('Saved'));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/saved'));
   });
 
   it('routes "My Groups" to the existing community groups browse screen (no fabricated membership filter)', async () => {
     await renderWithProvider(<SettingsScreen />);
-    fireEvent.press(screen.getByText('My Groups'));
+    await fireEvent.press(screen.getByText('My Groups'));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/community'));
   });
 

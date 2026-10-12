@@ -46,7 +46,7 @@ describe('Inbox back button', () => {
     mockCanGoBack.mockReturnValue(true);
     await renderWithProvider(<MessagesScreen />);
 
-    fireEvent.press(screen.getByLabelText('Back'));
+    await fireEvent.press(screen.getByLabelText('Back'));
 
     await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1));
     expect(mockReplace).not.toHaveBeenCalled();
@@ -56,7 +56,7 @@ describe('Inbox back button', () => {
     mockCanGoBack.mockReturnValue(false);
     await renderWithProvider(<MessagesScreen />);
 
-    fireEvent.press(screen.getByLabelText('Back'));
+    await fireEvent.press(screen.getByLabelText('Back'));
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
     expect(mockBack).not.toHaveBeenCalled();

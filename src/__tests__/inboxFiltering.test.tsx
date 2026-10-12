@@ -38,18 +38,18 @@ describe('Inbox filtering', () => {
 
   it('"Groups" excludes event-linked chats; "Events" shows only them', async () => {
     await renderWithProvider(<MessagesScreen />);
-    fireEvent.press(screen.getByText('Groups'));
+    await fireEvent.press(screen.getByText('Groups'));
     await waitFor(() => expect(screen.queryByText('Test Event Chat')).toBeNull());
     expect(screen.getByText('Test Group Chat')).toBeTruthy();
 
-    fireEvent.press(screen.getByText('Events'));
+    await fireEvent.press(screen.getByText('Events'));
     await waitFor(() => expect(screen.queryByText('Test Group Chat')).toBeNull());
     expect(screen.getByText('Test Event Chat')).toBeTruthy();
   });
 
   it('"Unread" shows only conversations with unread messages from others, with a real count', async () => {
     await renderWithProvider(<MessagesScreen />);
-    fireEvent.press(screen.getByText('Unread'));
+    await fireEvent.press(screen.getByText('Unread'));
     await waitFor(() => expect(screen.queryByText('Test Group Chat')).toBeNull());
     expect(screen.getByText('Test Event Chat')).toBeTruthy();
     expect(screen.getByLabelText('1 unread')).toBeTruthy();
@@ -57,7 +57,7 @@ describe('Inbox filtering', () => {
 
   it('search matches message text', async () => {
     await renderWithProvider(<MessagesScreen />);
-    fireEvent.changeText(screen.getByPlaceholderText(/Search/i), 'unread hello');
+    await fireEvent.changeText(screen.getByPlaceholderText(/Search/i), 'unread hello');
     await waitFor(() => expect(screen.queryByText('Test Group Chat')).toBeNull());
     expect(screen.getByText('Test Event Chat')).toBeTruthy();
   });

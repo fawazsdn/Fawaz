@@ -51,19 +51,19 @@ describe('PollBlock', () => {
 
   it('lets the resident change their vote via the atomic server RPC', async () => {
     await render(<PollBlock poll={poll({ myOptionId: 'opt-a' })} />);
-    fireEvent.press(screen.getByLabelText(/Option B/));
+    await fireEvent.press(screen.getByLabelText(/Option B/));
     await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('vote_in_poll', { target_poll_id: 'poll-1', target_option_id: 'opt-b' }));
   });
 
   it('does not call the server when tapping the option already chosen', async () => {
     await render(<PollBlock poll={poll({ myOptionId: 'opt-a' })} />);
-    fireEvent.press(screen.getByLabelText(/Option A/));
+    await fireEvent.press(screen.getByLabelText(/Option A/));
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
   it('blocks voting and changes once the poll is closed', async () => {
     await render(<PollBlock poll={poll({ closesAt: past, myOptionId: 'opt-a' })} />);
-    fireEvent.press(screen.getByLabelText(/Option B/));
+    await fireEvent.press(screen.getByLabelText(/Option B/));
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });

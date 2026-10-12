@@ -39,7 +39,7 @@ describe('AppHeader back button', () => {
     mockCanGoBack.mockReturnValue(true);
     await renderWithProvider(<AppHeader title="Event" fallbackRoute="/events" />);
 
-    fireEvent.press(screen.getByLabelText('Back'));
+    await fireEvent.press(screen.getByLabelText('Back'));
 
     expect(mockBack).toHaveBeenCalledTimes(1);
     expect(mockReplace).not.toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe('AppHeader back button', () => {
     mockCanGoBack.mockReturnValue(false);
     await renderWithProvider(<AppHeader title="Event" fallbackRoute="/events" />);
 
-    fireEvent.press(screen.getByLabelText('Back'));
+    await fireEvent.press(screen.getByLabelText('Back'));
 
     expect(mockReplace).toHaveBeenCalledWith('/events');
     expect(mockBack).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('AppHeader back button', () => {
     mockCanGoBack.mockReturnValue(false);
     await renderWithProvider(<AppHeader title="Untitled" />);
 
-    fireEvent.press(screen.getByLabelText('Back'));
+    await fireEvent.press(screen.getByLabelText('Back'));
 
     expect(mockReplace).toHaveBeenCalledWith('/');
   });
@@ -69,7 +69,7 @@ describe('AppHeader back button', () => {
     const onBack = jest.fn();
     await renderWithProvider(<AppHeader title="Custom" onBack={onBack} fallbackRoute="/events" />);
 
-    fireEvent.press(screen.getByLabelText('Back'));
+    await fireEvent.press(screen.getByLabelText('Back'));
 
     expect(onBack).toHaveBeenCalledTimes(1);
     expect(mockBack).not.toHaveBeenCalled();

@@ -36,8 +36,9 @@ beforeEach(() => {
   mockRpc.mockResolvedValue({ data: null, error: null });
   resetStoreForTests();
   useStore.getState().setLocale('en');
-  const realId = useStore.getState().neighborhoods[0]!.id;
-  useStore.getState().selectNeighborhood(realId);
+  // A signed-in resident with a pending membership in Ajyal (real dataset id).
+  useStore.getState().setSupabaseAuth('00000000-0000-4000-8000-000000000001', 'email', 'resident.a@example.test');
+  useStore.getState().patchSession({ neighborhoodId: 'sa-district-10500227013', verification: 'pending' });
 });
 
 // This is the real, server-authoritative verification flow: the screen must
@@ -60,7 +61,7 @@ describe('Verification screen (real location verification)', () => {
     );
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() => expect(screen.getByText('✓ Verified Resident')).toBeTruthy());
     expect(useStore.getState().session.verification).toBe('verified');
@@ -76,7 +77,7 @@ describe('Verification screen (real location verification)', () => {
     );
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() =>
       expect(
@@ -90,7 +91,7 @@ describe('Verification screen (real location verification)', () => {
     mockRequestPermissions.mockResolvedValue({ status: 'denied', canAskAgain: true });
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() => expect(screen.getByText('Location permission needed')).toBeTruthy());
     expect(screen.getByText('Try Again')).toBeTruthy();
@@ -101,7 +102,7 @@ describe('Verification screen (real location verification)', () => {
     mockRequestPermissions.mockResolvedValue({ status: 'denied', canAskAgain: false });
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() => expect(screen.getByText('Open Settings')).toBeTruthy());
   });
@@ -111,7 +112,7 @@ describe('Verification screen (real location verification)', () => {
     mockGetCurrentPosition.mockRejectedValue(new Error('timeout'));
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() => expect(screen.getByText("Couldn't get your location")).toBeTruthy());
     expect(useStore.getState().session.verification).not.toBe('verified');
@@ -127,7 +128,7 @@ describe('Verification screen (real location verification)', () => {
     );
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() => expect(screen.getByText('Location verification is not yet available for this neighborhood')).toBeTruthy());
     expect(screen.getByText('Continue to the app')).toBeTruthy();
@@ -143,7 +144,7 @@ describe('Verification screen (real location verification)', () => {
     );
 
     await renderWithProvider(<VerificationScreen />);
-    fireEvent.press(screen.getByText('Verify with Location'));
+    await fireEvent.press(screen.getByText('Verify with Location'));
 
     await waitFor(() => expect(mockRpc).toHaveBeenCalledWith('verify_neighborhood_location', expect.any(Object)));
     const call = mockRpc.mock.calls.find((c) => c[0] === 'verify_neighborhood_location')!;

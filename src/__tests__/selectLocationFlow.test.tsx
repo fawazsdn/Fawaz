@@ -45,15 +45,15 @@ describe('select location onboarding flow (UI)', () => {
 
     // Region step: the Eastern Province is one of the 13 real regions.
     const easternProvinceRow = await screen.findByText('المنطقة الشرقية', { exact: false });
-    fireEvent.press(easternProvinceRow);
+    await fireEvent.press(easternProvinceRow);
 
     // City step: search within the region (it has ~230 cities, so the
     // target isn't guaranteed to be in the FlatList's initial render
     // window without narrowing it first) then pick Khobar.
     const regionSearch = await screen.findByPlaceholderText('ابحث عن مدينة أو حي...');
-    fireEvent.changeText(regionSearch, 'الخبر');
+    await fireEvent.changeText(regionSearch, 'الخبر');
     const khobarRow = await screen.findByText('الخبر');
-    fireEvent.press(khobarRow);
+    await fireEvent.press(khobarRow);
 
     expect(useStore.getState().session.cityId).toBe('sa-city-31');
     expect(useStore.getState().session.regionId).toBe('sa-region-5');
@@ -68,7 +68,7 @@ describe('select location onboarding flow (UI)', () => {
     await renderWithProvider(<SelectNeighborhoodScreen />);
 
     const neighborhoodRow = await screen.findByText('حي العقربية');
-    fireEvent.press(neighborhoodRow);
+    await fireEvent.press(neighborhoodRow);
 
     expect(useStore.getState().session.neighborhoodId).toBe('sa-district-10500031009');
     expect(mockPush).toHaveBeenCalledWith('/(auth)/verification');
@@ -79,12 +79,12 @@ describe('select location onboarding flow (UI)', () => {
     const search = await screen.findByPlaceholderText('ابحث عن مدينة أو حي...');
 
     await act(async () => {
-      fireEvent.changeText(search, 'العقربية');
+      await fireEvent.changeText(search, 'العقربية');
       await new Promise((r) => setTimeout(r, 250)); // debounce
     });
 
     const hit = await waitFor(() => screen.getByText('حي العقربية'));
-    fireEvent.press(hit);
+    await fireEvent.press(hit);
 
     // Selecting a neighborhood result directly sets city+region and the
     // neighborhood, skipping straight to verification.

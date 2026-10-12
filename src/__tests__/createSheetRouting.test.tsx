@@ -51,19 +51,19 @@ describe('Create sheet', () => {
 
   it('routes "Ask neighbors" into the existing post composer, not a duplicate flow', async () => {
     await renderWithProvider(<CreateSheetScreen />);
-    fireEvent.press(screen.getByText('Ask neighbors'));
+    await fireEvent.press(screen.getByText('Ask neighbors'));
     expect(mockPush).toHaveBeenCalledWith('/create/post');
   });
 
   it('routes "Recommend a place" to the existing businesses browse screen', async () => {
     await renderWithProvider(<CreateSheetScreen />);
-    fireEvent.press(screen.getByText('Recommend a place'));
+    await fireEvent.press(screen.getByText('Recommend a place'));
     expect(mockPush).toHaveBeenCalledWith('/recommendations');
   });
 
   it('routes "Sell / give away" to the marketplace composer', async () => {
     await renderWithProvider(<CreateSheetScreen />);
-    fireEvent.press(screen.getByText('Sell / give away'));
+    await fireEvent.press(screen.getByText('Sell / give away'));
     expect(mockPush).toHaveBeenCalledWith('/marketplace/create');
   });
 });

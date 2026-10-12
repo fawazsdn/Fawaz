@@ -42,7 +42,7 @@ describe('Zustand selector snapshot stability', () => {
 
   it('neighborhood name opens the real selection flow (membership changes go through the server)', async () => {
     await renderWithProvider(<HomeHeader />);
-    fireEvent.press(screen.getByText('Ajyal'));
+    await fireEvent.press(screen.getByText('Ajyal'));
     expect(mockPush).toHaveBeenCalledWith('/(auth)/select-city');
   });
 
