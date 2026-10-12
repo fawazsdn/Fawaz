@@ -599,7 +599,7 @@ const en: typeof ar = {
   notifications: {
     title: 'Notifications',
     markAllRead: 'Mark all as read',
-    empty: 'No notifications yet',
+    empty: 'No new notifications.',
   },
   messages: {
     title: 'Inbox',
@@ -726,13 +726,13 @@ const en: typeof ar = {
     submitted: 'Report submitted, thank you',
   },
   emptyStates: {
-    noEvents: 'Nothing planned yet.\nBe the first to bring the neighborhood together.',
+    noEvents: 'No activities in your neighborhood yet.',
     noMarketplace: 'Nothing for sale nearby yet.',
     noMessages: 'Your neighborhood conversations will appear here.',
     noIssues: 'No active neighborhood issues.',
     noNotifications: 'No notifications yet.',
     noResults: 'No results found.',
-    noPosts: 'No posts yet.',
+    noPosts: 'Nothing has been posted here yet.',
   },
   assistant: {
     title: 'Neighborhood assistant',

@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Map as MapIcon, Sparkles } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,12 +18,22 @@ import { PostCard } from '@/features/feed/PostCard';
 import { LostFoundCard } from '@/features/lostFound/LostFoundCard';
 import { ExploreCategoryGrid } from '@/features/explore/ExploreCategoryGrid';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
+import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
+import { requestSync } from '@/backend/sync';
+import { localizeDigits } from '@/utils/format';
 
 export default function DiscoverScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const needsVerification = useNeedsVerification();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await requestSync();
+    setRefreshing(false);
+  }, []);
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
   // .find() returns a stable reference (the actual array element), safe
   // directly in a selector — see src/features/home/HomeHeader.tsx.
@@ -42,7 +52,11 @@ export default function DiscoverScreen() {
   const allBusinesses = useStore((s) => s.businesses);
 
   const events = useMemo(
-    () => allEvents.filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled).slice(0, 4),
+    () =>
+      allEvents
+        .filter((e) => e.neighborhoodId === neighborhoodId && !e.cancelled && new Date(e.endsAt).getTime() > Date.now())
+        .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt))
+        .slice(0, 6),
     [allEvents, neighborhoodId],
   );
   const issues = useMemo(
@@ -85,7 +99,11 @@ export default function DiscoverScreen() {
   if (!neighborhood) return <NoNeighborhoodState />;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }} contentContainerStyle={{ paddingBottom: 100 }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      contentContainerStyle={{ paddingBottom: 32 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+    >
       <View style={{ paddingTop: insets.top + 10, paddingHorizontal: theme.spacing.md, marginBottom: 12 }}>
         <Text style={[theme.text('heading1'), { marginBottom: 12 }]}>{t.discover.title}</Text>
         <Pressable onPress={() => router.push('/search')} accessibilityRole="button">
@@ -95,7 +113,7 @@ export default function DiscoverScreen() {
         </Pressable>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: theme.spacing.md, marginBottom: 20 }}>
+      <View style={[theme.row(), { gap: 10, marginHorizontal: theme.spacing.md, marginBottom: 20 }]}>
         <Pressable
           onPress={() => router.push('/map')}
           style={{
@@ -103,7 +121,7 @@ export default function DiscoverScreen() {
             backgroundColor: theme.colors.primary,
             borderRadius: theme.radii.lg,
             padding: 16,
-            flexDirection: 'row',
+            ...theme.row(),
             alignItems: 'center',
             gap: 10,
           }}
@@ -118,7 +136,7 @@ export default function DiscoverScreen() {
             backgroundColor: theme.colors.secondary,
             borderRadius: theme.radii.lg,
             padding: 16,
-            flexDirection: 'row',
+            ...theme.row(),
             alignItems: 'center',
             gap: 10,
           }}
@@ -132,9 +150,12 @@ export default function DiscoverScreen() {
         <ExploreCategoryGrid />
       </View>
 
-      <Section title={t.discover.events} onSeeAll={() => router.push('/events')}>
+      <SyncNotice />
+      {needsVerification ? <VerifyGate compact /> : null}
+
+      <Section title={t.events.title} onSeeAll={() => router.push('/events')}>
         {events.length === 0 ? (
-          <EmptyState title={t.emptyStates.noEvents} compact />
+          <EmptyState title={t.events.noActivities} actionLabel={t.events.create} onAction={() => router.push('/event/create')} compact />
         ) : (
           <HorizontalList items={events} render={(e) => <EventCard event={e} compact />} width={220} />
         )}
@@ -179,7 +200,7 @@ export default function DiscoverScreen() {
               >
                 <Text style={theme.text('title')}>{b.name}</Text>
                 <Text style={theme.text('caption', theme.colors.textMuted)}>
-                  {t.recommendations.recommendedBy} {b.recommendationCount} {t.recommendations.neighbors}
+                  {t.recommendations.recommendedBy} {localizeDigits(b.recommendationCount, locale)} {t.recommendations.neighbors}
                 </Text>
               </Pressable>
             ))}
@@ -193,7 +214,7 @@ export default function DiscoverScreen() {
         ) : (
           <View
             style={{
-              flexDirection: 'row',
+              ...theme.row(),
               flexWrap: 'wrap',
               justifyContent: 'space-between',
               paddingHorizontal: theme.spacing.md,

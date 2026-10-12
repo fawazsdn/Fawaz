@@ -1,12 +1,13 @@
-import { useCallback } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { MessageSquareOff } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
-import { postService } from '@/services';
-import { useAsync } from '@/hooks/useAsync';
+import { requestSync } from '@/backend/sync';
+import { useCurrentUserId } from '@/store/useStore';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { NeighborhoodIdentityCard } from '@/features/home/NeighborhoodIdentityCard';
 import { QuickActions } from '@/features/home/QuickActions';
@@ -17,46 +18,72 @@ import { InviteNeighborhoodCard } from '@/features/home/InviteNeighborhoodCard';
 import { PostCard } from '@/features/feed/PostCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
 import { SkeletonCardRow } from '@/components/Skeleton';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
+import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
+import { EventCard } from '@/features/events/EventCard';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const { t } = useI18n();
-  const neighborhoodId = useStore((s) => s.session.neighborhoodId);
-  // .find() returns the actual array element (a stable reference) rather
-  // than a freshly-built array/object, so it's safe directly in a
-  // selector — see src/features/home/HomeHeader.tsx for the same pattern
-  // and why filter()/map() aren't. Guarding on the *resolved* neighborhood
-  // (not just the id string) also catches a stale/invalid persisted
-  // neighborhoodId that no longer matches anything in the current
-  // neighborhoods dataset, instead of quietly rendering a hollow "0 of
-  // everything" Home screen.
+  const router = useRouter();
+  const me = useCurrentUserId();
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
+  const hasNeighborhoodId = useStore((s) => !!s.session.neighborhoodId);
   const ramadanMode = useStore((s) => s.settings.ramadanMode);
+  const syncStatus = useStore((s) => s.sync.status);
+  const allPosts = useStore((s) => s.posts);
+  const allEvents = useStore((s) => s.events);
+  const blocked = useStore((s) => s.blockedUserIds);
+  const muted = useStore((s) => s.mutedUserIds);
+  const needsVerification = useNeedsVerification();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const { data: posts, loading, refreshing, error, refresh } = useAsync(() => postService.getFeed(neighborhoodId ?? ''), [neighborhoodId]);
+  const posts = useMemo(
+    () =>
+      allPosts
+        .filter((p) => p.neighborhoodId === neighborhood?.id && !blocked.includes(p.authorId) && (p.authorId === me || !muted.includes(p.authorId)))
+        .sort((a, b) => (a.pinned === b.pinned ? +new Date(b.createdAt) - +new Date(a.createdAt) : a.pinned ? -1 : 1)),
+    [allPosts, neighborhood?.id, blocked, muted, me],
+  );
+  const upcoming = useMemo(
+    () =>
+      allEvents
+        .filter((e) => e.neighborhoodId === neighborhood?.id && !e.cancelled && new Date(e.endsAt).getTime() > Date.now())
+        .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt))
+        .slice(0, 6),
+    [allEvents, neighborhood?.id],
+  );
 
-  const onRefresh = useCallback(() => refresh(), [refresh]);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await requestSync();
+    setRefreshing(false);
+  }, []);
 
-  // Previously `if (!neighborhoodId) return null` — a bare null render
-  // left the screen permanently blank (content area empty, tab bar still
-  // visible) whenever this route mounted with no resolvable neighborhood:
-  // a direct URL open or a web refresh on this tab skips
-  // app/index.tsx's splash-redirect guard entirely (that only runs when
-  // the app boots through "/"), and a stale persisted neighborhoodId from
-  // an older build hits this exact case too. Show a real recovery screen
-  // instead.
-  if (!neighborhood) return <NoNeighborhoodState />;
+  const loading = syncStatus === 'loading' && allPosts.length === 0 && !needsVerification;
+
+  // A real recovery screen instead of a blank tab when there's no resolvable
+  // neighborhood (direct deep link, or a stale pointer from an older build).
+  // While the first sync is still resolving the neighborhood, show a skeleton.
+  if (!neighborhood) {
+    if (hasNeighborhoodId && (syncStatus === 'loading' || syncStatus === 'idle')) {
+      return (
+        <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: 80, paddingHorizontal: theme.spacing.md }}>
+          <SkeletonCardRow count={3} />
+        </View>
+      );
+    }
+    return <NoNeighborhoodState />;
+  }
 
   return (
     <FlatList
       style={{ backgroundColor: theme.colors.background }}
-      data={loading || error ? [] : (posts ?? [])}
+      data={needsVerification || loading ? [] : posts}
       keyExtractor={(p) => p.id}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 32 }}
       renderItem={({ item }) => (
         <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 12 }}>
           <PostCard post={item} />
@@ -82,9 +109,25 @@ export default function HomeScreen() {
             <InviteNeighborhoodCard />
           </View>
 
+          <SyncNotice />
+          {needsVerification ? <VerifyGate compact /> : null}
+
           <View style={{ marginBottom: 20 }}>
             <HappeningNow neighborhoodId={neighborhood.id} />
           </View>
+
+          {upcoming.length > 0 ? (
+            <View style={{ marginBottom: 20 }}>
+              <SectionHeader title={t.events.title} onSeeAll={() => router.push('/events')} />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ ...theme.row(), gap: 10, paddingHorizontal: theme.spacing.md }}>
+                {upcoming.map((e) => (
+                  <View key={e.id} style={{ width: 250 }}>
+                    <EventCard event={e} compact />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
 
           <SectionHeader title={t.home.feedTitle} />
 
@@ -93,11 +136,13 @@ export default function HomeScreen() {
               <SkeletonCardRow count={3} />
             </View>
           ) : null}
-
-          {error ? <ErrorState onRetry={refresh} /> : null}
         </View>
       }
-      ListEmptyComponent={!loading && !error ? <EmptyState icon={MessageSquareOff} title={t.emptyStates.noPosts} compact /> : null}
+      ListEmptyComponent={
+        !loading && !needsVerification ? (
+          <EmptyState icon={MessageSquareOff} title={t.emptyStates.noPosts} actionLabel={t.create.post} onAction={() => router.push('/create/post')} compact />
+        ) : null
+      }
     />
   );
 }
