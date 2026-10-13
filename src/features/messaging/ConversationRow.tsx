@@ -27,16 +27,28 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
   const unreadCount = messages.filter((m) => m.senderId !== me && !m.readBy.includes(me)).length;
   const unread = unreadCount > 0;
 
-  const title = conversation.isGroup ? (conversation.title ?? '') : otherUser ? displayName(otherUser) : t.common.neighbor;
+  // Club chats show the club's current name and logo (the conversation title is a snapshot from creation).
+  const club = useStore((s) => (conversation.groupId ? s.clubs.find((c) => c.id === conversation.groupId) : undefined));
+  const title = club
+    ? club.name
+    : conversation.isGroup
+      ? (conversation.title ?? '')
+      : otherUser
+        ? displayName(otherUser)
+        : t.common.neighbor;
   const contextLabel = !conversation.isGroup
     ? t.messages.contextNeighbor
     : conversation.eventId
       ? t.messages.contextEvent
-      : t.messages.contextCommunity;
+      : conversation.groupId
+        ? t.messages.contextClub
+        : t.messages.contextCommunity;
 
   return (
     <Pressable onPress={() => router.push(`/messages/${conversation.id}`)} style={[theme.row(), styles.row]} accessibilityRole="button">
-      {conversation.isGroup ? (
+      {club?.logo ? (
+        <Avatar uri={club.logo} name={title} size={50} />
+      ) : conversation.isGroup ? (
         <View style={[styles.groupAvatar, { backgroundColor: theme.colors.backgroundAlt }]}>
           <Users size={20} color={theme.colors.primary} />
         </View>

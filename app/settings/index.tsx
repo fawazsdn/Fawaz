@@ -138,12 +138,7 @@ export default function SettingsScreen() {
         <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${me}?tab=activity`)} Chevron={Chevron} />
         <Row icon={CalendarDays} label={t.settings.myEvents} onPress={() => router.push(`/profile/${me}?tab=events`)} Chevron={Chevron} />
         <Row icon={Bookmark} label={t.settings.saved} onPress={() => router.push('/saved')} Chevron={Chevron} />
-        {/* CommunityGroup has no per-user membership list in this model
-            (only memberCount) — there's no real "groups I've joined" data
-            to filter by, so this honestly opens the same groups browse
-            screen everyone sees rather than fabricating a "my groups"
-            filter. See t.settings.myGroupsNote / final report. */}
-        <Row icon={Users} label={t.settings.myGroups} onPress={() => router.push('/community')} Chevron={Chevron} />
+        <Row icon={Users} label={t.clubs.myClubs} onPress={() => router.push('/clubs/mine')} Chevron={Chevron} />
         <Row icon={HandCoins} label={t.marketplace.title} onPress={() => router.push('/marketplace')} Chevron={Chevron} />
         <Row icon={Gift} label={t.invite.title} onPress={() => router.push('/invite')} Chevron={Chevron} />
 
@@ -204,6 +199,9 @@ export default function SettingsScreen() {
         <Row icon={Info} label={t.settings.aboutHaratna} onPress={() => router.push('/settings/info/about')} Chevron={Chevron} />
 
         {isStaff ? <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} /> : null}
+        {user?.role === 'admin' ? (
+          <Row icon={Shield} label={t.clubs.admin.entry} onPress={() => router.push('/admin/clubs')} Chevron={Chevron} />
+        ) : null}
 
         <SectionLabel title={t.settings.accountActions} />
         <Row icon={Share2} label={t.settings.shareHaratna} onPress={shareHaratna} Chevron={Chevron} />

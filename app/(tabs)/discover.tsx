@@ -17,6 +17,8 @@ import { HelpRequestCard } from '@/features/help/HelpRequestCard';
 import { PostCard } from '@/features/feed/PostCard';
 import { LostFoundCard } from '@/features/lostFound/LostFoundCard';
 import { ExploreCategoryGrid } from '@/features/explore/ExploreCategoryGrid';
+import { ClubCard } from '@/features/clubs/ClubCard';
+import { discoverableClubs } from '@/features/clubs/clubLogic';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
 import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
 import { requestSync } from '@/backend/sync';
@@ -50,6 +52,7 @@ export default function DiscoverScreen() {
   const allLostFound = useStore((s) => s.lostFound);
   const allPosts = useStore((s) => s.posts);
   const allBusinesses = useStore((s) => s.businesses);
+  const allClubs = useStore((s) => s.clubs);
 
   const events = useMemo(
     () =>
@@ -58,6 +61,10 @@ export default function DiscoverScreen() {
         .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt))
         .slice(0, 6),
     [allEvents, neighborhoodId],
+  );
+  const clubs = useMemo(
+    () => [...discoverableClubs(allClubs, neighborhoodId)].sort((a, b) => b.memberCount - a.memberCount).slice(0, 8),
+    [allClubs, neighborhoodId],
   );
   const issues = useMemo(
     () => allIssues.filter((i) => i.neighborhoodId === neighborhoodId && i.status !== 'resolved').slice(0, 3),
@@ -155,6 +162,14 @@ export default function DiscoverScreen() {
           <EmptyState title={t.events.noActivities} actionLabel={t.events.create} onAction={() => router.push('/event/create')} compact />
         ) : (
           <HorizontalList items={events} render={(e) => <EventCard event={e} compact />} width={220} />
+        )}
+      </Section>
+
+      <Section title={t.clubs.title} onSeeAll={() => router.push('/clubs')}>
+        {clubs.length === 0 ? (
+          <EmptyState title={t.clubs.emptyTitle} actionLabel={t.clubs.createClub} onAction={() => router.push('/clubs/create')} compact />
+        ) : (
+          <HorizontalList items={clubs} render={(c) => <ClubCard club={c} compact />} width={240} />
         )}
       </Section>
 

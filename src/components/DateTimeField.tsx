@@ -5,7 +5,7 @@ import { Calendar, Clock } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { formatClock, formatDay } from '@/utils/format';
+import { formatClock, formatDay, formatFullDate } from '@/utils/format';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 
@@ -17,6 +17,9 @@ interface Props {
   value: Date;
   onChange: (d: Date) => void;
   minimumDate?: Date;
+  maximumDate?: Date;
+  /** Calendar dates far from today (e.g. a date of birth): show the year and use a spinner. */
+  birthDate?: boolean;
 }
 
 /**
@@ -24,13 +27,18 @@ interface Props {
  * (Asia/Riyadh) with a 12-hour clock ("7:00 PM" / "٧:٠٠ م"); the value is a
  * real instant, stored as UTC by Supabase — formatting never changes it.
  */
-export function DateTimeField({ label, mode, value, onChange, minimumDate }: Props) {
+export function DateTimeField({ label, mode, value, onChange, minimumDate, maximumDate, birthDate }: Props) {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
 
-  const display = mode === 'date' ? formatDay(value.toISOString(), locale) : formatClock(value.toISOString(), locale);
+  const display =
+    mode === 'date'
+      ? birthDate
+        ? formatFullDate(value.toISOString(), locale)
+        : formatDay(value.toISOString(), locale)
+      : formatClock(value.toISOString(), locale);
   const Icon = mode === 'date' ? Calendar : Clock;
 
   const openPicker = () => {
@@ -40,6 +48,7 @@ export function DateTimeField({ label, mode, value, onChange, minimumDate }: Pro
         mode,
         is24Hour: false,
         minimumDate,
+        maximumDate,
         timeZoneName: SAUDI_TZ,
         onChange: (e, d) => {
           if (e.type === 'set' && d) onChange(d);
@@ -76,10 +85,11 @@ export function DateTimeField({ label, mode, value, onChange, minimumDate }: Pro
             <DateTimePicker
               value={draft}
               mode={mode}
-              display={mode === 'date' ? 'inline' : 'spinner'}
+              display={mode === 'date' && !birthDate ? 'inline' : 'spinner'}
               timeZoneName={SAUDI_TZ}
               locale={locale === 'ar' ? 'ar_SA' : 'en_US'}
               minimumDate={minimumDate}
+              maximumDate={maximumDate}
               minuteInterval={5}
               themeVariant={theme.scheme === 'dark' ? 'dark' : 'light'}
               accentColor={theme.colors.primary}

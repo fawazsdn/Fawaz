@@ -10,6 +10,7 @@ import {
   MessageCircleQuestion,
   MessageSquarePlus,
   PawPrint,
+  Shield,
   Star,
   Trophy,
   X,
@@ -70,6 +71,14 @@ export default function CreateSheetScreen() {
       title: t.create.event,
       desc: t.create.eventDesc,
       route: { pathname: '/event/create', params: { kind: 'event' } },
+    },
+    {
+      key: 'club',
+      icon: Shield,
+      tone: theme.colors.primary,
+      title: t.clubs.createClub,
+      desc: t.create.clubDesc,
+      route: '/clubs/create',
     },
     { key: 'poll', icon: BarChart3, tone: theme.colors.primary, title: t.create.poll, desc: t.create.pollDesc, route: '/create/poll' },
     {

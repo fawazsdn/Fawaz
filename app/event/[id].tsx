@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { Calendar, Clock, Map as MapIcon, MapPin, MessageCircle, Share2, Users } from 'lucide-react-native';
+import { Calendar, Clock, Map as MapIcon, MapPin, MessageCircle, Pencil, Repeat, Share2, Shield, Users } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, useCurrentUserId } from '@/store/useStore';
 import { useUser } from '@/hooks/useNeighborhood';
 import { useAction } from '@/hooks/useAction';
-import { cancelEvent, getOrCreateDirectConversation, joinEvent, leaveEvent } from '@/backend/actions';
+import { cancelActivity, getOrCreateDirectConversation, joinEvent, leaveEvent } from '@/backend/actions';
 import { formatDay, formatTimeRange, localizeDigits } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 import { shareContent } from '@/utils/share';
@@ -23,7 +23,9 @@ import { UserRow } from '@/components/UserRow';
 import { EmptyState } from '@/components/EmptyState';
 import { SkeletonCardRow } from '@/components/Skeleton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { Chip } from '@/components/Chip';
 import { CATEGORY_ICON, eventState } from '@/features/events/EventCard';
+import { eventCategoryBadge } from '@/features/events/categories';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,7 +40,12 @@ export default function EventDetailScreen() {
   const conversations = useStore((s) => s.conversations);
   const users = useStore((s) => s.users);
   const host = useUser(event?.hostId);
+  const club = useStore((s) => (event?.clubId ? s.clubs.find((c) => c.id === event.clubId) : undefined));
+  const myClubRole = useStore((s) =>
+    event?.clubId ? s.clubMemberships.find((m) => m.clubId === event.clubId && m.userId === me && m.status === 'active')?.role : undefined,
+  );
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelScope, setCancelScope] = useState<'one' | 'future'>('one');
 
   if (!event) {
     return (
@@ -61,9 +68,14 @@ export default function EventDetailScreen() {
   const mine = event.attendees.find((a) => a.userId === me && (a.status === 'going' || a.status === 'waitlisted'));
   const myWaitlistPos = mine?.status === 'waitlisted' ? waitlisted.findIndex((a) => a.userId === me) + 1 : 0;
   const discussion = conversations.find((c) => c.eventId === event.id);
-  const categoryLabel = (t.eventCreate.categories as Record<string, string>)[event.category] ?? event.category;
+  const categoryLabel = eventCategoryBadge(event, t.eventCreate.categories as Record<string, string>);
   const occasionLabel = event.occasion ? (t.occasions as Record<string, string>)[event.occasion] : null;
   const canRsvp = !event.cancelled && !started;
+  const managesClub = myClubRole === 'owner' || myClubRole === 'moderator';
+  const canManage = isOwn || managesClub;
+  // Members-only club activities: RSVP is refused server-side for non-members, so
+  // point neighbors to the club instead of showing a Join button that would fail.
+  const blockedMembersOnly = event.membersOnly && !myClubRole;
 
   const onJoin = () => {
     haptics.medium();
@@ -111,6 +123,7 @@ export default function EventDetailScreen() {
             <Badge label={event.kind === 'activity' ? t.events.kindActivity : t.events.kindEvent} tone="primary" />
             <Badge label={categoryLabel} tone="neutral" />
             {occasionLabel ? <Badge label={occasionLabel} tone="info" /> : null}
+            {event.membersOnly ? <Badge label={t.events.membersOnly} tone="warning" /> : null}
             {event.cancelled ? (
               <Badge label={t.events.cancelled} tone="danger" />
             ) : ended ? (
@@ -123,6 +136,7 @@ export default function EventDetailScreen() {
             <InfoRow icon={Calendar} text={formatDay(event.startsAt, locale)} />
             <InfoRow icon={Clock} text={`${formatTimeRange(event.startsAt, event.endsAt, locale)} · ${t.eventCreate.timesInSaudi}`} />
             <InfoRow icon={MapPin} text={event.locationLabel} />
+            {event.recurrence !== 'none' ? <InfoRow icon={Repeat} text={t.eventCreate.recurrenceOptions[event.recurrence]} /> : null}
             <InfoRow
               icon={Users}
               text={`${localizeDigits(going, locale)}/${localizeDigits(event.capacity, locale)} ${t.events.participants}${
@@ -153,6 +167,20 @@ export default function EventDetailScreen() {
             </Card>
           ) : null}
 
+          {club ? (
+            <Card style={{ marginTop: 16 }} onPress={() => router.push(`/clubs/${club.id}`)}>
+              <View style={[theme.row(), { alignItems: 'center', gap: 10 }]}>
+                <Shield size={18} color={theme.colors.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={theme.text('caption', theme.colors.textMuted)}>{t.events.organizedByClub}</Text>
+                  <Text style={theme.text('bodySmall')} numberOfLines={1}>
+                    {club.name}
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          ) : null}
+
           <View style={{ marginTop: 16 }}>
             {host ? (
               <UserRow user={host} subtitle={t.events.organizer} onPress={() => router.push(`/profile/${host.id}`)} />
@@ -170,7 +198,12 @@ export default function EventDetailScreen() {
           ) : null}
 
           <View style={{ marginTop: 16, gap: 10 }}>
-            {canRsvp && !isOwn ? (
+            {canRsvp && !isOwn && blockedMembersOnly && !mine ? (
+              <>
+                <Text style={theme.text('bodySmall', theme.colors.textMuted)}>{t.events.membersOnlyHint}</Text>
+                {club ? <Button label={t.clubs.viewClub} onPress={() => router.push(`/clubs/${club.id}`)} fullWidth size="lg" /> : null}
+              </>
+            ) : canRsvp && !isOwn ? (
               mine ? (
                 <Button
                   label={mine.status === 'waitlisted' ? t.events.leaveWaitlist : t.events.leave}
@@ -201,7 +234,16 @@ export default function EventDetailScreen() {
               />
             ) : null}
             {!isOwn ? <Button label={t.events.messageHost} onPress={messageHost} variant="ghost" fullWidth /> : null}
-            {isOwn && !event.cancelled && !ended ? (
+            {canManage && !event.cancelled && !started ? (
+              <Button
+                label={t.common.edit}
+                onPress={() => router.push({ pathname: '/event/create', params: { edit: event.id } })}
+                variant="outline"
+                icon={<Pencil size={16} color={theme.colors.primary} />}
+                fullWidth
+              />
+            ) : null}
+            {canManage && !event.cancelled && !ended ? (
               <Button label={t.events.cancelEvent} onPress={() => setCancelOpen(true)} variant="danger" fullWidth />
             ) : null}
           </View>
@@ -224,14 +266,21 @@ export default function EventDetailScreen() {
       <ConfirmationModal
         visible={cancelOpen}
         title={t.events.cancelEvent}
-        body={event.title}
+        body={event.seriesId ? `${event.title}\n\n${t.events.cancelSeriesHint}` : event.title}
         destructive
         onCancel={() => setCancelOpen(false)}
         onConfirm={() => {
           setCancelOpen(false);
-          run(() => cancelEvent(event.id));
+          run(() => cancelActivity(event.id, cancelScope));
         }}
-      />
+      >
+        {event.seriesId ? (
+          <View style={[theme.row(), { gap: 8, flexWrap: 'wrap', marginTop: 8 }]}>
+            <Chip label={t.eventCreate.applyThis} selected={cancelScope === 'one'} onPress={() => setCancelScope('one')} />
+            <Chip label={t.eventCreate.applyFuture} selected={cancelScope === 'future'} onPress={() => setCancelScope('future')} />
+          </View>
+        ) : null}
+      </ConfirmationModal>
     </View>
   );
 

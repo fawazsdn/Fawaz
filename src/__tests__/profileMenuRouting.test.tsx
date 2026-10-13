@@ -63,10 +63,15 @@ describe('Profile & Settings menu', () => {
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/saved'));
   });
 
-  it('routes "My Groups" to the existing community groups browse screen (no fabricated membership filter)', async () => {
+  it('routes "My Clubs" to the real per-resident clubs screen', async () => {
     await renderWithProvider(<SettingsScreen />);
-    await fireEvent.press(screen.getByText('My Groups'));
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/community'));
+    await fireEvent.press(screen.getByText('My Clubs'));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/clubs/mine'));
+  });
+
+  it('hides the club review dashboard from non-admins', async () => {
+    await renderWithProvider(<SettingsScreen />);
+    expect(screen.queryByText('Review club applications')).toBeNull();
   });
 
   it('still offers sign out and delete account', async () => {

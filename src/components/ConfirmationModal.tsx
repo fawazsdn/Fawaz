@@ -13,6 +13,8 @@ interface ConfirmationModalProps {
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Optional extra controls shown under the body (e.g. a scope choice). */
+  children?: React.ReactNode;
 }
 
 export function ConfirmationModal({
@@ -24,6 +26,7 @@ export function ConfirmationModal({
   destructive,
   onConfirm,
   onCancel,
+  children,
 }: ConfirmationModalProps) {
   const theme = useTheme();
   const { t } = useI18n();
@@ -36,6 +39,7 @@ export function ConfirmationModal({
         <View style={[styles.card, { backgroundColor: theme.colors.surfaceElevated, borderRadius: theme.radii.lg }]}>
           <Text style={[theme.text('heading3'), styles.center]}>{title}</Text>
           {body ? <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.center, { marginTop: 6 }]}>{body}</Text> : null}
+          {children}
           <View style={{ height: theme.spacing.lg }} />
           <View style={{ gap: 10 }}>
             <Button label={confirmLabel ?? t.common.confirm} variant={destructive ? 'danger' : 'primary'} onPress={onConfirm} fullWidth />

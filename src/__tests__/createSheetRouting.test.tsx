@@ -61,6 +61,12 @@ describe('Create sheet', () => {
     expect(mockPush).toHaveBeenCalledWith('/recommendations');
   });
 
+  it('offers "Create Club", routed to the club application flow', async () => {
+    await renderWithProvider(<CreateSheetScreen />);
+    await fireEvent.press(screen.getByText('Create Club'));
+    expect(mockPush).toHaveBeenCalledWith('/clubs/create');
+  });
+
   it('routes "Sell / give away" to the marketplace composer', async () => {
     await renderWithProvider(<CreateSheetScreen />);
     await fireEvent.press(screen.getByText('Sell / give away'));

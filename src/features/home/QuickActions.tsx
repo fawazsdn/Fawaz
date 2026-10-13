@@ -1,14 +1,14 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AlertTriangle, Calendar, MessageSquarePlus, Star } from 'lucide-react-native';
+import { AlertTriangle, Calendar, MessageSquarePlus, Shield, Star } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { haptics } from '@/utils/haptics';
 
 /**
- * The four fastest paths into creating something, surfaced right on Home
- * rather than making residents open the Create sheet first. "Recommend"
+ * The fastest paths into creating something (plus the Clubs shortcut),
+ * surfaced right on Home rather than making residents open the Create sheet first. "Recommend"
  * routes to the recommendations browse screen (the closest existing entry
  * point — there's no standalone "create a recommendation" composer, only
  * leaving one from a business's own page) rather than a fabricated flow.
@@ -22,6 +22,7 @@ export function QuickActions() {
     { key: 'ask', icon: MessageSquarePlus, label: t.home.quickAskNeighbors, route: '/create/post' as const },
     { key: 'event', icon: Calendar, label: t.home.quickCreateEvent, route: '/event/create' as const },
     { key: 'issue', icon: AlertTriangle, label: t.home.quickReportIssue, route: '/issue/create' as const },
+    { key: 'clubs', icon: Shield, label: t.clubs.title, route: '/clubs' as const },
     { key: 'recommend', icon: Star, label: t.home.quickRecommendPlace, route: '/recommendations' as const },
   ];
 

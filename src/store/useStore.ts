@@ -8,8 +8,11 @@ import type {
   Business,
   BorrowItem,
   Comment,
+  Club,
+  ClubAnnouncement,
+  ClubMembership,
+  ClubReviewDecision,
   CommunityEvent,
-  CommunityGroup,
   Conversation,
   HelpRequest,
   Institution,
@@ -102,7 +105,13 @@ export interface EntityState {
   notifications: AppNotification[];
   institutions: Institution[];
   alerts: AlertItem[];
-  communityGroups: CommunityGroup[];
+  /** Clubs visible to the resident (RLS: approved in their neighborhood, plus their own applications). */
+  clubs: Club[];
+  /** Membership rows RLS lets the resident see (their own, co-members, and pending requests they manage). */
+  clubMemberships: ClubMembership[];
+  clubAnnouncements: ClubAnnouncement[];
+  /** Review history for the resident's own applications. */
+  clubDecisions: ClubReviewDecision[];
   reputationEvents: ReputationEvent[];
   blockedUserIds: string[];
   mutedUserIds: string[];
@@ -193,7 +202,10 @@ export function emptyEntities(): EntityState {
     notifications: [],
     institutions: [],
     alerts: [],
-    communityGroups: [],
+    clubs: [],
+    clubMemberships: [],
+    clubAnnouncements: [],
+    clubDecisions: [],
     reputationEvents: [],
     blockedUserIds: [],
     mutedUserIds: [],

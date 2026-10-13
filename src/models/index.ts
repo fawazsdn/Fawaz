@@ -149,7 +149,40 @@ export interface HelpRequest {
   status: 'open' | 'in_progress' | 'resolved';
 }
 
-export type EventCategory = 'football' | 'padel' | 'walking' | 'cleanup' | 'coffee' | 'iftar' | 'kids' | 'family' | 'community';
+export type EventCategory =
+  | 'football'
+  | 'padel'
+  | 'basketball'
+  | 'volleyball'
+  | 'running'
+  | 'walking'
+  | 'cycling'
+  | 'fitness'
+  | 'hiking'
+  | 'swimming'
+  | 'tournaments'
+  | 'coffee'
+  | 'family'
+  | 'kids'
+  | 'community'
+  | 'food'
+  | 'networking'
+  | 'gaming'
+  | 'movies'
+  | 'arts'
+  | 'entertainment'
+  | 'celebrations'
+  | 'cleanup'
+  | 'volunteering'
+  | 'education'
+  | 'markets'
+  | 'religious'
+  | 'outdoors'
+  | 'pets'
+  | 'iftar'
+  | 'other';
+
+export type Recurrence = 'none' | 'weekly' | 'biweekly' | 'monthly';
 
 /** Activities are casual/recurring gatherings; events are one-off occasions. Same backend table. */
 export type EventKind = 'event' | 'activity';
@@ -171,6 +204,15 @@ export interface CommunityEvent {
   occasion?: EventOccasion;
   title: string;
   category: EventCategory;
+  /** Resident-typed label when category is 'other' (trimmed, ≤ 40 chars). */
+  customCategory?: string;
+  /** Club that organizes this activity (club activities live in the same events table). */
+  clubId?: string;
+  /** Occurrences of one recurring schedule share a seriesId. */
+  seriesId?: string;
+  recurrence: Recurrence;
+  /** Only active club members can RSVP (enforced server-side). */
+  membersOnly: boolean;
   /** Signed URL of the organizer's uploaded cover, if any — never a stock placeholder. */
   coverImage?: string;
   description: string;
@@ -299,6 +341,8 @@ export interface Conversation {
   kind: 'direct' | 'neighborhood' | 'group' | 'event';
   participantIds: string[];
   eventId?: string;
+  /** Set for club chats (kind 'group'). */
+  groupId?: string;
   isGroup?: boolean;
   title?: string;
   lastMessageAt: string;
@@ -374,12 +418,104 @@ export interface Report {
   status: 'open' | 'reviewed' | 'dismissed' | 'actioned';
 }
 
-export interface CommunityGroup {
+// ------------------------------------------------------------------ clubs --
+
+/** Stable club category ids (community_groups.category check constraint). Labels live in i18n. */
+export type ClubCategory =
+  | 'running'
+  | 'cycling'
+  | 'football'
+  | 'padel'
+  | 'basketball'
+  | 'volleyball'
+  | 'fitness'
+  | 'walking'
+  | 'hiking'
+  | 'swimming'
+  | 'coffee'
+  | 'community'
+  | 'family'
+  | 'networking'
+  | 'food'
+  | 'travel'
+  | 'photography'
+  | 'gaming'
+  | 'books'
+  | 'chess'
+  | 'art'
+  | 'music'
+  | 'technology'
+  | 'cars'
+  | 'volunteering'
+  | 'environment'
+  | 'education'
+  | 'workshops'
+  | 'neighborhood_improvement'
+  | 'other';
+
+export type ClubReviewStatus = 'draft' | 'pending_review' | 'needs_changes' | 'approved' | 'rejected' | 'suspended' | 'archived';
+export type ClubMembershipType = 'open' | 'approval';
+export type ClubRole = 'owner' | 'moderator' | 'member';
+export type ClubMemberStatus = 'pending' | 'active' | 'banned' | 'left' | 'removed' | 'rejected';
+
+/** A neighborhood club (community_groups). Only approved clubs are visible to neighbors. */
+export interface Club {
   id: string;
   name: string;
   description: string;
+  category: ClubCategory;
+  customCategory?: string;
   neighborhoodId: string;
+  ownerId: string;
+  coverImage?: string;
+  logo?: string;
+  /** Storage paths, needed to keep images unchanged when editing. */
+  coverImagePath?: string;
+  logoPath?: string;
+  membershipType: ClubMembershipType;
+  rules: string;
+  meetingSchedule?: string;
+  purpose: string;
+  plannedActivities: string;
+  meetingFrequency: string;
+  neighborhoodBenefit: string;
+  meetingLocation?: string;
+  additionalInfo?: string;
+  reviewStatus: ClubReviewStatus;
+  reviewNote?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  createdAt: string;
+  /** Active members, from club_member_counts (real count, never estimated). */
   memberCount: number;
+}
+
+export interface ClubMembership {
+  clubId: string;
+  userId: string;
+  role: ClubRole;
+  status: ClubMemberStatus;
+  joinedAt: string;
+}
+
+export interface ClubAnnouncement {
+  id: string;
+  clubId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+}
+
+export type ClubDecision =
+  'approved' | 'rejected' | 'needs_changes' | 'suspended' | 'revoked' | 'reinstated' | 'submitted' | 'resubmitted' | 'archived';
+
+export interface ClubReviewDecision {
+  id: string;
+  clubId: string;
+  adminId?: string;
+  decision: ClubDecision;
+  reason?: string;
+  createdAt: string;
 }
 
 export interface AlertItem {

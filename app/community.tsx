@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Building2, ChevronLeft, ChevronRight, Users } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
@@ -11,8 +11,9 @@ import { useStore } from '@/store/useStore';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { SectionHeader } from '@/components/SectionHeader';
 import { UserRow } from '@/components/UserRow';
-import { BottomSheet } from '@/components/BottomSheet';
 import { AlertCard } from '@/features/community/AlertCard';
+import { ClubCard } from '@/features/clubs/ClubCard';
+import { discoverableClubs } from '@/features/clubs/clubLogic';
 
 export default function CommunityScreen() {
   const theme = useTheme();
@@ -27,18 +28,16 @@ export default function CommunityScreen() {
   // for why (getSnapshot must return a stable reference across renders).
   const allUsers = useStore((s) => s.users);
   const allAlerts = useStore((s) => s.alerts);
-  const allGroups = useStore((s) => s.communityGroups);
+  const allClubs = useStore((s) => s.clubs);
   const allInstitutions = useStore((s) => s.institutions);
 
   const members = useMemo(() => allUsers.filter((u) => u.neighborhoodId === neighborhood?.id).slice(0, 4), [allUsers, neighborhood?.id]);
   const alerts = useMemo(() => allAlerts.filter((a) => a.neighborhoodId === neighborhood?.id), [allAlerts, neighborhood?.id]);
-  const groups = useMemo(() => allGroups.filter((g) => g.neighborhoodId === neighborhood?.id), [allGroups, neighborhood?.id]);
+  const clubs = useMemo(() => discoverableClubs(allClubs, neighborhood?.id ?? null), [allClubs, neighborhood?.id]);
   const institutions = useMemo(
     () => allInstitutions.filter((i) => i.neighborhoodId === neighborhood?.id),
     [allInstitutions, neighborhood?.id],
   );
-
-  const [selectedGroup, setSelectedGroup] = useState<(typeof groups)[number] | null>(null);
 
   if (!neighborhood) return null;
 
@@ -101,28 +100,21 @@ export default function CommunityScreen() {
         </View>
 
         <View style={{ marginTop: 14 }}>
-          <SectionHeader title={t.community.groups} />
-          <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
-            {groups.map((g) => (
-              <Pressable
-                key={g.id}
-                onPress={() => setSelectedGroup(g)}
-                style={[
-                  theme.row(),
-                  styles.groupRow,
-                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderRadius: theme.radii.md },
-                ]}
-              >
-                <View style={[styles.groupIcon, { backgroundColor: theme.colors.backgroundAlt }]}>
-                  <Users size={16} color={theme.colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={theme.text('title')}>{g.name}</Text>
-                  <Text style={theme.text('caption', theme.colors.textMuted)}>{g.memberCount.toLocaleString()}</Text>
-                </View>
-              </Pressable>
+          <SectionHeader title={t.clubs.title} onSeeAll={() => router.push('/clubs')} />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ ...theme.row(), gap: 12, paddingHorizontal: theme.spacing.md }}
+          >
+            {clubs.slice(0, 8).map((c) => (
+              <ClubCard key={c.id} club={c} compact />
             ))}
-          </View>
+          </ScrollView>
+          {clubs.length === 0 ? (
+            <Pressable onPress={() => router.push('/clubs')} style={{ paddingHorizontal: theme.spacing.md }} accessibilityRole="button">
+              <Text style={theme.text('bodySmall', theme.colors.primary)}>{t.clubs.createClub}</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={{ marginTop: 14 }}>
@@ -150,19 +142,6 @@ export default function CommunityScreen() {
           </ScrollView>
         </View>
       </ScrollView>
-
-      <BottomSheet visible={!!selectedGroup} onClose={() => setSelectedGroup(null)}>
-        <View style={{ paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.lg }}>
-          <View style={[theme.row(), { alignItems: 'center', gap: 8, marginBottom: 10 }]}>
-            <Building2 size={18} color={theme.colors.primary} />
-            <Text style={theme.text('heading3')}>{selectedGroup?.name}</Text>
-          </View>
-          <Text style={theme.text('body', theme.colors.textSecondary)}>{selectedGroup?.description}</Text>
-          <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 10 }]}>
-            {selectedGroup?.memberCount.toLocaleString()} {t.directory.title}
-          </Text>
-        </View>
-      </BottomSheet>
     </View>
   );
 }
@@ -184,8 +163,6 @@ const styles = StyleSheet.create({
   hero: { paddingBottom: 20, paddingHorizontal: 20 },
   backButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   statsRow: { marginTop: 18, gap: 6 },
-  groupRow: { alignItems: 'center', gap: 12, padding: 12, borderWidth: StyleSheet.hairlineWidth },
-  groupIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   instCard: { width: 150, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   instImage: { width: '100%', height: 80 },
 });

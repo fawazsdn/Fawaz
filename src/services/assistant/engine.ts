@@ -64,7 +64,19 @@ export interface AnswerContext {
   source: AssistantDataSource;
 }
 
-const SPORTS = new Set(['football', 'padel', 'walking', 'sports']);
+const SPORTS = new Set([
+  'football',
+  'padel',
+  'basketball',
+  'volleyball',
+  'running',
+  'walking',
+  'cycling',
+  'fitness',
+  'hiking',
+  'swimming',
+  'tournaments',
+]);
 const FAMILY = new Set(['family', 'kids']);
 
 function windowRange(window: TimeWindow, now: Date): [Date, Date] {

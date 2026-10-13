@@ -5,7 +5,7 @@
  * synthetic ("Test Resident A") so they can't be mistaken for real people.
  */
 import { emptyEntities, useStore } from '@/store/useStore';
-import type { CommunityEvent, Conversation, Message, Neighborhood, Poll, Post, User } from '@/models';
+import type { Club, ClubMembership, CommunityEvent, Conversation, Message, Neighborhood, Poll, Post, User } from '@/models';
 
 export const TEST_ME = '00000000-0000-4000-8000-000000000001';
 export const TEST_NEIGHBOR = '00000000-0000-4000-8000-000000000002';
@@ -83,6 +83,8 @@ export function signInVerifiedForTests(
     conversations?: Conversation[];
     messages?: Message[];
     users?: User[];
+    clubs?: Club[];
+    clubMemberships?: ClubMembership[];
   } = {},
 ) {
   resetStoreForTests();
@@ -108,5 +110,34 @@ export function signInVerifiedForTests(
     polls: extra.polls ?? [],
     conversations: extra.conversations ?? [],
     messages: extra.messages ?? [],
+    clubs: extra.clubs ?? [],
+    clubMemberships: extra.clubMemberships ?? [],
   }));
+}
+
+/** A club row as sync.ts maps it (approved, in the test neighborhood, unless overridden). */
+export function testClub(id: string, extra: Partial<Club> = {}): Club {
+  return {
+    id,
+    name: `Club ${id}`,
+    description: 'Easy group runs around the neighborhood park for all levels.',
+    category: 'running',
+    neighborhoodId: TEST_NEIGHBORHOOD_ID,
+    ownerId: TEST_NEIGHBOR,
+    membershipType: 'approval',
+    rules: 'Be respectful and punctual.',
+    purpose: 'Help neighbors stay active together.',
+    plannedActivities: 'Weekly 5km runs',
+    meetingFrequency: 'weekly',
+    neighborhoodBenefit: 'Neighbors meet regularly and exercise together in the park.',
+    reviewStatus: 'approved',
+    createdAt: '2026-10-01T09:00:00Z',
+    approvedAt: '2026-10-02T09:00:00Z',
+    memberCount: 1,
+    ...extra,
+  };
+}
+
+export function testMembership(clubId: string, userId: string, extra: Partial<ClubMembership> = {}): ClubMembership {
+  return { clubId, userId, role: 'member', status: 'active', joinedAt: '2026-10-03T09:00:00Z', ...extra };
 }

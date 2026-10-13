@@ -37,7 +37,7 @@ export default function MessagesScreen() {
   const users = useStore((s) => s.users);
 
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'unread' | 'neighbors' | 'groups' | 'events'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'neighbors' | 'clubs' | 'groups' | 'events'>('all');
   const unreadIds = useMemo(
     () => new Set(allMessages.filter((m) => m.senderId !== me && !m.readBy.includes(me)).map((m) => m.conversationId)),
     [allMessages, me],
@@ -47,7 +47,8 @@ export default function MessagesScreen() {
     let list = conversations;
     if (filter === 'unread') list = list.filter((c) => unreadIds.has(c.id));
     if (filter === 'neighbors') list = list.filter((c) => !c.isGroup);
-    if (filter === 'groups') list = list.filter((c) => c.isGroup && !c.eventId);
+    if (filter === 'groups') list = list.filter((c) => c.isGroup && !c.eventId && !c.groupId);
+    if (filter === 'clubs') list = list.filter((c) => !!c.groupId);
     if (filter === 'events') list = list.filter((c) => c.isGroup && !!c.eventId);
     const q = normalizeForSearch(query);
     if (q) {
@@ -77,6 +78,7 @@ export default function MessagesScreen() {
             { key: 'all', label: t.messages.filters.all },
             { key: 'unread', label: t.messages.unreadFilter },
             { key: 'neighbors', label: t.messages.filters.neighbors },
+            { key: 'clubs', label: t.clubs.title },
             { key: 'groups', label: t.messages.filters.groups },
             { key: 'events', label: t.messages.filters.events },
           ]}

@@ -11,7 +11,10 @@ import type {
   Business,
   Comment,
   CommunityEvent,
-  CommunityGroup,
+  Club,
+  ClubAnnouncement,
+  ClubMembership,
+  ClubReviewDecision,
   Conversation,
   HelpRequest,
   Institution,
@@ -196,6 +199,7 @@ export async function syncAll(): Promise<void> {
         kind: c.kind,
         participantIds: members.filter((m) => m.conversation_id === c.id).map((m) => m.user_id),
         eventId: c.event_id ?? undefined,
+        groupId: c.group_id ?? undefined,
         isGroup: c.kind !== 'direct',
         title: c.title ?? undefined,
         lastMessageAt: c.last_message_at,
@@ -244,7 +248,6 @@ export async function syncAll(): Promise<void> {
         bizRes,
         alertsRes,
         instRes,
-        groupsRes,
         borrowRes,
       ] = await Promise.all([
         supabase
@@ -303,7 +306,6 @@ export async function syncAll(): Promise<void> {
           .limit(CONTENT_LIMIT),
         supabase.from('community_alerts').select('*').eq('neighborhood_id', nb).order('created_at', { ascending: false }).limit(50),
         supabase.from('institutions').select('*, institution_content(*)').eq('neighborhood_id', nb).limit(50),
-        supabase.from('community_groups').select('*').eq('neighborhood_id', nb).limit(100),
         supabase
           .from('borrow_listings')
           .select('*, borrow_requests(requester_id, status, created_at)')
@@ -390,15 +392,13 @@ export async function syncAll(): Promise<void> {
           expiresAt: a.expires_at ?? undefined,
         }));
       entities.institutions = instRows.map((i) => mapInstitution(i, img));
-      entities.communityGroups = (must(groupsRes, 'groups') as Row[]).map((g): CommunityGroup => ({
-        id: g.id,
-        name: g.name,
-        description: g.description,
-        neighborhoodId: g.neighborhood_id,
-        memberCount: 0,
-      }));
       entities.borrowItems = borrowRows.map((b) => mapBorrow(b, imgs));
     }
+
+    // 4b. Clubs. RLS returns approved clubs in the resident's verified
+    //     neighborhood, clubs they belong to, and their own applications in
+    //     any review state (admins also see every club, for review).
+    await loadClubs(entities, me);
 
     // 5. Profiles for every person referenced (RLS only returns neighbors who
     //    share a verified neighborhood, plus the resident themself).
@@ -418,6 +418,9 @@ export async function syncAll(): Promise<void> {
     entities.recommendations.forEach((r) => userIds.add(r.authorId));
     entities.conversations.forEach((c) => c.participantIds.forEach((id) => userIds.add(id)));
     entities.borrowItems.forEach((b) => userIds.add(b.ownerId));
+    entities.clubs.forEach((c) => userIds.add(c.ownerId));
+    entities.clubMemberships.forEach((m) => userIds.add(m.userId));
+    entities.clubAnnouncements.forEach((a) => userIds.add(a.authorId));
     entities.notifications.forEach((n) => n.actorId && userIds.add(n.actorId));
 
     const ids = [...userIds];
@@ -588,6 +591,85 @@ export function mapPoll(p: Row, counts: Map<string, number>, myOptionId: string 
   };
 }
 
+async function loadClubs(entities: EntityState, me: string) {
+  const clubRows = must(
+    await supabase.from('community_groups').select('*').is('deleted_at', null).order('created_at', { ascending: false }).limit(200),
+    'clubs',
+  ) as Row[];
+  if (clubRows.length === 0) return;
+  const ids = clubRows.map((c) => c.id as string);
+  const owned = clubRows.filter((c) => c.owner_id === me).map((c) => c.id as string);
+  const [membersRes, annRes, countsRes, decisionsRes] = await Promise.all([
+    supabase.from('group_members').select('group_id, user_id, role, status, joined_at').in('group_id', ids),
+    supabase
+      .from('club_announcements')
+      .select('id, club_id, author_id, body, created_at')
+      .in('club_id', ids)
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase.rpc('club_member_counts', { target_clubs: ids }),
+    owned.length > 0
+      ? supabase.from('club_review_decisions').select('*').in('club_id', owned).order('created_at', { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const counts = new Map(((countsRes.data ?? []) as Row[]).map((r) => [r.club_id as string, Number(r.member_count)]));
+  const urls = await resolveMediaUrls(clubRows.flatMap((c) => [c.cover_image_path, c.logo_path].filter(Boolean)));
+  entities.clubs = clubRows.map((c) => mapClub(c, counts.get(c.id) ?? 0, (p) => (p ? urls[p] : undefined)));
+  entities.clubMemberships = (must(membersRes, 'club members') as Row[]).map((m): ClubMembership => ({
+    clubId: m.group_id,
+    userId: m.user_id,
+    role: m.role,
+    status: m.status,
+    joinedAt: m.joined_at,
+  }));
+  entities.clubAnnouncements = (must(annRes, 'club announcements') as Row[]).map((a): ClubAnnouncement => ({
+    id: a.id,
+    clubId: a.club_id,
+    authorId: a.author_id,
+    body: a.body,
+    createdAt: a.created_at,
+  }));
+  entities.clubDecisions = (must(decisionsRes, 'club decisions') as Row[]).map((d): ClubReviewDecision => ({
+    id: d.id,
+    clubId: d.club_id,
+    adminId: d.admin_id ?? undefined,
+    decision: d.decision,
+    reason: d.reason ?? undefined,
+    createdAt: d.created_at,
+  }));
+}
+
+export function mapClub(c: Row, memberCount: number, img: (p?: string | null) => string | undefined): Club {
+  return {
+    id: c.id,
+    name: c.name,
+    description: c.description ?? '',
+    category: c.category,
+    customCategory: c.category === 'other' && c.custom_category ? c.custom_category : undefined,
+    neighborhoodId: c.neighborhood_id,
+    ownerId: c.owner_id,
+    coverImage: img(c.cover_image_path),
+    logo: img(c.logo_path),
+    coverImagePath: c.cover_image_path ?? undefined,
+    logoPath: c.logo_path ?? undefined,
+    membershipType: c.membership_type === 'open' ? 'open' : 'approval',
+    rules: c.rules ?? '',
+    meetingSchedule: c.meeting_schedule ?? undefined,
+    purpose: c.purpose ?? '',
+    plannedActivities: c.planned_activities ?? '',
+    meetingFrequency: c.meeting_frequency ?? '',
+    neighborhoodBenefit: c.neighborhood_benefit ?? '',
+    meetingLocation: c.meeting_location ?? undefined,
+    additionalInfo: c.additional_info ?? undefined,
+    reviewStatus: c.review_status,
+    reviewNote: c.review_note ?? undefined,
+    submittedAt: c.submitted_at ?? undefined,
+    approvedAt: c.approved_at ?? undefined,
+    createdAt: c.created_at,
+    memberCount,
+  };
+}
+
 export function mapEvent(e: Row, img: (p?: string | null) => string | undefined): CommunityEvent {
   return {
     id: e.id,
@@ -595,6 +677,11 @@ export function mapEvent(e: Row, img: (p?: string | null) => string | undefined)
     occasion: e.occasion ?? undefined,
     title: e.title,
     category: e.category,
+    customCategory: e.category === 'other' && e.custom_category ? e.custom_category : undefined,
+    clubId: e.club_id ?? undefined,
+    seriesId: e.series_id ?? undefined,
+    recurrence: e.recurrence === 'weekly' || e.recurrence === 'biweekly' || e.recurrence === 'monthly' ? e.recurrence : 'none',
+    membersOnly: !!e.members_only,
     coverImage: img(e.cover_image_path),
     description: e.description ?? '',
     hostId: e.host_id,

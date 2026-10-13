@@ -13,9 +13,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { UserRow } from '@/components/UserRow';
 import { PostCard } from '@/features/feed/PostCard';
 import { EventCard } from '@/features/events/EventCard';
+import { eventCategoryLabel } from '@/features/events/categories';
+import { ClubCard } from '@/features/clubs/ClubCard';
+import { discoverableClubs, searchClubs } from '@/features/clubs/clubLogic';
 import { MarketplaceCard } from '@/features/marketplace/MarketplaceCard';
 
-type Tab = 'all' | 'posts' | 'events' | 'people' | 'services' | 'marketplace';
+type Tab = 'all' | 'posts' | 'events' | 'clubs' | 'people' | 'services' | 'marketplace';
 
 export default function SearchScreen() {
   const theme = useTheme();
@@ -33,6 +36,7 @@ export default function SearchScreen() {
   const allUsers = useStore((s) => s.users);
   const allBusinesses = useStore((s) => s.businesses);
   const allListings = useStore((s) => s.marketplaceListings);
+  const allClubs = useStore((s) => s.clubs);
 
   const posts = useMemo(() => allPosts.filter((p) => p.neighborhoodId === neighborhoodId), [allPosts, neighborhoodId]);
   const events = useMemo(() => allEvents.filter((e) => e.neighborhoodId === neighborhoodId), [allEvents, neighborhoodId]);
@@ -42,6 +46,7 @@ export default function SearchScreen() {
     [allBusinesses, neighborhoodId],
   );
   const listings = useMemo(() => allListings.filter((m) => m.neighborhoodId === neighborhoodId), [allListings, neighborhoodId]);
+  const clubs = useMemo(() => discoverableClubs(allClubs, neighborhoodId), [allClubs, neighborhoodId]);
 
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('all');
@@ -52,12 +57,15 @@ export default function SearchScreen() {
     if (!q) return null;
     return {
       posts: posts.filter((p) => p.textAr.toLowerCase().includes(q)),
-      events: events.filter((e) => e.title.toLowerCase().includes(q)),
+      events: events.filter((e) =>
+        [e.title, eventCategoryLabel(e, t.eventCreate.categories as Record<string, string>)].some((v) => v.toLowerCase().includes(q)),
+      ),
+      clubs: searchClubs(clubs, q, t.clubs.categories as Record<string, string>),
       people: users.filter((u) => `${u.firstName} ${u.lastName}`.toLowerCase().includes(q)),
       services: businesses.filter((b) => b.name.toLowerCase().includes(q)),
       marketplace: listings.filter((m) => m.title.toLowerCase().includes(q)),
     };
-  }, [q, posts, events, users, businesses, listings]);
+  }, [q, posts, events, clubs, users, businesses, listings, t]);
 
   const onSubmit = () => {
     if (query.trim()) addSearchHistory(query.trim());
@@ -79,6 +87,7 @@ export default function SearchScreen() {
               { key: 'all', label: t.search.tabs.all },
               { key: 'posts', label: t.search.tabs.posts },
               { key: 'events', label: t.search.tabs.events },
+              { key: 'clubs', label: t.clubs.title },
               { key: 'people', label: t.search.tabs.people },
               { key: 'services', label: t.search.tabs.services },
               { key: 'marketplace', label: t.search.tabs.marketplace },
@@ -134,6 +143,13 @@ export default function SearchScreen() {
                 <ResultGroup title={t.search.tabs.events}>
                   {results!.events.map((e) => (
                     <EventCard key={e.id} event={e} />
+                  ))}
+                </ResultGroup>
+              ) : null}
+              {(tab === 'all' || tab === 'clubs') && results!.clubs.length > 0 ? (
+                <ResultGroup title={t.clubs.title}>
+                  {results!.clubs.map((c) => (
+                    <ClubCard key={c.id} club={c} />
                   ))}
                 </ResultGroup>
               ) : null}

@@ -16,17 +16,9 @@ import { Avatar } from '@/components/Avatar';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 
-export const CATEGORY_ICON: Record<string, string> = {
-  football: '⚽️',
-  padel: '🎾',
-  walking: '🚶',
-  cleanup: '🧹',
-  coffee: '☕️',
-  iftar: '🌙',
-  kids: '🧒',
-  family: '👨‍👩‍👧',
-  community: '🤝',
-};
+import { CATEGORY_ICON, eventCategoryLabel } from './categories';
+
+export { CATEGORY_ICON };
 
 export function eventState(event: CommunityEvent, now = Date.now()) {
   const going = event.attendees.filter((a) => a.status === 'going').length;
@@ -77,7 +69,7 @@ export function EventCard({ event, compact }: { event: CommunityEvent; compact?:
     : isFull
       ? t.events.joinWaitlist
       : t.events.join;
-  const categoryLabel = (t.eventCreate.categories as Record<string, string>)[event.category] ?? event.category;
+  const categoryLabel = eventCategoryLabel(event, t.eventCreate.categories as Record<string, string>);
   const occasionLabel = event.occasion ? (t.occasions as Record<string, string>)[event.occasion] : null;
 
   return (

@@ -93,6 +93,8 @@ describe('Activities page sections', () => {
     capacity: 10,
     audience: 'neighborhood',
     recurring: false,
+    recurrence: 'none',
+    membersOnly: false,
     attendees: Array.from({ length: going }, (_, i) => ({ userId: `u${i}`, status: 'going' as const, joinedAt: startsAt })),
     ...extra,
   });

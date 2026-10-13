@@ -15,6 +15,7 @@ import { SkeletonCardRow } from '@/components/Skeleton';
 import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
 import { EventCard, eventState } from '@/features/events/EventCard';
 import type { CommunityEvent, EventCategory } from '@/models';
+import { ALL_EVENT_CATEGORIES, CATEGORY_ICON } from '@/features/events/categories';
 import { isSameSaudiDay } from '@/utils/format';
 
 type KindFilter = 'all' | 'activity' | 'event';
@@ -65,18 +66,11 @@ export default function ActivitiesScreen() {
   );
   const groups = useMemo(() => groupActivities(visible), [visible]);
 
-  const categories: (EventCategory | 'all')[] = [
-    'all',
-    'football',
-    'padel',
-    'walking',
-    'family',
-    'kids',
-    'iftar',
-    'cleanup',
-    'coffee',
-    'community',
-  ];
+  // Only offer categories that real activities in this neighborhood use.
+  const categories = useMemo<(EventCategory | 'all')[]>(() => {
+    const used = new Set(allEvents.filter((e) => e.neighborhoodId === neighborhoodId).map((e) => e.category));
+    return ['all', ...ALL_EVENT_CATEGORIES.filter((c) => used.has(c))];
+  }, [allEvents, neighborhoodId]);
   const labels = t.eventCreate.categories as Record<string, string>;
   const loading = syncStatus === 'loading' && allEvents.length === 0;
   const empty =
@@ -104,7 +98,7 @@ export default function ActivitiesScreen() {
           </View>
           <View style={{ marginBottom: 10 }}>
             <FilterBar
-              options={categories.map((c) => ({ key: c, label: c === 'all' ? t.common.all : labels[c] }))}
+              options={categories.map((c) => ({ key: c, label: c === 'all' ? t.common.all : `${CATEGORY_ICON[c]} ${labels[c]}` }))}
               selected={category}
               onSelect={(k) => setCategory(k as EventCategory | 'all')}
             />

@@ -53,7 +53,7 @@ describe('New/redesigned screens render correctly in Arabic (RTL default)', () =
   it('Profile & Settings renders the new Arabic menu groups', async () => {
     await renderWithProvider(<SettingsScreen />);
 
-    for (const label of ['منشوراتي', 'فعالياتي', 'المحفوظات', 'مجموعاتي', 'شارك حارتنا']) {
+    for (const label of ['منشوراتي', 'فعالياتي', 'المحفوظات', 'أنديتي', 'شارك حارتنا']) {
       expect(screen.getByText(label)).toBeTruthy();
     }
   });

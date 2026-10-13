@@ -8,11 +8,12 @@ import {
   HeartHandshake,
   MapPin as MapPinIcon,
   PawPrint,
+  Shield,
   Star,
+  type LucideIcon,
   Users,
   UtensilsCrossed,
   Wrench,
-  type LucideIcon,
 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -47,6 +48,7 @@ export function ExploreCategoryGrid() {
     { key: 'recommendations', icon: Star, label: t.explore.categoryRecommendations, route: '/recommendations' },
     { key: 'marketplace', icon: HandCoins, label: t.explore.categoryMarketplace, route: '/marketplace' },
     { key: 'lostFound', icon: PawPrint, label: t.explore.categoryLostFound, route: '/lost-found' },
+    { key: 'clubs', icon: Shield, label: t.clubs.title, route: '/clubs' },
     { key: 'community', icon: Users, label: t.explore.categoryCommunity, route: '/community' },
     { key: 'help', icon: HeartHandshake, label: t.explore.categoryHelp, route: '/help-request/create' },
     { key: 'businesses', icon: Building2, label: t.explore.categoryBusinesses, route: '/recommendations' },

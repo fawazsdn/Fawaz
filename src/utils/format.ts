@@ -87,6 +87,19 @@ export function formatDay(iso: string, locale: Locale): string {
   return `${EN_WEEKDAYS[p.weekday]}, ${p.day} ${EN_MONTHS[p.month]}`;
 }
 
+/** "12 October 1990" / "١٢ أكتوبر ١٩٩٠" (Riyadh date, with year). */
+export function formatFullDate(iso: string, locale: Locale): string {
+  const p = saudiParts(iso);
+  if (locale === 'ar') return `${localizeDigits(p.day, 'ar')} ${AR_MONTHS[p.month]} ${localizeDigits(p.year, 'ar')}`;
+  return `${p.day} ${EN_MONTHS[p.month]} ${p.year}`;
+}
+
+/** "1990-10-12" for the Riyadh calendar date of an instant. */
+export function saudiIsoDate(d: Date): string {
+  const p = saudiParts(d);
+  return `${p.year}-${String(p.month + 1).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+}
+
 /** "12 Oct" / "١٢ أكتوبر". */
 export function formatShortDate(iso: string, locale: Locale): string {
   const p = saudiParts(iso);

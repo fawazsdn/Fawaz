@@ -10,6 +10,14 @@ export function useActionErrorMessage() {
   return useCallback(
     (err: unknown): string => {
       const code = err instanceof ActionError ? err.code : 'unknown';
+      // Specific reasons raised by club/activity RPCs ("not_adult", "rate_limited", "invalid:name", ...).
+      const reason = err instanceof ActionError ? err.reason : undefined;
+      if (reason) {
+        const clubErrors = t.clubs.errors as Record<string, string>;
+        if (clubErrors[reason]) return clubErrors[reason];
+        if (reason === 'invalid:custom_category') return t.eventCreate.customCategoryRequired;
+        if (reason.startsWith('invalid:')) return t.clubs.fixFields;
+      }
       switch (code) {
         case 'not_signed_in':
           return t.errors.notSignedIn;

@@ -20,6 +20,7 @@ import { Button } from '@/components/Button';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
 import { HaratnaMap, type HaratnaMapHandle, type MapCoordinate } from '@/components/HaratnaMap';
 import { CATEGORY_ICON, eventState } from '@/features/events/EventCard';
+import { eventCategoryLabel } from '@/features/events/categories';
 import type { GeographySearchResult } from '@/types/geography';
 
 type FilterKey = 'all' | 'activities' | 'events' | 'businesses' | 'community';
@@ -52,6 +53,7 @@ export default function MapScreen() {
   const allPosts = useStore((s) => s.posts);
   const allIssues = useStore((s) => s.issues);
   const users = useStore((s) => s.users);
+  const clubs = useStore((s) => s.clubs);
 
   const [filter, setFilter] = useState<FilterKey>('all');
   const [query, setQuery] = useState('');
@@ -316,8 +318,9 @@ export default function MapScreen() {
     const event = allEvents.find((e) => e.id === eventId);
     if (!event) return null;
     const host = users.find((u) => u.id === event.hostId);
+    const club = event.clubId ? clubs.find((c) => c.id === event.clubId) : undefined;
     const { going, spotsLeft, isFull } = eventState(event);
-    const category = (t.eventCreate.categories as Record<string, string>)[event.category] ?? event.category;
+    const category = eventCategoryLabel(event, t.eventCreate.categories as Record<string, string>);
     const Row = ({ icon: Icon, text }: { icon: typeof Clock; text: string }) => (
       <View style={[theme.row(), { alignItems: 'center', gap: 8 }]}>
         <Icon size={15} color={theme.colors.textMuted} />
@@ -335,6 +338,7 @@ export default function MapScreen() {
         <Row icon={Clock} text={`${formatClock(event.startsAt, locale)} – ${formatClock(event.endsAt, locale)}`} />
         <Row icon={MapPin} text={event.locationLabel} />
         <Row icon={UserIcon} text={`${t.events.organizer}: ${host ? displayName(host) : t.common.neighbor}`} />
+        {club ? <Row icon={Users} text={`${t.events.organizedByClub}: ${club.name}`} /> : null}
         <Row
           icon={Users}
           text={`${localizeDigits(going, locale)} ${t.events.participants} · ${isFull ? t.events.full : `${localizeDigits(spotsLeft, locale)} ${t.events.spotsLeft}`}`}

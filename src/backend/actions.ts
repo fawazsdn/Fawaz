@@ -1,6 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId, useStore } from '@/store/useStore';
 import type {
+  Club,
+  ClubCategory,
+  ClubMembershipType,
+  ClubReviewDecision,
+  ClubReviewStatus,
   Comment,
   EventCategory,
   EventKind,
@@ -14,10 +19,11 @@ import type {
   NamePrivacy,
   PostType,
   ReportReason,
+  Recurrence,
   ReportTargetType,
 } from '@/models';
-import { uploadAvatar, uploadCommunityImage, uploadCommunityImages } from './media';
-import { requestSync } from './sync';
+import { resolveMediaUrls, uploadAvatar, uploadCommunityImage, uploadCommunityImages } from './media';
+import { mapClub, requestSync } from './sync';
 
 /**
  * Every mutation in the app. Each one writes to Supabase (RLS decides what's
@@ -31,9 +37,13 @@ export type ActionErrorCode =
 
 export class ActionError extends Error {
   code: ActionErrorCode;
+  /** Machine-readable reason raised by an RPC, e.g. 'not_adult', 'rate_limited', 'invalid:name'. */
+  reason?: string;
   constructor(code: ActionErrorCode, message?: string) {
     super(message ?? code);
     this.code = code;
+    const m = (message ?? '').trim();
+    if (/^[a-z_]+(:[a-z_]+)?$/.test(m)) this.reason = m;
   }
 }
 
@@ -41,6 +51,7 @@ function toActionError(err: unknown): ActionError {
   if (err instanceof ActionError) return err;
   const e = err as { code?: string; message?: string } | null;
   const msg = e?.message ?? String(err);
+  if (msg === 'rate_limited') return new ActionError('invalid', msg);
   if (/network|fetch|Failed to fetch|timed out/i.test(msg)) return new ActionError('offline', msg);
   if (e?.code === '42501' || /row-level security|permission denied|access denied/i.test(msg)) return new ActionError('forbidden', msg);
   if (/closed/i.test(msg)) return new ActionError('closed', msg);
@@ -294,6 +305,8 @@ export interface EventInput {
   occasion?: EventOccasion;
   title: string;
   category: EventCategory;
+  /** Required when category is 'other'; ignored otherwise. */
+  customCategory?: string;
   description: string;
   startsAt: string;
   endsAt: string;
@@ -303,6 +316,14 @@ export interface EventInput {
   audience: 'neighborhood' | 'city';
   recurring: boolean;
   localCoverImage?: string;
+}
+
+/** 'other' must carry a trimmed label (≤ 40); any other category carries none. */
+function customCategoryFor(category: EventCategory, raw?: string): string | null {
+  if (category !== 'other') return null;
+  const v = (raw ?? '').replace(/\s+/g, ' ').trim();
+  if (!v || v.length > 40) throw new ActionError('invalid', 'invalid:custom_category');
+  return v;
 }
 
 export async function createEvent(input: EventInput) {
@@ -320,6 +341,7 @@ export async function createEvent(input: EventInput) {
           occasion: input.occasion ?? null,
           title: input.title,
           category: input.category,
+          custom_category: customCategoryFor(input.category, input.customCategory),
           description: input.description,
           starts_at: input.startsAt,
           ends_at: input.endsAt,
@@ -337,6 +359,94 @@ export async function createEvent(input: EventInput) {
     // The organizer takes the first spot.
     await supabase.rpc('rsvp_event', { target_event_id: row.id, desired_status: 'going' });
     return row.id;
+  });
+}
+
+export interface ClubActivityInput extends Omit<EventInput, 'audience' | 'recurring'> {
+  recurrence: Recurrence;
+  /** Number of occurrences to schedule for a recurring activity (2–12). */
+  occurrences: number;
+  membersOnly: boolean;
+}
+
+/** Club activities: the server creates one events row per occurrence and notifies members once. */
+export async function createClubActivity(clubId: string, input: ClubActivityInput) {
+  return run(async () => {
+    const uid = me();
+    const nb = verifiedNeighborhood();
+    const custom = customCategoryFor(input.category, input.customCategory);
+    const coverPath = input.localCoverImage ? await uploadCommunityImage(input.localCoverImage, nb, uid) : null;
+    return check(
+      await supabase.rpc('create_club_activity', {
+        target_club: clubId,
+        p: {
+          kind: input.kind,
+          title: input.title,
+          category: input.category,
+          custom_category: custom,
+          description: input.description,
+          starts_at: input.startsAt,
+          ends_at: input.endsAt,
+          location_label: input.locationLabel,
+          approx_lat: input.coordinate ? approximateCoordinate(input.coordinate.lat) : null,
+          approx_lng: input.coordinate ? approximateCoordinate(input.coordinate.lng) : null,
+          capacity: input.capacity,
+          cover_image_path: coverPath,
+          recurrence: input.recurrence,
+          occurrences: input.occurrences,
+          members_only: input.membersOnly,
+        },
+      }),
+    ) as string;
+  });
+}
+
+export interface EventEditInput {
+  title: string;
+  category: EventCategory;
+  customCategory?: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+  locationLabel: string;
+  capacity: number;
+  membersOnly?: boolean;
+}
+
+/**
+ * Edits an activity the caller hosts or (for club activities) organizes.
+ * scope 'future' applies the change to this and later occurrences of a
+ * recurring series; RSVPs are kept, so nobody is registered twice.
+ */
+export async function updateEvent(eventId: string, input: EventEditInput, scope: 'one' | 'future' = 'one') {
+  return run(async () => {
+    me();
+    const custom = customCategoryFor(input.category, input.customCategory);
+    check(
+      await supabase.rpc('update_club_activity', {
+        target_event: eventId,
+        scope,
+        p: {
+          title: input.title,
+          category: input.category,
+          custom_category: custom,
+          description: input.description,
+          starts_at: input.startsAt,
+          ends_at: input.endsAt,
+          location_label: input.locationLabel,
+          capacity: input.capacity,
+          ...(input.membersOnly === undefined ? {} : { members_only: input.membersOnly }),
+        },
+      }),
+    );
+  });
+}
+
+/** Cancels one occurrence or the rest of a series; attendees are notified once. */
+export async function cancelActivity(eventId: string, scope: 'one' | 'future' = 'one') {
+  return run(async () => {
+    me();
+    return check(await supabase.rpc('cancel_club_activity', { target_event: eventId, scope })) as number;
   });
 }
 
@@ -716,4 +826,306 @@ export async function deleteAccount() {
   } catch (err) {
     throw toActionError(err);
   }
+}
+
+// ------------------------------------------------------------------ clubs --
+// Every club write is a SECURITY DEFINER RPC that re-checks the caller's role,
+// verified neighborhood, age declaration and the club's review status on the
+// server. The client never sets review_status, roles or membership status.
+
+export interface ClubEligibility {
+  signedIn: boolean;
+  verifiedNeighborhoodId: string | null;
+  ageDeclared: boolean;
+  isAdult: boolean;
+  suspended: boolean;
+  pendingApplications: number;
+}
+
+export async function getClubEligibility(): Promise<ClubEligibility> {
+  return run(
+    async () => {
+      const r = (check(await supabase.rpc('my_club_eligibility')) ?? {}) as Record<string, unknown>;
+      return {
+        signedIn: !!r.signed_in,
+        verifiedNeighborhoodId: (r.verified_neighborhood_id as string | null) ?? null,
+        ageDeclared: !!r.age_declared,
+        isAdult: !!r.is_adult,
+        suspended: !!r.suspended,
+        pendingApplications: Number(r.pending_applications ?? 0),
+      };
+    },
+    { resync: false },
+  );
+}
+
+/** Self-declared, set once, never readable by anyone. Returns whether the resident is 18+. */
+export async function declareDateOfBirth(isoDate: string): Promise<boolean> {
+  return run(
+    async () => {
+      me();
+      return !!check(await supabase.rpc('declare_date_of_birth', { dob: isoDate }));
+    },
+    { resync: false },
+  );
+}
+
+export interface ClubApplicationInput {
+  name: string;
+  description: string;
+  category: ClubCategory;
+  customCategory?: string;
+  purpose: string;
+  plannedActivities: string;
+  meetingFrequency: string;
+  neighborhoodBenefit: string;
+  rules: string;
+  membershipType: ClubMembershipType;
+  meetingLocation?: string;
+  meetingSchedule?: string;
+  additionalInfo?: string;
+  /** Newly picked local images (already cropped by the photo editor). */
+  localCover?: string;
+  localLogo?: string;
+  /** Existing storage paths to keep when editing. */
+  coverImagePath?: string | null;
+  logoPath?: string | null;
+}
+
+async function clubPayload(input: ClubApplicationInput) {
+  const uid = me();
+  const nb = verifiedNeighborhood();
+  const cover = input.localCover ? await uploadCommunityImage(input.localCover, nb, uid) : (input.coverImagePath ?? null);
+  const logo = input.localLogo ? await uploadCommunityImage(input.localLogo, nb, uid) : (input.logoPath ?? null);
+  return {
+    name: input.name,
+    description: input.description,
+    category: input.category,
+    custom_category: input.category === 'other' ? (input.customCategory ?? null) : null,
+    purpose: input.purpose,
+    planned_activities: input.plannedActivities,
+    meeting_frequency: input.meetingFrequency,
+    neighborhood_benefit: input.neighborhoodBenefit,
+    rules: input.rules,
+    membership_type: input.membershipType,
+    meeting_location: input.meetingLocation ?? null,
+    meeting_schedule: input.meetingSchedule ?? null,
+    additional_info: input.additionalInfo ?? null,
+    cover_image_path: cover,
+    logo_path: logo,
+  };
+}
+
+/** The neighborhood is taken from the server-side verified membership, never from this payload. */
+export async function submitClubApplication(input: ClubApplicationInput): Promise<string> {
+  return run(async () => check(await supabase.rpc('submit_club_application', { p: await clubPayload(input) })) as string);
+}
+
+/** Pending/needs-changes: full edit and resubmit. Approved: organizers edit presentation and rules only. */
+export async function updateClub(clubId: string, input: ClubApplicationInput) {
+  return run(async () => {
+    check(await supabase.rpc('update_club', { target_club: clubId, p: await clubPayload(input) }));
+  });
+}
+
+/** Returns 'active' for open clubs, 'pending' when organizer approval is required. */
+export async function joinClub(clubId: string): Promise<'active' | 'pending'> {
+  return run(async () => {
+    me();
+    return check(await supabase.rpc('join_club', { target_club: clubId })) as 'active' | 'pending';
+  });
+}
+
+export async function cancelJoinRequest(clubId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('cancel_join_request', { target_club: clubId }));
+  });
+}
+
+export async function leaveClub(clubId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('leave_club', { target_club: clubId }));
+  });
+}
+
+export async function respondJoinRequest(clubId: string, userId: string, approve: boolean) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('respond_join_request', { target_club: clubId, target_user: userId, approve }));
+  });
+}
+
+export async function setClubMemberRole(clubId: string, userId: string, role: 'moderator' | 'member') {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('set_member_role', { target_club: clubId, target_user: userId, new_role: role }));
+  });
+}
+
+export async function removeClubMember(clubId: string, userId: string, ban = false) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('remove_club_member', { target_club: clubId, target_user: userId, ban }));
+  });
+}
+
+export async function unbanClubMember(clubId: string, userId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('unban_club_member', { target_club: clubId, target_user: userId }));
+  });
+}
+
+export async function transferClubOwnership(clubId: string, newOwnerId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('transfer_club_ownership', { target_club: clubId, new_owner: newOwnerId }));
+  });
+}
+
+export async function archiveClub(clubId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('archive_club', { target_club: clubId }));
+  });
+}
+
+export async function postClubAnnouncement(clubId: string, body: string) {
+  return run(async () => {
+    me();
+    return check(await supabase.rpc('post_club_announcement', { target_club: clubId, body })) as string;
+  });
+}
+
+export async function deleteClubAnnouncement(announcementId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('delete_club_announcement', { target_announcement: announcementId }));
+  });
+}
+
+/** Club organizers/moderators can hide a message in their club chat. */
+export async function hideClubMessage(messageId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('moderate_club_message', { target_message: messageId }));
+  });
+}
+
+// ------------------------------------------------------- club review (admin) --
+// These RPCs refuse anyone whose profiles.app_role is not 'admin'; hiding the
+// screens from non-admins is only a convenience.
+
+export interface AdminClubApplication {
+  clubId: string;
+  name: string;
+  reviewStatus: ClubReviewStatus;
+  submittedAt?: string;
+  ownerId: string;
+  ownerName: string;
+  ownerIsAdult: boolean;
+  ownerVerifiedNeighborhood: string | null;
+  neighborhoodId: string;
+  neighborhoodNameAr?: string;
+  neighborhoodNameEn?: string;
+}
+
+export async function fetchClubApplications(status: ClubReviewStatus | null): Promise<AdminClubApplication[]> {
+  return run(
+    async () => {
+      const rows = (check(await supabase.rpc('admin_club_applications', { status_filter: status })) ?? []) as Record<string, any>[];
+      return rows.map((r) => ({
+        clubId: r.club_id,
+        name: r.name,
+        reviewStatus: r.review_status,
+        submittedAt: r.submitted_at ?? undefined,
+        ownerId: r.owner_id,
+        ownerName: r.owner_name ?? '',
+        ownerIsAdult: !!r.owner_is_adult,
+        ownerVerifiedNeighborhood: r.owner_verified_neighborhood ?? null,
+        neighborhoodId: r.neighborhood_id,
+        neighborhoodNameAr: r.neighborhood_name_ar ?? undefined,
+        neighborhoodNameEn: r.neighborhood_name_en ?? undefined,
+      }));
+    },
+    { resync: false },
+  );
+}
+
+export interface AdminClubDetail {
+  club: Club;
+  decisions: ClubReviewDecision[];
+  signals: {
+    memberCount: number;
+    pendingRequests: number;
+    upcomingActivities: number;
+    activitiesLast90Days: number;
+    messagesLast30Days: number;
+    announcementsLast30Days: number;
+    lastActivityAt: string | null;
+    inactivityRemindedAt: string | null;
+    ownerIsAdult: boolean;
+    reportsOpen: number;
+  };
+}
+
+export async function fetchClubForReview(clubId: string): Promise<AdminClubDetail | null> {
+  return run(
+    async () => {
+      const [clubRes, decisionsRes, signalsRes] = await Promise.all([
+        supabase.from('community_groups').select('*').eq('id', clubId).maybeSingle(),
+        supabase.from('club_review_decisions').select('*').eq('club_id', clubId).order('created_at', { ascending: false }),
+        supabase.rpc('admin_club_signals', { target_club: clubId }),
+      ]);
+      const row = check(clubRes) as Record<string, any> | null;
+      if (!row) return null;
+      const s = (check(signalsRes) ?? {}) as Record<string, any>;
+      const urls = await resolveMediaUrls([row.cover_image_path, row.logo_path].filter(Boolean));
+      return {
+        club: mapClub(row, Number(s.member_count ?? 0), (p) => (p ? urls[p] : undefined)),
+        decisions: ((check(decisionsRes) ?? []) as Record<string, any>[]).map((d) => ({
+          id: d.id,
+          clubId: d.club_id,
+          adminId: d.admin_id ?? undefined,
+          decision: d.decision,
+          reason: d.reason ?? undefined,
+          createdAt: d.created_at,
+        })),
+        signals: {
+          memberCount: Number(s.member_count ?? 0),
+          pendingRequests: Number(s.pending_requests ?? 0),
+          upcomingActivities: Number(s.upcoming_activities ?? 0),
+          activitiesLast90Days: Number(s.activities_last_90_days ?? 0),
+          messagesLast30Days: Number(s.messages_last_30_days ?? 0),
+          announcementsLast30Days: Number(s.announcements_last_30_days ?? 0),
+          lastActivityAt: s.last_activity_at ?? null,
+          inactivityRemindedAt: s.inactivity_reminded_at ?? null,
+          ownerIsAdult: !!s.owner_is_adult,
+          reportsOpen: Number(s.reports_open ?? 0),
+        },
+      };
+    },
+    { resync: false },
+  );
+}
+
+export type ReviewDecision = 'approved' | 'rejected' | 'needs_changes' | 'suspended' | 'revoked' | 'reinstated';
+
+export async function reviewClub(clubId: string, decision: ReviewDecision, reason?: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('review_club', { target_club: clubId, decision, reason: reason?.trim() || null }));
+  });
+}
+
+export async function sendClubInactivityReminder(clubId: string) {
+  return run(
+    async () => {
+      me();
+      check(await supabase.rpc('send_club_inactivity_reminder', { target_club: clubId }));
+    },
+    { resync: false },
+  );
 }
