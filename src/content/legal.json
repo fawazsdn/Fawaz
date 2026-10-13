@@ -1,0 +1,569 @@
+{
+  "updated": "2026-10-14",
+  "en": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "p": [
+            "This policy explains what Haratna (\"we\") collects, why, who it is shared with, how long it is kept and how you can control it. Haratna is a neighborhood app for residents in Saudi Arabia. It is offered by {{OPERATOR}}. This policy is prepared with the Saudi Personal Data Protection Law (PDPL) in mind and is subject to legal review."
+          ]
+        },
+        {
+          "h": "1. Information you give us",
+          "li": [
+            "Account: your email address and password (the password is stored only as a secure hash by our authentication provider). If you use Sign in with Apple or Google, we receive the identifier and the name/email that provider shares with us; with Apple you can hide your email.",
+            "Profile: first name, last name, how your name is shown (full, first name + initial, or first name only), an optional bio and an optional profile photo.",
+            "Neighborhood: the region, city and neighborhood you choose from the official Saudi address dataset.",
+            "Date of birth (only if you choose to create a club): it is self-declared, stored privately, never shown to other residents and only used to check that club organizers are 18 or older. It is not identity verification.",
+            "Interests you select (for example padel or reading) and your Neighbors privacy settings.",
+            "Content you create: posts, comments, polls and votes, activities and RSVPs, club applications, announcements and chat messages, marketplace and borrow listings, help requests, lost & found posts (including any contact method you choose to add), issue reports, recommendations, photos, reports you file and support requests."
+          ]
+        },
+        {
+          "h": "2. Location",
+          "li": [
+            "To verify that you live in a neighborhood, the app asks for your location once, only when you tap Verify (\"while using the app\" permission). Your coordinates are sent to our server only to check them against the official neighborhood boundary; we store the result (verified or not), not the coordinates.",
+            "When you choose to pin an activity, post or listing on the map, we store an approximate point rounded to about 100 meters, never your exact position.",
+            "We do not track your location in the background."
+          ]
+        },
+        {
+          "h": "3. Information created when you use Haratna",
+          "li": [
+            "Neighbor connections and requests, club memberships and roles, activity invitations, blocks and mutes, notifications, reputation points and referral codes.",
+            "Technical data needed to run the service, such as authentication sessions and server logs kept by our hosting provider for security and troubleshooting.",
+            "We do not use advertising, we do not track you across other companies' apps or websites, and the app contains no third-party analytics or advertising SDKs."
+          ]
+        },
+        {
+          "h": "4. How we use information",
+          "li": [
+            "To provide the service: show your neighborhood's content, connect neighbors, run clubs and activities, deliver messages and notifications.",
+            "To keep the community safe: neighborhood verification, the 18+ rule for club organizers, content filtering, reports, blocking, moderation and preventing abuse.",
+            "To answer support requests and to meet legal obligations."
+          ]
+        },
+        {
+          "h": "5. Who can see what",
+          "li": [
+            "Neighborhood content (posts, activities, listings, approved clubs) is visible only to verified residents of the same neighborhood.",
+            "You do not appear in Discover Neighbors unless you turn on \"Allow neighbors to find me\" (off by default). Your neighbor list is private to you.",
+            "Private messages are visible only to the people in the conversation. Club chats are visible only to active members.",
+            "We never show your address, exact location, phone number, email address or date of birth to other residents.",
+            "Haratna staff (moderators and administrators) can access content when needed to review reports, review club applications, answer support requests or enforce our guidelines."
+          ]
+        },
+        {
+          "h": "6. Service providers",
+          "p": [
+            "We share data only with providers that run the service for us, under agreements that require them to protect it at least as strongly as this policy:"
+          ],
+          "li": [
+            "Supabase — database, authentication, file storage and server functions. Data location: {{DATA_REGION}}.",
+            "Apple and Google — only if you choose their sign-in.",
+            "Apple Maps (on iPhone) — to display maps; map requests do not include your account information.",
+            "Email delivery provider — to send verification and password-reset emails: {{EMAIL_PROVIDER}}."
+          ]
+        },
+        {
+          "h": "7. How long we keep data",
+          "li": [
+            "Your account and content are kept while your account is active.",
+            "When you delete content, it is removed from the app. When you delete your account, we delete your profile, your posts, comments, messages you sent, activities you host, listings, requests, reports you filed, uploaded photos, connections, interests, settings and your date-of-birth declaration. Clubs you organize pass to an adult member or are archived.",
+            "Copies in encrypted backups kept by our hosting provider are deleted on its backup schedule: {{BACKUP_RETENTION}}."
+          ]
+        },
+        {
+          "h": "8. Your rights and choices",
+          "li": [
+            "Access and correct your profile at any time in Settings → Edit profile.",
+            "Control discovery, neighbor requests, messages, interests and what others can see in Settings → Neighbors & privacy.",
+            "Withdraw location permission at any time in iPhone Settings; already-verified membership is not affected.",
+            "Delete your account inside the app: Settings → Delete account. This cannot be undone.",
+            "Ask us a question or request a copy of your data through Settings → Contact support or {{SUPPORT_EMAIL}}. You may also contact the Saudi Data & AI Authority (SDAIA) regarding personal data protection."
+          ]
+        },
+        {
+          "h": "9. Children",
+          "p": [
+            "Haratna is a community app for residents and is not designed for young children. Residents under 18 cannot create, own or run clubs. Parents and guardians who believe a child has provided information can contact us to have it removed."
+          ]
+        },
+        {
+          "h": "10. Security",
+          "p": [
+            "Data is transmitted over encrypted connections and protected by access rules enforced on our servers (for example, residents can only read their own neighborhood's content). No system is perfectly secure; please report any concern through support."
+          ]
+        },
+        {
+          "h": "11. Changes",
+          "p": ["We will update this page and the date below when the policy changes, and tell you in the app about significant changes."]
+        },
+        {
+          "h": "12. Contact",
+          "p": ["{{OPERATOR}} · {{SUPPORT_EMAIL}} · In the app: Settings → Contact support."]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "sections": [
+        {
+          "p": [
+            "By creating an account or using Haratna you agree to these terms and to the Community Guidelines. If you do not agree, do not use the app. These terms are subject to legal review."
+          ]
+        },
+        {
+          "h": "1. Who can use Haratna",
+          "li": [
+            "You must provide accurate information and use one personal account.",
+            "Neighborhood features require verifying that you live in the neighborhood. Do not misrepresent where you live.",
+            "Creating, owning or running a club requires being 18 or older."
+          ]
+        },
+        {
+          "h": "2. Zero tolerance for objectionable content and abusive users",
+          "p": [
+            "There is no tolerance for objectionable content or abusive behavior. You must not post content that is hateful, harassing, sexually explicit, violent, threatening, defamatory, illegal, an invasion of privacy, spam, scams or misleading, or that shares someone's private information (such as a home address or phone number) without consent. We filter content, review reports, remove content and suspend or remove accounts that break these rules. We aim to act on reports within 24 hours."
+          ]
+        },
+        {
+          "h": "3. Your content",
+          "p": [
+            "You own what you post. You give us permission to store, display and share it within Haratna with the audience you choose, only to operate the service. You are responsible for what you post and for having the rights to any photos you upload."
+          ]
+        },
+        {
+          "h": "4. Meeting neighbors",
+          "p": [
+            "Activities, clubs and listings are organized by residents, not by Haratna. Meet in public places, use your judgment and report anything unsafe. Haratna does not verify identities and is not responsible for offline meetings or transactions between residents."
+          ]
+        },
+        {
+          "h": "5. Clubs",
+          "p": [
+            "Club applications are reviewed by the Haratna team before they appear. We may approve, request changes, reject, suspend or revoke a club at any time to keep the community safe."
+          ]
+        },
+        {
+          "h": "6. Marketplace and borrowing",
+          "p": ["Listings and arrangements are between residents. Haratna does not process payments, take a commission or guarantee items."]
+        },
+        {
+          "h": "7. Termination",
+          "p": [
+            "You can delete your account at any time in Settings. We may suspend or end accounts that violate these terms or the Community Guidelines."
+          ]
+        },
+        {
+          "h": "8. Disclaimers",
+          "p": [
+            "Haratna is provided \"as is\". To the extent allowed by law, we are not liable for indirect damages or for content and conduct of other residents."
+          ]
+        },
+        {
+          "h": "9. Governing law",
+          "p": ["These terms are governed by the laws of the Kingdom of Saudi Arabia. {{OPERATOR}}."]
+        },
+        {
+          "h": "10. Contact",
+          "p": ["{{SUPPORT_EMAIL}} · In the app: Settings → Contact support."]
+        }
+      ]
+    },
+    "guidelines": {
+      "title": "Community Guidelines",
+      "sections": [
+        {
+          "p": [
+            "Haratna works when neighbors treat each other the way they would face to face. These guidelines apply to everything in the app: posts, comments, messages, clubs, activities, listings and profiles."
+          ]
+        },
+        {
+          "h": "Be a good neighbor",
+          "li": [
+            "Be respectful, even when you disagree.",
+            "Post things that are useful or relevant to your neighborhood.",
+            "Use your real name and a genuine photo, or none."
+          ]
+        },
+        {
+          "h": "Not allowed",
+          "li": [
+            "Harassment, bullying, threats, hate speech or insults about religion, origin, gender, disability or any group.",
+            "Sexual content, nudity, violence or graphic material.",
+            "Sharing anyone's private information: home address, exact location, phone number, documents or photos without consent.",
+            "Scams, spam, misleading offers or unauthorized commercial promotion.",
+            "Illegal goods or activities, or content that breaks Saudi law.",
+            "Impersonating someone or misrepresenting where you live."
+          ]
+        },
+        {
+          "h": "Safety when meeting",
+          "li": [
+            "Meet in public places such as parks, mosques' public areas or community centers.",
+            "Children's activities must be organized by adults and attended with guardians.",
+            "Never send money in advance to someone you have not met."
+          ]
+        },
+        {
+          "h": "Report, block, move on",
+          "p": [
+            "Use Report on any post, comment, message, profile, activity or club. Use Block on a profile to stop someone contacting you; blocking also removes them as a neighbor. Our team reviews reports and aims to act within 24 hours. Repeated or serious violations lead to removal from Haratna."
+          ]
+        }
+      ]
+    },
+    "help": {
+      "title": "Help Center",
+      "sections": [
+        {
+          "h": "Why do I need to verify my neighborhood?",
+          "p": [
+            "Haratna shows each neighborhood's content only to people who live there. Verification checks your location once against the official neighborhood boundary. Your coordinates are not stored."
+          ]
+        },
+        {
+          "h": "How do Neighbors work?",
+          "p": [
+            "Open a resident's profile and tap Add Neighbor. You become neighbors only when they accept. You can message connected neighbors. You appear in Discover Neighbors only if you turn on \"Allow neighbors to find me\" in Settings → Neighbors & privacy."
+          ]
+        },
+        {
+          "h": "How do I create a club?",
+          "p": [
+            "Go to Create → Create Club. Club organizers must be 18 or older. Every club is reviewed by the Haratna team before neighbors can see it."
+          ]
+        },
+        {
+          "h": "How do I report or block someone?",
+          "p": ["Tap ⋯ on a profile, post, comment, message or club and choose Report. On a profile choose Block to stop all contact."]
+        },
+        {
+          "h": "How do I delete my account?",
+          "p": ["Settings → Delete account. Your profile, content, messages you sent and photos are deleted. This cannot be undone."]
+        },
+        {
+          "h": "Contact support",
+          "p": ["In the app: Settings → Contact support. Email: {{SUPPORT_EMAIL}}."]
+        }
+      ]
+    },
+    "about": {
+      "title": "About Haratna",
+      "sections": [
+        {
+          "p": [
+            "Haratna (حارتنا, \"our neighborhood\") connects verified residents of the same Saudi neighborhood: local news and questions, activities and events, clubs, a neighborhood marketplace, help between neighbors, lost & found and issue reports — in Arabic and English.",
+            "Each neighborhood is private to its verified residents. Discovery of neighbors is opt-in, and your exact location is never shown."
+          ]
+        }
+      ]
+    },
+    "deletion": {
+      "title": "Account Deletion",
+      "sections": [
+        {
+          "p": ["You can delete your Haratna account at any time from inside the app."]
+        },
+        {
+          "h": "How",
+          "li": [
+            "Open Haratna and go to Profile → Settings.",
+            "Tap Delete account and confirm.",
+            "Your account is deleted immediately and you are signed out."
+          ]
+        },
+        {
+          "h": "What is deleted",
+          "li": [
+            "Your profile, photo, interests, privacy settings and date-of-birth declaration.",
+            "Posts, comments, polls, activities you host, listings, help requests, lost & found posts and issue reports you created.",
+            "Messages you sent, reports you filed, neighbor connections and requests, invitations and uploaded photos.",
+            "Clubs you organize pass to an adult member or are archived."
+          ]
+        },
+        {
+          "h": "If you can't open the app",
+          "p": ["Contact {{SUPPORT_EMAIL}} from the email address of your account and we will delete it for you."]
+        }
+      ]
+    }
+  },
+  "ar": {
+    "privacy": {
+      "title": "سياسة الخصوصية",
+      "sections": [
+        {
+          "p": [
+            "توضح هذه السياسة ما تجمعه حارتنا («نحن»)، ولماذا، ومع من نشاركه، ومدة الاحتفاظ به، وكيف تتحكم فيه. حارتنا تطبيق للأحياء السكنية في المملكة العربية السعودية تقدّمه {{OPERATOR}}. أُعدّت هذه السياسة مع مراعاة نظام حماية البيانات الشخصية في المملكة، وهي خاضعة للمراجعة القانونية."
+          ]
+        },
+        {
+          "h": "١. المعلومات التي تقدمها لنا",
+          "li": [
+            "الحساب: بريدك الإلكتروني وكلمة المرور (تُحفظ كلمة المرور مشفّرة فقط لدى مزوّد المصادقة). عند استخدام تسجيل الدخول عبر Apple أو Google نستلم المعرّف والاسم/البريد الذي يشاركه المزوّد، ويمكنك إخفاء بريدك مع Apple.",
+            "الملف الشخصي: الاسم الأول واسم العائلة وطريقة عرض اسمك، ونبذة اختيارية وصورة اختيارية.",
+            "الحي: المنطقة والمدينة والحي التي تختارها من بيانات العنوان الوطني الرسمية.",
+            "تاريخ الميلاد (فقط إذا أردت إنشاء نادٍ): إقرار ذاتي يُحفظ بشكل خاص، ولا يظهر لأي ساكن، ويُستخدم فقط للتحقق من أن منظم النادي بعمر ١٨ سنة فأكثر. وهو ليس توثيقاً للهوية.",
+            "الاهتمامات التي تختارها وإعدادات الخصوصية الخاصة بالجيران.",
+            "المحتوى الذي تنشئه: المنشورات والتعليقات والاستطلاعات والتصويت، والأنشطة والتسجيل فيها، وطلبات الأندية والإعلانات ورسائل الدردشة، وإعلانات السوق والاستعارة، وطلبات المساعدة، والمفقودات (مع أي وسيلة تواصل تختار إضافتها)، والبلاغات، والتوصيات، والصور، والبلاغات عن المحتوى، وطلبات الدعم."
+          ]
+        },
+        {
+          "h": "٢. الموقع",
+          "li": [
+            "للتحقق من سكنك في الحي، يطلب التطبيق موقعك مرة واحدة فقط عند ضغطك على «تحقق» (إذن «أثناء استخدام التطبيق»). تُرسل الإحداثيات لخادمنا فقط لمقارنتها بحدود الحي الرسمية، ونحفظ النتيجة (موثّق أو لا) وليس الإحداثيات.",
+            "عند اختيارك تحديد نشاط أو منشور أو إعلان على الخريطة نحفظ نقطة تقريبية بدقة نحو ١٠٠ متر، وليس موقعك الدقيق.",
+            "لا نتتبع موقعك في الخلفية."
+          ]
+        },
+        {
+          "h": "٣. المعلومات الناتجة عن استخدامك",
+          "li": [
+            "علاقات الجيران وطلباتها، وعضويات الأندية وأدوارها، ودعوات الأنشطة، والحظر والكتم، والإشعارات، ونقاط السمعة ورموز الدعوة.",
+            "بيانات تقنية لازمة لتشغيل الخدمة مثل جلسات الدخول وسجلات الخادم لدى مزوّد الاستضافة لأغراض الأمان وحل المشكلات.",
+            "لا نستخدم الإعلانات، ولا نتتبعك عبر تطبيقات أو مواقع شركات أخرى، ولا يحتوي التطبيق على أدوات تحليلات أو إعلانات من أطراف ثالثة."
+          ]
+        },
+        {
+          "h": "٤. كيف نستخدم المعلومات",
+          "li": [
+            "لتقديم الخدمة: عرض محتوى حيّك، وربط الجيران، وتشغيل الأندية والأنشطة، وإيصال الرسائل والإشعارات.",
+            "للحفاظ على سلامة المجتمع: توثيق الحي، وشرط ١٨+ لمنظمي الأندية، وتصفية المحتوى، والبلاغات، والحظر، والإشراف، ومنع إساءة الاستخدام.",
+            "للرد على طلبات الدعم والوفاء بالالتزامات النظامية."
+          ]
+        },
+        {
+          "h": "٥. من يرى ماذا",
+          "li": [
+            "محتوى الحي (المنشورات والأنشطة والإعلانات والأندية المعتمدة) يظهر فقط لسكان الحي نفسه الموثّقين.",
+            "لا تظهر في «اكتشف الجيران» إلا إذا فعّلت «السماح للجيران بالعثور عليّ» (مغلق افتراضياً). قائمة جيرانك خاصة بك.",
+            "الرسائل الخاصة يراها أطراف المحادثة فقط، ودردشة النادي يراها الأعضاء النشطون فقط.",
+            "لا نعرض أبداً عنوانك أو موقعك الدقيق أو رقم جوالك أو بريدك أو تاريخ ميلادك لأي ساكن.",
+            "يمكن لفريق حارتنا (المشرفين والإداريين) الاطلاع على المحتوى عند الحاجة لمراجعة البلاغات أو طلبات الأندية أو طلبات الدعم أو تطبيق الإرشادات."
+          ]
+        },
+        {
+          "h": "٦. مزوّدو الخدمة",
+          "p": ["لا نشارك البيانات إلا مع مزوّدين يشغّلون الخدمة لصالحنا وفق اتفاقيات تُلزمهم بحمايتها بمستوى لا يقل عن هذه السياسة:"],
+          "li": [
+            "Supabase — قاعدة البيانات والمصادقة وتخزين الملفات ووظائف الخادم. موقع البيانات: {{DATA_REGION}}.",
+            "Apple وGoogle — فقط إذا اخترت تسجيل الدخول عبرهما.",
+            "خرائط Apple (على iPhone) — لعرض الخرائط دون إرسال معلومات حسابك.",
+            "مزوّد إرسال البريد — لرسائل التحقق واستعادة كلمة المرور: {{EMAIL_PROVIDER}}."
+          ]
+        },
+        {
+          "h": "٧. مدة الاحتفاظ",
+          "li": [
+            "نحتفظ بحسابك ومحتواك طالما حسابك نشط.",
+            "عند حذفك لمحتوى يُزال من التطبيق. وعند حذف حسابك نحذف ملفك الشخصي ومنشوراتك وتعليقاتك والرسائل التي أرسلتها والأنشطة التي تنظمها وإعلاناتك وطلباتك والبلاغات التي قدمتها والصور المرفوعة والعلاقات والاهتمامات والإعدادات وإقرار تاريخ الميلاد. أما الأندية التي تنظمها فتنتقل لعضو بالغ أو تُؤرشف.",
+            "النسخ الموجودة في النسخ الاحتياطية المشفّرة لدى مزوّد الاستضافة تُحذف وفق جدول النسخ الاحتياطي: {{BACKUP_RETENTION}}."
+          ]
+        },
+        {
+          "h": "٨. حقوقك وخياراتك",
+          "li": [
+            "الاطلاع على ملفك وتعديله في أي وقت من الإعدادات ← تعديل الملف الشخصي.",
+            "التحكم في الظهور وطلبات الجيران والرسائل والاهتمامات من الإعدادات ← الجيران والخصوصية.",
+            "سحب إذن الموقع في أي وقت من إعدادات iPhone دون أن يتأثر توثيقك السابق.",
+            "حذف حسابك من داخل التطبيق: الإعدادات ← حذف الحساب. لا يمكن التراجع عن ذلك.",
+            "التواصل معنا أو طلب نسخة من بياناتك عبر الإعدادات ← تواصل مع الدعم أو {{SUPPORT_EMAIL}}. ويمكنك أيضاً التواصل مع الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا) بشأن حماية البيانات الشخصية."
+          ]
+        },
+        {
+          "h": "٩. الأطفال",
+          "p": [
+            "حارتنا تطبيق مجتمعي للسكان وغير مصمم للأطفال الصغار. لا يمكن لمن هم دون ١٨ سنة إنشاء الأندية أو إدارتها. يمكن لأولياء الأمور التواصل معنا لإزالة أي معلومات قدّمها طفل."
+          ]
+        },
+        {
+          "h": "١٠. الأمان",
+          "p": [
+            "تُنقل البيانات عبر اتصالات مشفّرة وتحميها قواعد وصول مطبّقة على خوادمنا (مثلاً لا يرى الساكن إلا محتوى حيّه). لا يوجد نظام آمن تماماً، فنرجو إبلاغنا عن أي ملاحظة عبر الدعم."
+          ]
+        },
+        {
+          "h": "١١. التغييرات",
+          "p": ["سنحدّث هذه الصفحة والتاريخ أدناه عند تغيّر السياسة، ونبلغك داخل التطبيق بالتغييرات المهمة."]
+        },
+        {
+          "h": "١٢. التواصل",
+          "p": ["{{OPERATOR}} · {{SUPPORT_EMAIL}} · داخل التطبيق: الإعدادات ← تواصل مع الدعم."]
+        }
+      ]
+    },
+    "terms": {
+      "title": "شروط الاستخدام",
+      "sections": [
+        {
+          "p": [
+            "بإنشائك حساباً أو استخدامك حارتنا فإنك توافق على هذه الشروط وعلى إرشادات المجتمع. إذا لم توافق فلا تستخدم التطبيق. هذه الشروط خاضعة للمراجعة القانونية."
+          ]
+        },
+        {
+          "h": "١. من يحق له الاستخدام",
+          "li": [
+            "يجب تقديم معلومات صحيحة واستخدام حساب شخصي واحد.",
+            "تتطلب ميزات الحي توثيق سكنك فيه، فلا تُدلِ بمعلومات غير صحيحة عن مكان سكنك.",
+            "يتطلب إنشاء الأندية وإدارتها أن يكون عمرك ١٨ سنة فأكثر."
+          ]
+        },
+        {
+          "h": "٢. لا تسامح مع المحتوى المسيء أو المستخدمين المسيئين",
+          "p": [
+            "لا تسامح إطلاقاً مع المحتوى المسيء أو السلوك المؤذي. يُمنع نشر محتوى يحض على الكراهية أو يتضمن تحرشاً أو محتوى جنسياً أو عنفاً أو تهديداً أو تشهيراً أو مخالفة للأنظمة أو انتهاكاً للخصوصية أو رسائل مزعجة أو احتيالاً أو تضليلاً، أو مشاركة معلومات خاصة لأي شخص (مثل عنوان المنزل أو رقم الجوال) دون إذنه. نقوم بتصفية المحتوى ومراجعة البلاغات وإزالة المحتوى وإيقاف الحسابات المخالفة أو إزالتها. نسعى لمعالجة البلاغات خلال ٢٤ ساعة."
+          ]
+        },
+        {
+          "h": "٣. محتواك",
+          "p": [
+            "أنت مالك ما تنشره، وتمنحنا الإذن بتخزينه وعرضه ومشاركته داخل حارتنا للجمهور الذي تختاره، فقط لتشغيل الخدمة. أنت مسؤول عما تنشره وعن امتلاكك حقوق الصور التي ترفعها."
+          ]
+        },
+        {
+          "h": "٤. لقاء الجيران",
+          "p": [
+            "الأنشطة والأندية والإعلانات ينظمها السكان وليس حارتنا. التقوا في أماكن عامة، واستخدم تقديرك، وأبلغ عن أي أمر غير آمن. حارتنا لا توثّق الهويات وليست مسؤولة عن اللقاءات أو التعاملات بين السكان خارج التطبيق."
+          ]
+        },
+        {
+          "h": "٥. الأندية",
+          "p": [
+            "يراجع فريق حارتنا طلبات الأندية قبل ظهورها، ولنا أن نوافق أو نطلب تعديلات أو نرفض أو نعلّق أو نسحب الموافقة على أي نادٍ في أي وقت حفاظاً على سلامة المجتمع."
+          ]
+        },
+        {
+          "h": "٦. السوق والاستعارة",
+          "p": ["الإعلانات والاتفاقات تتم بين السكان مباشرة. حارتنا لا تعالج المدفوعات ولا تأخذ عمولة ولا تضمن الأغراض."]
+        },
+        {
+          "h": "٧. إنهاء الحساب",
+          "p": ["يمكنك حذف حسابك في أي وقت من الإعدادات، ويحق لنا إيقاف أو إنهاء الحسابات المخالفة لهذه الشروط أو لإرشادات المجتمع."]
+        },
+        {
+          "h": "٨. إخلاء المسؤولية",
+          "p": [
+            "تُقدَّم حارتنا «كما هي». وبالقدر الذي تسمح به الأنظمة، لسنا مسؤولين عن الأضرار غير المباشرة أو عن محتوى وسلوك السكان الآخرين."
+          ]
+        },
+        {
+          "h": "٩. النظام الحاكم",
+          "p": ["تخضع هذه الشروط لأنظمة المملكة العربية السعودية. {{OPERATOR}}."]
+        },
+        {
+          "h": "١٠. التواصل",
+          "p": ["{{SUPPORT_EMAIL}} · داخل التطبيق: الإعدادات ← تواصل مع الدعم."]
+        }
+      ]
+    },
+    "guidelines": {
+      "title": "إرشادات المجتمع",
+      "sections": [
+        {
+          "p": [
+            "تنجح حارتنا عندما يتعامل الجيران كما يتعاملون وجهاً لوجه. تنطبق هذه الإرشادات على كل ما في التطبيق: المنشورات والتعليقات والرسائل والأندية والأنشطة والإعلانات والملفات الشخصية."
+          ]
+        },
+        {
+          "h": "كن جاراً طيباً",
+          "li": ["احترم الآخرين حتى عند الاختلاف.", "انشر ما يفيد حيّك أو يهمه.", "استخدم اسمك الحقيقي وصورة حقيقية أو بدون صورة."]
+        },
+        {
+          "h": "غير مسموح",
+          "li": [
+            "التحرش أو التنمر أو التهديد أو خطاب الكراهية أو الإساءة للدين أو الأصل أو الجنس أو الإعاقة أو أي فئة.",
+            "المحتوى الجنسي أو العاري أو العنيف أو الصادم.",
+            "مشاركة معلومات خاصة لأي شخص: عنوان المنزل أو الموقع الدقيق أو رقم الجوال أو الوثائق أو الصور دون إذنه.",
+            "الاحتيال والرسائل المزعجة والعروض المضللة والترويج التجاري غير المصرح.",
+            "السلع أو الأنشطة الممنوعة أو المخالفة لأنظمة المملكة.",
+            "انتحال شخصية الآخرين أو الادعاء بالسكن في حي آخر."
+          ]
+        },
+        {
+          "h": "السلامة عند اللقاء",
+          "li": [
+            "التقوا في أماكن عامة مثل الحدائق والساحات العامة ومراكز الأحياء.",
+            "يجب أن ينظم أنشطة الأطفال بالغون، وأن يحضرها الأطفال مع أولياء أمورهم.",
+            "لا ترسل مالاً مقدماً لشخص لم تقابله."
+          ]
+        },
+        {
+          "h": "أبلغ، احظر، وتابع",
+          "p": [
+            "استخدم «إبلاغ» على أي منشور أو تعليق أو رسالة أو ملف أو نشاط أو نادٍ، واستخدم «حظر» من الملف الشخصي لمنع أي شخص من التواصل معك، ويزيل الحظر أيضاً علاقة الجيرة. يراجع فريقنا البلاغات ويسعى للتعامل معها خلال ٢٤ ساعة، والمخالفات المتكررة أو الجسيمة تؤدي للإزالة من حارتنا."
+          ]
+        }
+      ]
+    },
+    "help": {
+      "title": "مركز المساعدة",
+      "sections": [
+        {
+          "h": "لماذا أحتاج لتوثيق حيّي؟",
+          "p": ["تعرض حارتنا محتوى كل حي لسكانه فقط. يتحقق التوثيق من موقعك مرة واحدة مقارنةً بحدود الحي الرسمية، ولا تُحفظ إحداثياتك."]
+        },
+        {
+          "h": "كيف تعمل ميزة الجيران؟",
+          "p": [
+            "افتح ملف أحد السكان واضغط «إضافة جار». تصبحان جيراناً فقط بعد قبوله، ويمكنك بعدها مراسلته. لا تظهر في «اكتشف الجيران» إلا إذا فعّلت «السماح للجيران بالعثور عليّ» من الإعدادات ← الجيران والخصوصية."
+          ]
+        },
+        {
+          "h": "كيف أنشئ نادياً؟",
+          "p": ["من «إنشاء» ← «إنشاء نادٍ». يجب أن يكون المنظم بعمر ١٨ سنة فأكثر، ويراجع فريق حارتنا كل نادٍ قبل ظهوره للجيران."]
+        },
+        {
+          "h": "كيف أبلغ عن شخص أو أحظره؟",
+          "p": ["اضغط ⋯ على الملف أو المنشور أو التعليق أو الرسالة أو النادي واختر «إبلاغ». ومن الملف الشخصي اختر «حظر» لإيقاف أي تواصل."]
+        },
+        {
+          "h": "كيف أحذف حسابي؟",
+          "p": ["الإعدادات ← حذف الحساب. يُحذف ملفك ومحتواك والرسائل التي أرسلتها وصورك، ولا يمكن التراجع."]
+        },
+        {
+          "h": "التواصل مع الدعم",
+          "p": ["داخل التطبيق: الإعدادات ← تواصل مع الدعم. البريد: {{SUPPORT_EMAIL}}."]
+        }
+      ]
+    },
+    "about": {
+      "title": "عن حارتنا",
+      "sections": [
+        {
+          "p": [
+            "تربط حارتنا السكان الموثّقين في الحي السعودي الواحد: أخبار الحي وأسئلته، والأنشطة والفعاليات، والأندية، وسوق الحي، والفزعة بين الجيران، والمفقودات، وبلاغات المشاكل — بالعربية والإنجليزية.",
+            "محتوى كل حي خاص بسكانه الموثّقين، والظهور للجيران اختياري، ولا يُعرض موقعك الدقيق أبداً."
+          ]
+        }
+      ]
+    },
+    "deletion": {
+      "title": "حذف الحساب",
+      "sections": [
+        {
+          "p": ["يمكنك حذف حسابك في حارتنا في أي وقت من داخل التطبيق."]
+        },
+        {
+          "h": "الطريقة",
+          "li": ["افتح حارتنا واذهب إلى الملف الشخصي ← الإعدادات.", "اضغط «حذف الحساب» وأكّد.", "يُحذف حسابك فوراً ويتم تسجيل خروجك."]
+        },
+        {
+          "h": "ما الذي يُحذف",
+          "li": [
+            "ملفك الشخصي وصورتك واهتماماتك وإعدادات الخصوصية وإقرار تاريخ الميلاد.",
+            "المنشورات والتعليقات والاستطلاعات والأنشطة التي تنظمها والإعلانات وطلبات المساعدة والمفقودات والبلاغات التي أنشأتها.",
+            "الرسائل التي أرسلتها والبلاغات التي قدمتها وعلاقات الجيران وطلباتها والدعوات والصور المرفوعة.",
+            "الأندية التي تنظمها تنتقل لعضو بالغ أو تُؤرشف."
+          ]
+        },
+        {
+          "h": "إذا لم تستطع فتح التطبيق",
+          "p": ["راسل {{SUPPORT_EMAIL}} من البريد المسجّل في حسابك وسنحذفه لك."]
+        }
+      ]
+    }
+  }
+}

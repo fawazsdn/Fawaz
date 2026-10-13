@@ -195,12 +195,17 @@ export default function SettingsScreen() {
 
         <SectionLabel title={t.settings.helpSafety} />
         <Row icon={Info} label={t.settings.help} onPress={() => router.push('/settings/info/help')} Chevron={Chevron} />
+        <Row icon={Info} label={t.support.title} onPress={() => router.push('/settings/support')} Chevron={Chevron} />
+        <Row icon={Info} label={t.support.guidelines} onPress={() => router.push('/settings/info/guidelines')} Chevron={Chevron} />
         <Row icon={Info} label={t.settings.terms} onPress={() => router.push('/settings/info/terms')} Chevron={Chevron} />
         <Row icon={Shield} label={t.settings.privacyPolicy} onPress={() => router.push('/settings/info/privacy')} Chevron={Chevron} />
 
         <Row icon={Info} label={t.settings.aboutHaratna} onPress={() => router.push('/settings/info/about')} Chevron={Chevron} />
 
         {isStaff ? <Row icon={Shield} label={t.moderation.title} onPress={() => router.push('/moderation')} Chevron={Chevron} /> : null}
+        {isStaff ? (
+          <Row icon={Shield} label={t.support.adminTitle} onPress={() => router.push('/admin/support')} Chevron={Chevron} />
+        ) : null}
         {user?.role === 'admin' ? (
           <Row icon={Shield} label={t.clubs.admin.entry} onPress={() => router.push('/admin/clubs')} Chevron={Chevron} />
         ) : null}

@@ -10,6 +10,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { isValidEmail, passwordProblem, signUpWithEmail } from '@/features/auth/supabaseAuth';
 import { routeAfterAuth } from '@/features/auth/routeAfterAuth';
+import { ConsentNotice } from '@/features/auth/ConsentNotice';
 
 export default function SignUpScreen() {
   const theme = useTheme();
@@ -26,6 +27,8 @@ export default function SignUpScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirm?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [consentError, setConsentError] = useState(false);
 
   const validate = () => {
     const next: typeof errors = {};
@@ -40,7 +43,9 @@ export default function SignUpScreen() {
 
   const onSubmit = async () => {
     setFormError(null);
-    if (!validate()) return;
+    const fieldsOk = validate();
+    setConsentError(!agreed);
+    if (!fieldsOk || !agreed) return;
     setPending(true);
     const outcome = await signUpWithEmail(email, password, locale);
     if (!outcome.ok) {
@@ -102,6 +107,15 @@ export default function SignUpScreen() {
       />
 
       {formError ? <Text style={[theme.text('bodySmall', theme.colors.danger), styles.center]}>{formError}</Text> : null}
+
+      <ConsentNotice
+        checked={agreed}
+        onToggle={() => {
+          setAgreed((v) => !v);
+          setConsentError(false);
+        }}
+        error={consentError}
+      />
 
       <Button label={t.auth.createAccount} onPress={onSubmit} loading={pending} disabled={pending} fullWidth size="lg" />
 

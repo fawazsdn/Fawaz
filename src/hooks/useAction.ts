@@ -13,6 +13,7 @@ export function useActionErrorMessage() {
       // Specific reasons raised by club/activity RPCs ("not_adult", "rate_limited", "invalid:name", ...).
       const reason = err instanceof ActionError ? err.reason : undefined;
       if (reason) {
+        if (reason === 'content_blocked') return t.errors.contentBlocked;
         const clubErrors = t.clubs.errors as Record<string, string>;
         if (clubErrors[reason]) return clubErrors[reason];
         const neighborErrors = t.neighbors.errors as Record<string, string>;

@@ -10,6 +10,7 @@ import { Button } from '@/components/Button';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { ConsentNotice } from '@/features/auth/ConsentNotice';
 import { isValidEmail, signInWithApple, signInWithEmail, signInWithGoogle, type AuthOutcome } from '@/features/auth/supabaseAuth';
 import { routeAfterAuth } from '@/features/auth/routeAfterAuth';
 
@@ -167,6 +168,7 @@ export default function SignInScreen() {
           icon={<LogIn size={17} color={theme.colors.textPrimary} />}
         />
       </View>
+      <ConsentNotice />
     </AuthShell>
   );
 }

@@ -1,0 +1,9 @@
+{
+  "CFBundleDisplayName": "Haratna",
+  "NSPhotoLibraryUsageDescription": "Haratna uses only the photos you pick, to share them in posts, activities, clubs or as your profile photo.",
+  "NSCameraUsageDescription": "Haratna only uses the camera if you choose to take a photo to share.",
+  "NSLocationWhenInUseUsageDescription": "Haratna uses your location once, when you ask, to confirm you are inside your neighborhood or to pin an approximate activity location. We don't track you or store your exact coordinates.",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "Haratna does not use your location in the background. It is used once, only when you ask, to confirm your neighborhood or pin an approximate activity location, and your exact coordinates are not stored.",
+  "NSLocationAlwaysUsageDescription": "Haratna does not use your location in the background. It is used once, only when you ask, to confirm your neighborhood or pin an approximate activity location, and your exact coordinates are not stored.",
+  "NSMotionUsageDescription": "Haratna does not use motion or fitness data."
+}

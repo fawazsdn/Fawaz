@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Bookmark, Share2 } from 'lucide-react-native';
+import { Bookmark, Flag, Share2 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
@@ -17,6 +18,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { ImageGallery } from '@/components/ImageGallery';
 import { UserRow } from '@/components/UserRow';
 import { IconButton } from '@/components/IconButton';
+import { ReportSheet } from '@/components/ReportSheet';
 
 export default function MarketplaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,6 +31,7 @@ export default function MarketplaceDetailScreen() {
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === listing?.neighborhoodId));
   const me = useCurrentUserId();
   const { run } = useAction();
+  const [reportOpen, setReportOpen] = useState(false);
 
   if (!listing) {
     return (
@@ -74,6 +77,11 @@ export default function MarketplaceDetailScreen() {
             >
               <Share2 size={19} color={theme.colors.textPrimary} />
             </IconButton>
+            {listing.sellerId !== me ? (
+              <IconButton accessibilityLabel={t.common.report} onPress={() => setReportOpen(true)}>
+                <Flag size={18} color={theme.colors.textPrimary} />
+              </IconButton>
+            ) : null}
           </View>
         }
       />
@@ -134,6 +142,7 @@ export default function MarketplaceDetailScreen() {
           </View>
         )}
       </ScrollView>
+      <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} targetType="listing" targetId={listing.id} />
     </View>
   );
 }

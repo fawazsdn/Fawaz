@@ -1,0 +1,23 @@
+[
+  { "id": "1-home", "screen": "Home tab (الرئيسية)", "ar": "حيك كله في مكان واحد", "en": "Your Neighborhood in One Place" },
+  {
+    "id": "2-activities",
+    "screen": "Activities tab, list with a few activities",
+    "ar": "اكتشف فعاليات وأنشطة حيك",
+    "en": "Discover Local Activities"
+  },
+  { "id": "3-clubs", "screen": "Explore → Clubs, or an approved club page", "ar": "انضم لأندية حيك", "en": "Join Neighborhood Clubs" },
+  {
+    "id": "4-neighbors",
+    "screen": "Explore → Neighbors (Discover or My Neighbors)",
+    "ar": "تعرّف على جيرانك",
+    "en": "Connect With Your Neighbors"
+  },
+  { "id": "5-map", "screen": "Map tab with activity pins", "ar": "اكتشف الأماكن القريبة منك", "en": "Explore Your Neighborhood" },
+  {
+    "id": "6-community",
+    "screen": "Community / neighborhood feed with a post and poll",
+    "ar": "مع بعض، حارتنا أحلى",
+    "en": "Better Together"
+  }
+]

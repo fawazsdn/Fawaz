@@ -1,0 +1,78 @@
+<!doctype html>
+<!-- App Store screenshot frame. Rendered by compose.mjs at 1320x2868 (6.9")
+     or 1284x2778 (6.5"). It only frames a REAL capture from raw/; it never
+     draws app UI itself. -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: var(--w);
+        height: var(--h);
+        overflow: hidden;
+      }
+      body {
+        background: linear-gradient(180deg, #0d4939 0%, #07352a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: 'Tajawal', 'Plus Jakarta Sans', 'Geeza Pro', 'SF Arabic', system-ui, sans-serif;
+        color: #f4efe3;
+      }
+      .cap {
+        height: 22%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0 7%;
+      }
+      h1 {
+        margin: 0;
+        font-size: calc(var(--w) * 0.074);
+        line-height: 1.25;
+        font-weight: 800;
+      }
+      .rule {
+        width: 14%;
+        height: calc(var(--w) * 0.008);
+        background: #d2b078;
+        border-radius: 99px;
+        margin-top: 3%;
+      }
+      .phone {
+        width: 80%;
+        flex: 1;
+        margin-bottom: -6%;
+        border-radius: calc(var(--w) * 0.07) calc(var(--w) * 0.07) 0 0;
+        overflow: hidden;
+        border: calc(var(--w) * 0.012) solid #83977a;
+        border-bottom: 0;
+        background: #f4efe3;
+      }
+      .phone img {
+        width: 100%;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cap">
+      <h1 id="t"></h1>
+      <div class="rule"></div>
+    </div>
+    <div class="phone"><img id="s" alt="" /></div>
+    <script>
+      const q = new URLSearchParams(location.search);
+      document.documentElement.style.setProperty('--w', q.get('w') + 'px');
+      document.documentElement.style.setProperty('--h', q.get('h') + 'px');
+      document.documentElement.lang = q.get('lang');
+      document.documentElement.dir = q.get('lang') === 'ar' ? 'rtl' : 'ltr';
+      document.getElementById('t').textContent = q.get('caption');
+      document.getElementById('s').src = q.get('shot');
+    </script>
+  </body>
+</html>

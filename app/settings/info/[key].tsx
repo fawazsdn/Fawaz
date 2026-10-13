@@ -1,59 +1,48 @@
 import { ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { AppHeader } from '@/components/AppHeader';
+import { Button } from '@/components/Button';
+import { LEGAL_DOCS, LEGAL_UPDATED, legalDoc, type LegalDoc } from '@/content/legal';
+import { formatFullDate } from '@/utils/format';
 
-const CONTENT_AR: Record<string, { title: string; body: string }> = {
-  about: {
-    title: 'عن حارتنا',
-    body: 'حارتنا تطبيق مجتمعي سعودي يربط سكان الحي الواحد ببعض. هذا إصدار تجريبي للواجهة الأمامية فقط، وجميع البيانات هنا وهمية لأغراض العرض.',
-  },
-  help: {
-    title: 'المساعدة',
-    body: 'لأي استفسار حول استخدام التطبيق، يمكنك التواصل مع فريق الدعم عبر البريد الإلكتروني. هذا محتوى تجريبي.',
-  },
-  terms: {
-    title: 'الشروط والأحكام',
-    body: 'هذا نص تجريبي للشروط والأحكام. في النسخة الفعلية سيتم عرض الشروط الكاملة لاستخدام التطبيق.',
-  },
-  privacy: {
-    title: 'سياسة الخصوصية',
-    body: 'نحترم خصوصيتك. عنوان منزلك لا يُعرض أبدًا للعامة، ونعرض فقط الموقع التقريبي داخل الحي. هذا نص تجريبي.',
-  },
-};
-
-const CONTENT_EN: Record<string, { title: string; body: string }> = {
-  about: {
-    title: 'About Haratna',
-    body: 'Haratna is a Saudi neighborhood community app. This is a frontend-only demo build — all data here is mock content for demonstration purposes.',
-  },
-  help: {
-    title: 'Help',
-    body: 'For any question about using the app, reach out to our support team by email. This is demo content.',
-  },
-  terms: {
-    title: 'Terms & Conditions',
-    body: 'This is placeholder terms & conditions text. The production version will show the full terms of use.',
-  },
-  privacy: {
-    title: 'Privacy Policy',
-    body: 'We respect your privacy. Your home address is never shown publicly — only an approximate location within your neighborhood. This is placeholder text.',
-  },
-};
-
+/** Privacy policy, terms, community guidelines, help, about and account deletion — same text as the website. */
 export default function InfoScreen() {
   const { key } = useLocalSearchParams<{ key: string }>();
   const theme = useTheme();
-  const { locale } = useI18n();
-  const content = (locale === 'ar' ? CONTENT_AR : CONTENT_EN)[key ?? 'about'] ?? CONTENT_AR.about!;
+  const { t, locale } = useI18n();
+  const router = useRouter();
+  const doc: LegalDoc = (LEGAL_DOCS as string[]).includes(key ?? '') ? (key as LegalDoc) : 'about';
+  const { title, sections } = legalDoc(doc, locale);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={content.title} fallbackRoute="/settings" />
-      <ScrollView contentContainerStyle={{ padding: theme.spacing.md }}>
-        <Text style={theme.text('body', theme.colors.textSecondary)}>{content.body}</Text>
+      <AppHeader title={title} fallbackRoute="/settings" />
+      <ScrollView contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 48, gap: 14 }}>
+        {sections.map((s, i) => (
+          <View key={i} style={{ gap: 6 }}>
+            {s.h ? <Text style={theme.text('title')}>{s.h}</Text> : null}
+            {s.p?.map((p, j) => (
+              <Text key={j} style={theme.text('body', theme.colors.textSecondary)}>
+                {p}
+              </Text>
+            ))}
+            {s.li?.map((li, j) => (
+              <Text key={j} style={theme.text('body', theme.colors.textSecondary)}>
+                {'•  '}
+                {li}
+              </Text>
+            ))}
+          </View>
+        ))}
+        {doc === 'help' || doc === 'deletion' ? (
+          <Button label={t.support.title} onPress={() => router.push('/settings/support')} variant="outline" />
+        ) : null}
+        <Text style={theme.text('caption', theme.colors.textMuted)}>
+          {t.support.lastUpdated} {formatFullDate(`${LEGAL_UPDATED}T12:00:00Z`, locale)}
+        </Text>
       </ScrollView>
     </View>
   );

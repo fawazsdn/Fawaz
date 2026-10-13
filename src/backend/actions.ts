@@ -1311,3 +1311,65 @@ export async function inviteNeighborToClub(clubId: string, userId: string): Prom
     return !!check(await supabase.rpc('invite_neighbor_to_club', { target_club: clubId, invitee: userId }));
   });
 }
+
+// --------------------------------------------------------------- support --
+
+export type SupportCategory = 'account' | 'bug' | 'safety' | 'privacy' | 'deletion' | 'other';
+
+export interface SupportRequest {
+  id: string;
+  userId: string;
+  category: SupportCategory;
+  message: string;
+  status: 'open' | 'answered' | 'closed';
+  response?: string;
+  createdAt: string;
+  respondedAt?: string;
+}
+
+function mapSupport(r: Record<string, any>): SupportRequest {
+  return {
+    id: r.id,
+    userId: r.user_id,
+    category: r.category,
+    message: r.message,
+    status: r.status,
+    response: r.response ?? undefined,
+    createdAt: r.created_at,
+    respondedAt: r.responded_at ?? undefined,
+  };
+}
+
+export async function submitSupportRequest(category: SupportCategory, message: string): Promise<string> {
+  return run(
+    async () => {
+      me();
+      return check(await supabase.rpc('submit_support_request', { category, message: message.trim() })) as string;
+    },
+    { resync: false },
+  );
+}
+
+/** Residents see their own requests; staff see all (RLS). */
+export async function fetchSupportRequests(): Promise<SupportRequest[]> {
+  return run(
+    async () => {
+      me();
+      const rows = check(
+        await supabase.from('support_requests').select('*').order('created_at', { ascending: false }).limit(100),
+      ) as Record<string, any>[];
+      return (rows ?? []).map(mapSupport);
+    },
+    { resync: false },
+  );
+}
+
+export async function respondSupportRequest(requestId: string, response: string, close = false) {
+  return run(
+    async () => {
+      me();
+      check(await supabase.rpc('respond_support_request', { request: requestId, response: response.trim(), close }));
+    },
+    { resync: false },
+  );
+}

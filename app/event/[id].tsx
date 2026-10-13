@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import {
   Calendar,
   Clock,
+  Flag,
   Map as MapIcon,
   MapPin,
   MessageCircle,
@@ -37,6 +38,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { SkeletonCardRow } from '@/components/Skeleton';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Chip } from '@/components/Chip';
+import { ReportSheet } from '@/components/ReportSheet';
 import { CATEGORY_ICON, eventState } from '@/features/events/EventCard';
 import { eventCategoryBadge } from '@/features/events/categories';
 
@@ -60,6 +62,7 @@ export default function EventDetailScreen() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelScope, setCancelScope] = useState<'one' | 'future'>('one');
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const myInvitation = useStore((s) => s.eventInvitations.find((i) => i.eventId === id && i.inviteeId === me && i.status === 'pending'));
   const inviter = useUser(myInvitation?.inviterId);
 
@@ -121,9 +124,16 @@ export default function EventDetailScreen() {
         showBack
         fallbackRoute="/events"
         right={
-          <IconButton accessibilityLabel={t.common.share} onPress={shareEvent}>
-            <Share2 size={19} color={theme.colors.textPrimary} />
-          </IconButton>
+          <View style={[theme.row(), { gap: 4 }]}>
+            <IconButton accessibilityLabel={t.common.share} onPress={shareEvent}>
+              <Share2 size={19} color={theme.colors.textPrimary} />
+            </IconButton>
+            {!isOwn ? (
+              <IconButton accessibilityLabel={t.common.report} onPress={() => setReportOpen(true)}>
+                <Flag size={18} color={theme.colors.textPrimary} />
+              </IconButton>
+            ) : null}
+          </View>
         }
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
@@ -309,6 +319,7 @@ export default function EventDetailScreen() {
         </View>
       </ScrollView>
 
+      <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} targetType="event" targetId={event.id} />
       <InviteNeighborsSheet
         visible={inviteOpen}
         onClose={() => setInviteOpen(false)}

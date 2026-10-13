@@ -1,5 +1,9 @@
 # Haratna — next TestFlight build checklist
 
+> App Store launch steps (metadata, review access, legal, screenshots,
+> website) are in [`docs/app-store/LAUNCH-READINESS.md`](app-store/LAUNCH-READINESS.md).
+> This file covers Supabase dashboard and EAS build setup.
+
 ## 1. Supabase dashboard (project `Haratna`, ref `ckqwziutmqohihrenstz`)
 
 These can't be set from the app or via SQL; do them once in the dashboard.
@@ -11,7 +15,7 @@ These can't be set from the app or via SQL; do them once in the dashboard.
 
 **Authentication → Sign In / Providers → Email**
 
-- Enable *Email* provider, keep **Confirm email = ON**.
+- Enable _Email_ provider, keep **Confirm email = ON**.
 - Minimum password length ≥ 8 (the app also enforces 8 + letter + number).
 
 **Authentication → Emails → SMTP Settings — required before inviting real users.**
@@ -27,7 +31,7 @@ needs the Apple provider enabled with `sa.haratna.app` as an authorized client I
 
 **Clubs review team (required before clubs can go live).** Club applications
 are approved only by accounts whose `profiles.app_role = 'admin'`. No account
-has that role yet, so every application stays *Under review* until you
+has that role yet, so every application stays _Under review_ until you
 promote the Haratna reviewers. In **SQL Editor** (runs as the database owner,
 which the privilege trigger allows; the app itself can never do this):
 
