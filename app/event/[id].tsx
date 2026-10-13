@@ -2,15 +2,28 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { Calendar, Clock, Map as MapIcon, MapPin, MessageCircle, Pencil, Repeat, Share2, Shield, Users } from 'lucide-react-native';
+import {
+  Calendar,
+  Clock,
+  Map as MapIcon,
+  MapPin,
+  MessageCircle,
+  Pencil,
+  Repeat,
+  Share2,
+  Shield,
+  UserPlus,
+  Users,
+} from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, useCurrentUserId } from '@/store/useStore';
 import { useUser } from '@/hooks/useNeighborhood';
 import { useAction } from '@/hooks/useAction';
-import { cancelActivity, getOrCreateDirectConversation, joinEvent, leaveEvent } from '@/backend/actions';
-import { formatDay, formatTimeRange, localizeDigits } from '@/utils/format';
+import { cancelActivity, getOrCreateDirectConversation, joinEvent, leaveEvent, respondEventInvitation } from '@/backend/actions';
+import { InviteNeighborsSheet } from '@/features/neighbors/InviteNeighborsSheet';
+import { displayName, formatDay, formatTimeRange, localizeDigits } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 import { shareContent } from '@/utils/share';
 import { links } from '@/config/links';
@@ -46,6 +59,9 @@ export default function EventDetailScreen() {
   );
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelScope, setCancelScope] = useState<'one' | 'future'>('one');
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const myInvitation = useStore((s) => s.eventInvitations.find((i) => i.eventId === id && i.inviteeId === me && i.status === 'pending'));
+  const inviter = useUser(myInvitation?.inviterId);
 
   if (!event) {
     return (
@@ -83,7 +99,7 @@ export default function EventDetailScreen() {
   };
 
   const messageHost = async () => {
-    const res = await run(() => getOrCreateDirectConversation(event.hostId));
+    const res = await run(() => getOrCreateDirectConversation(event.hostId, { type: 'event', id: event.id }));
     if (res.ok) router.push(`/messages/${res.value}`);
   };
 
@@ -197,6 +213,27 @@ export default function EventDetailScreen() {
             </Text>
           ) : null}
 
+          {myInvitation && canRsvp && !mine ? (
+            <Card style={{ marginTop: 16 }}>
+              <Text style={[theme.text('bodySmall'), { marginBottom: 10 }]}>
+                {t.neighbors.invitationFrom.replace('{name}', inviter ? displayName(inviter) : t.common.neighbor)}
+              </Text>
+              <View style={[theme.row(), { gap: 8 }]}>
+                <Button
+                  label={t.neighbors.acceptInvite}
+                  onPress={() => run(() => respondEventInvitation(myInvitation.id, true))}
+                  loading={pending}
+                />
+                <Button
+                  label={t.neighbors.declineInvite}
+                  variant="outline"
+                  disabled={pending}
+                  onPress={() => run(() => respondEventInvitation(myInvitation.id, false))}
+                />
+              </View>
+            </Card>
+          ) : null}
+
           <View style={{ marginTop: 16, gap: 10 }}>
             {canRsvp && !isOwn && blockedMembersOnly && !mine ? (
               <>
@@ -216,6 +253,15 @@ export default function EventDetailScreen() {
               ) : (
                 <Button label={joinLabel} onPress={onJoin} loading={pending} fullWidth size="lg" />
               )
+            ) : null}
+            {canRsvp && (isOwn || mine) ? (
+              <Button
+                label={t.neighbors.inviteNeighbors}
+                onPress={() => setInviteOpen(true)}
+                variant="outline"
+                icon={<UserPlus size={16} color={theme.colors.primary} />}
+                fullWidth
+              />
             ) : null}
             <Button
               label={t.events.share}
@@ -263,6 +309,12 @@ export default function EventDetailScreen() {
         </View>
       </ScrollView>
 
+      <InviteNeighborsSheet
+        visible={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        eventId={event.id}
+        excludeUserIds={event.attendees.filter((a) => a.status === 'going' || a.status === 'waitlisted').map((a) => a.userId)}
+      />
       <ConfirmationModal
         visible={cancelOpen}
         title={t.events.cancelEvent}

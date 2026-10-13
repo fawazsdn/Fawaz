@@ -10,9 +10,9 @@ import { localizeDigits } from '@/utils/format';
 import { useStore } from '@/store/useStore';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { SectionHeader } from '@/components/SectionHeader';
-import { UserRow } from '@/components/UserRow';
 import { AlertCard } from '@/features/community/AlertCard';
 import { ClubCard } from '@/features/clubs/ClubCard';
+import { MeetNeighborsCard } from '@/features/home/MeetNeighborsCard';
 import { discoverableClubs } from '@/features/clubs/clubLogic';
 
 export default function CommunityScreen() {
@@ -26,12 +26,10 @@ export default function CommunityScreen() {
 
   // Raw state + useMemo, not filter() inside the selector — see HomeHeader
   // for why (getSnapshot must return a stable reference across renders).
-  const allUsers = useStore((s) => s.users);
   const allAlerts = useStore((s) => s.alerts);
   const allClubs = useStore((s) => s.clubs);
   const allInstitutions = useStore((s) => s.institutions);
 
-  const members = useMemo(() => allUsers.filter((u) => u.neighborhoodId === neighborhood?.id).slice(0, 4), [allUsers, neighborhood?.id]);
   const alerts = useMemo(() => allAlerts.filter((a) => a.neighborhoodId === neighborhood?.id), [allAlerts, neighborhood?.id]);
   const clubs = useMemo(() => discoverableClubs(allClubs, neighborhood?.id ?? null), [allClubs, neighborhood?.id]);
   const institutions = useMemo(
@@ -79,11 +77,9 @@ export default function CommunityScreen() {
         ) : null}
 
         <View style={{ marginTop: 8 }}>
-          <SectionHeader title={t.community.members} onSeeAll={() => router.push('/directory')} />
+          {/* Residents are listed only through opt-in Neighbors discovery, never as an implicit directory. */}
           <View style={{ paddingHorizontal: theme.spacing.md }}>
-            {members.map((m) => (
-              <UserRow key={m.id} user={m} onPress={() => router.push(`/profile/${m.id}`)} />
-            ))}
+            <MeetNeighborsCard />
           </View>
         </View>
 

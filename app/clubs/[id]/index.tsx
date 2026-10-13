@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { CalendarClock, Flag, MapPin, MessageCircle, Plus, Settings2, Share2, Trash2, Users } from 'lucide-react-native';
+import { CalendarClock, Flag, MapPin, MessageCircle, Plus, Settings2, Share2, Trash2, UserPlus, Users } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
@@ -24,6 +24,7 @@ import { ReportSheet } from '@/components/ReportSheet';
 import { SkeletonCardRow } from '@/components/Skeleton';
 import { UserRow } from '@/components/UserRow';
 import { EventCard } from '@/features/events/EventCard';
+import { InviteNeighborsSheet } from '@/features/neighbors/InviteNeighborsSheet';
 import {
   CLUB_ICON,
   clubCategoryLabel,
@@ -57,6 +58,7 @@ export default function ClubDetailScreen() {
   const [confirm, setConfirm] = useState<'leave' | 'archive' | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const membership = club ? myClubMembership(memberships, club.id, me) : undefined;
   const state = clubMemberState(membership);
@@ -223,6 +225,16 @@ export default function ClubDetailScreen() {
           </View>
 
           <View style={{ gap: 10 }}>{membershipAction()}</View>
+
+          {active && approved ? (
+            <Button
+              label={t.neighbors.inviteToClub}
+              onPress={() => setInviteOpen(true)}
+              variant="ghost"
+              icon={<UserPlus size={16} color={theme.colors.primary} />}
+              fullWidth
+            />
+          ) : null}
 
           {active && conversation && approved ? (
             <Button
@@ -392,6 +404,14 @@ export default function ClubDetailScreen() {
             run(() => leaveClub(club.id));
           }
         }}
+      />
+      <InviteNeighborsSheet
+        visible={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        clubId={club.id}
+        excludeUserIds={memberships
+          .filter((m) => m.clubId === club.id && (m.status === 'active' || m.status === 'pending'))
+          .map((m) => m.userId)}
       />
       <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} targetType="group" targetId={club.id} />
     </KeyboardAvoidingView>

@@ -53,7 +53,7 @@ export default function HelpRequestDetailScreen() {
 
   const messageRequester = async () => {
     setConfirmOpen(false);
-    const res = await run(() => getOrCreateDirectConversation(request.requesterId));
+    const res = await run(() => getOrCreateDirectConversation(request.requesterId, { type: 'help', id: request.id }));
     if (res.ok) router.push(`/messages/${res.value}`);
   };
 

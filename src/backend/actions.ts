@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId, useStore } from '@/store/useStore';
 import type {
+  DiscoveredNeighbor,
+  Interest,
+  NeighborProfileInfo,
+  NeighborSettings,
+  NeighborState,
+  User,
   Club,
   ClubCategory,
   ClubMembershipType,
@@ -23,7 +29,7 @@ import type {
   ReportTargetType,
 } from '@/models';
 import { resolveMediaUrls, uploadAvatar, uploadCommunityImage, uploadCommunityImages } from './media';
-import { mapClub, requestSync } from './sync';
+import { isInterest, mapClub, mapNeighborSettings, mapProfile, requestSync } from './sync';
 
 /**
  * Every mutation in the app. Each one writes to Supabase (RLS decides what's
@@ -690,10 +696,25 @@ export async function markLostFoundStatus(id: string, status: LostFoundStatus) {
 
 // --------------------------------------------------------------- messaging --
 
-export async function getOrCreateDirectConversation(otherUserId: string): Promise<string> {
+/** What lets two residents start a direct conversation without being connected neighbors. */
+export type MessageContext = { type: 'event' | 'listing' | 'help' | 'borrow' | 'lost_found'; id: string };
+
+/**
+ * Opens (or reuses) a direct conversation. A new thread needs an accepted
+ * neighbor connection — or a context the other resident created, such as
+ * their activity or listing. A pending neighbor request never grants
+ * messaging (enforced by start_direct_conversation on the server).
+ */
+export async function getOrCreateDirectConversation(otherUserId: string, context?: MessageContext): Promise<string> {
   return run(async () => {
     me();
-    const convo = check(await supabase.rpc('get_or_create_direct_conversation', { other_user_id: otherUserId })) as { id: string };
+    const convo = check(
+      await supabase.rpc('start_direct_conversation', {
+        other_user_id: otherUserId,
+        context_type: context?.type ?? null,
+        context_id: context?.id ?? null,
+      }),
+    ) as { id: string };
     return convo.id;
   });
 }
@@ -1128,4 +1149,165 @@ export async function sendClubInactivityReminder(clubId: string) {
     },
     { resync: false },
   );
+}
+
+// -------------------------------------------------------------- neighbors --
+// Connections are mutual and server-enforced: a request creates nothing until
+// the recipient accepts it. Discovery is opt-in (neighbor_settings).
+
+export async function sendNeighborRequest(userId: string): Promise<NeighborState> {
+  return run(async () => {
+    me();
+    return check(await supabase.rpc('send_neighbor_request', { target: userId })) as NeighborState;
+  });
+}
+
+export async function cancelNeighborRequest(userId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('cancel_neighbor_request', { target: userId }));
+  });
+}
+
+export async function respondNeighborRequest(requestId: string, accept: boolean) {
+  return run(async () => {
+    me();
+    return check(await supabase.rpc('respond_neighbor_request', { request: requestId, accept })) as string;
+  });
+}
+
+export async function removeNeighbor(userId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('remove_neighbor', { target: userId }));
+  });
+}
+
+export async function discoverNeighbors(search?: string): Promise<DiscoveredNeighbor[]> {
+  return run(
+    async () => {
+      me();
+      const rows = (check(await supabase.rpc('discover_neighbors', { search: search?.trim() || null, max_results: 60 })) ?? []) as Record<
+        string,
+        any
+      >[];
+      return rows.map((r) => ({
+        userId: r.user_id,
+        firstName: r.first_name ?? '',
+        lastName: r.last_name ?? '',
+        avatarUrl: r.avatar_url ?? undefined,
+        bio: r.bio ?? undefined,
+        sharedInterests: ((r.shared_interests ?? []) as string[]).filter(isInterest),
+        mutualCount: r.mutual_count ?? null,
+        state: r.state,
+      }));
+    },
+    { resync: false },
+  );
+}
+
+export async function fetchNeighborProfile(userId: string): Promise<NeighborProfileInfo | null> {
+  return run(
+    async () => {
+      me();
+      const r = check(await supabase.rpc('neighbor_profile', { target: userId })) as Record<string, any> | null;
+      if (!r) return null;
+      return {
+        state: r.state,
+        incomingRequestId: r.incoming_request_id ?? null,
+        acceptsRequests: r.accepts_requests !== false,
+        neighborCount: r.neighbor_count ?? null,
+        mutualCount: r.mutual_count ?? null,
+        sharedInterests: ((r.shared_interests ?? []) as string[]).filter(isInterest),
+        sharedClubs: (r.shared_clubs ?? []) as { id: string; name: string }[],
+        canMessage: !!r.can_message,
+      };
+    },
+    { resync: false },
+  );
+}
+
+/** Loads one profile the resident is allowed to see (RLS) into the store, e.g. from discovery. */
+export async function fetchProfile(userId: string): Promise<User | null> {
+  return run(
+    async () => {
+      me();
+      const [profileRes, interestsRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', userId).is('deleted_at', null).maybeSingle(),
+        supabase.from('user_interests').select('interests').eq('user_id', userId).maybeSingle(),
+      ]);
+      const row = check(profileRes) as Record<string, any> | null;
+      if (!row) return null;
+      const { session, users } = useStore.getState();
+      const user = mapProfile(row, {
+        isSelf: row.id === session.supabaseUserId,
+        neighborhoodId: session.neighborhoodId ?? '',
+        verification: 'verified',
+        eventsHosted: 0,
+        neighborsHelped: 0,
+        thanksReceived: 0,
+      });
+      const existing = users.find((u) => u.id === userId);
+      const merged = existing ? { ...user, stats: existing.stats } : user;
+      useStore.getState().applyEntities({ users: [...users.filter((u) => u.id !== userId), merged] });
+      useStore
+        .getState()
+        .setProfileInterests(userId, (((interestsRes.data as Record<string, any> | null)?.interests ?? []) as string[]).filter(isInterest));
+      return merged;
+    },
+    { resync: false },
+  );
+}
+
+export async function updateNeighborSettings(patch: Partial<NeighborSettings>) {
+  return run(async () => {
+    me();
+    const p: Record<string, boolean> = {};
+    if (patch.discoverable !== undefined) p.discoverable = patch.discoverable;
+    if (patch.allowRequests !== undefined) p.allow_requests = patch.allowRequests;
+    if (patch.showNeighborCount !== undefined) p.show_neighbor_count = patch.showNeighborCount;
+    if (patch.showInterests !== undefined) p.show_interests = patch.showInterests;
+    if (patch.showSharedClubs !== undefined) p.show_shared_clubs = patch.showSharedClubs;
+    if (patch.allowNeighborMessages !== undefined) p.allow_neighbor_messages = patch.allowNeighborMessages;
+    const row = check(await supabase.rpc('update_neighbor_settings', { p })) as Record<string, any>;
+    useStore.getState().applyEntities({ neighborSettings: mapNeighborSettings(row) });
+  });
+}
+
+export async function setMyInterests(interests: Interest[]) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('set_my_interests', { interests }));
+    useStore.getState().applyEntities({ myInterests: interests });
+  });
+}
+
+/** Invites connected neighbors; the server skips anyone ineligible and never enrolls them. */
+export async function inviteNeighborsToEvent(eventId: string, userIds: string[]): Promise<number> {
+  return run(async () => {
+    me();
+    return Number(check(await supabase.rpc('invite_neighbors_to_event', { target_event: eventId, invitees: userIds })) ?? 0);
+  });
+}
+
+export async function respondEventInvitation(invitationId: string, accept: boolean) {
+  return run(async () => {
+    me();
+    return check(await supabase.rpc('respond_event_invitation', { invitation: invitationId, accept })) as string;
+  });
+}
+
+export async function cancelEventInvitation(invitationId: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('cancel_event_invitation', { invitation: invitationId }));
+  });
+}
+
+/** Returns false when the neighbor was already invited or is already in the club. */
+export async function inviteNeighborToClub(clubId: string, userId: string): Promise<boolean> {
+  return run(async () => {
+    me();
+    return !!check(await supabase.rpc('invite_neighbor_to_club', { target_club: clubId, invitee: userId }));
+  });
 }

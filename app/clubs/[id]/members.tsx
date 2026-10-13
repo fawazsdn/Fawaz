@@ -7,7 +7,14 @@ import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useCurrentUserId, useStore } from '@/store/useStore';
 import { useAction } from '@/hooks/useAction';
-import { removeClubMember, respondJoinRequest, setClubMemberRole, transferClubOwnership, unbanClubMember } from '@/backend/actions';
+import {
+  removeClubMember,
+  respondJoinRequest,
+  sendNeighborRequest,
+  setClubMemberRole,
+  transferClubOwnership,
+  unbanClubMember,
+} from '@/backend/actions';
 import type { ClubMembership, User } from '@/models';
 import { displayName, localizeDigits } from '@/utils/format';
 import { ActionSheet, type ActionSheetItem } from '@/components/ActionSheet';
@@ -51,6 +58,10 @@ export default function ClubMembersScreen() {
   const active = useMemo(() => rows.filter((m) => m.status === 'active').sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]), [rows]);
   const requests = useMemo(() => rows.filter((m) => m.status === 'pending'), [rows]);
   const banned = useMemo(() => rows.filter((m) => m.status === 'banned'), [rows]);
+  const connections = useStore((s) => s.neighborConnections);
+  const neighborRequests = useStore((s) => s.neighborRequests);
+  const connectedIds = useMemo(() => new Set(connections.map((c) => c.userId)), [connections]);
+  const requestedIds = useMemo(() => new Set(neighborRequests.flatMap((r) => [r.requesterId, r.recipientId])), [neighborRequests]);
   const userOf = (uid: string): User | undefined => users.find((u) => u.id === uid);
   const nameOf = (uid: string) => {
     const u = userOf(uid);
@@ -160,6 +171,14 @@ export default function ClubMembersScreen() {
                 <IconButton accessibilityLabel={t.common.more} onPress={() => setMenuFor(m)}>
                   <MoreHorizontal size={18} color={theme.colors.textMuted} />
                 </IconButton>
+              ) : m.userId !== me && !connectedIds.has(m.userId) && !requestedIds.has(m.userId) ? (
+                <Button
+                  label={t.neighbors.addNeighbor}
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  onPress={() => run(() => sendNeighborRequest(m.userId))}
+                />
               ) : undefined,
             ),
           )}

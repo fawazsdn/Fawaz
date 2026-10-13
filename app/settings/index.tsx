@@ -138,6 +138,7 @@ export default function SettingsScreen() {
         <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${me}?tab=activity`)} Chevron={Chevron} />
         <Row icon={CalendarDays} label={t.settings.myEvents} onPress={() => router.push(`/profile/${me}?tab=events`)} Chevron={Chevron} />
         <Row icon={Bookmark} label={t.settings.saved} onPress={() => router.push('/saved')} Chevron={Chevron} />
+        <Row icon={Users} label={t.neighbors.myNeighbors} onPress={() => router.push('/neighbors?tab=mine')} Chevron={Chevron} />
         <Row icon={Users} label={t.clubs.myClubs} onPress={() => router.push('/clubs/mine')} Chevron={Chevron} />
         <Row icon={HandCoins} label={t.marketplace.title} onPress={() => router.push('/marketplace')} Chevron={Chevron} />
         <Row icon={Gift} label={t.invite.title} onPress={() => router.push('/invite')} Chevron={Chevron} />
@@ -171,6 +172,7 @@ export default function SettingsScreen() {
           value={settings.activityVisible}
           onChange={(v) => setSettings({ activityVisible: v })}
         />
+        <Row icon={Shield} label={t.neighbors.privacy.title} onPress={() => router.push('/settings/neighbors')} Chevron={Chevron} />
         <Row icon={UserX} label={t.settings.blockedUsers} onPress={() => router.push('/settings/blocked-users')} Chevron={Chevron} />
 
         <Row

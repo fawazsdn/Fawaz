@@ -13,6 +13,11 @@ import type {
   ClubMembership,
   ClubReviewDecision,
   CommunityEvent,
+  EventInvitation,
+  Interest,
+  NeighborConnection,
+  NeighborRequest,
+  NeighborSettings,
   Conversation,
   HelpRequest,
   Institution,
@@ -112,6 +117,15 @@ export interface EntityState {
   clubAnnouncements: ClubAnnouncement[];
   /** Review history for the resident's own applications. */
   clubDecisions: ClubReviewDecision[];
+  /** My accepted neighbor connections (private to me). */
+  neighborConnections: NeighborConnection[];
+  /** Pending requests I sent or received. */
+  neighborRequests: NeighborRequest[];
+  /** My own privacy settings; null until loaded (server defaults apply). */
+  neighborSettings: NeighborSettings | null;
+  myInterests: Interest[];
+  /** Activity invitations I sent or received. */
+  eventInvitations: EventInvitation[];
   reputationEvents: ReputationEvent[];
   blockedUserIds: string[];
   mutedUserIds: string[];
@@ -150,6 +164,9 @@ interface AppState extends EntityState {
   setSync: (partial: Partial<AppState['sync']>) => void;
   applyEntities: (partial: Partial<EntityState>) => void;
   setReferral: (partial: Partial<ReferralStats>) => void;
+  /** Other residents' public interests, cached when their profile is opened. */
+  profileInterests: Record<string, Interest[]>;
+  setProfileInterests: (userId: string, interests: Interest[]) => void;
 
   // -- selectors --
   currentUser: () => User | undefined;
@@ -206,6 +223,11 @@ export function emptyEntities(): EntityState {
     clubMemberships: [],
     clubAnnouncements: [],
     clubDecisions: [],
+    neighborConnections: [],
+    neighborRequests: [],
+    neighborSettings: null,
+    myInterests: [],
+    eventInvitations: [],
     reputationEvents: [],
     blockedUserIds: [],
     mutedUserIds: [],
@@ -314,11 +336,14 @@ export const useStore = create<AppState>()(
           session: { ...initialSession, onboardingCompleted: s.session.onboardingCompleted },
           sync: { status: 'idle', lastSyncedAt: null, error: null },
           referral: { invitesSent: 0, joinedCount: null },
+          profileInterests: {},
         })),
 
       setSync: (partial) => set((s) => ({ sync: { ...s.sync, ...partial } })),
       applyEntities: (partial) => set(partial),
       setReferral: (partial) => set((s) => ({ referral: { ...s.referral, ...partial } })),
+      profileInterests: {},
+      setProfileInterests: (userId, interests) => set((s) => ({ profileInterests: { ...s.profileInterests, [userId]: interests } })),
 
       currentUser: () => {
         const id = get().session.supabaseUserId;

@@ -12,6 +12,8 @@ import type {
   Comment,
   CommunityEvent,
   Club,
+  Interest,
+  NeighborSettings,
   ClubAnnouncement,
   ClubMembership,
   ClubReviewDecision,
@@ -400,6 +402,10 @@ export async function syncAll(): Promise<void> {
     //     any review state (admins also see every club, for review).
     await loadClubs(entities, me);
 
+    // 4c. Neighbors: my connections, open requests, settings, interests and
+    //     activity invitations. RLS limits every table to rows I'm a party to.
+    await loadNeighbors(entities, me);
+
     // 5. Profiles for every person referenced (RLS only returns neighbors who
     //    share a verified neighborhood, plus the resident themself).
     const userIds = new Set<string>([me]);
@@ -422,6 +428,15 @@ export async function syncAll(): Promise<void> {
     entities.clubMemberships.forEach((m) => userIds.add(m.userId));
     entities.clubAnnouncements.forEach((a) => userIds.add(a.authorId));
     entities.notifications.forEach((n) => n.actorId && userIds.add(n.actorId));
+    entities.neighborConnections.forEach((c) => userIds.add(c.userId));
+    entities.neighborRequests.forEach((r) => {
+      userIds.add(r.requesterId);
+      userIds.add(r.recipientId);
+    });
+    entities.eventInvitations.forEach((i) => {
+      userIds.add(i.inviterId);
+      userIds.add(i.inviteeId);
+    });
 
     const ids = [...userIds];
     const [profilesRes, repRes] = await Promise.all([
@@ -588,6 +603,72 @@ export function mapPoll(p: Row, counts: Map<string, number>, myOptionId: string 
     totalVotes: options.reduce((s, o) => s + o.votes, 0),
     myOptionId,
     allowChange: p.allow_change !== false,
+  };
+}
+
+async function loadNeighbors(entities: EntityState, me: string) {
+  const [connRes, reqRes, settingsRes, interestsRes, invRes] = await Promise.all([
+    supabase.from('neighbor_connections').select('user_a, user_b, created_at').is('removed_at', null),
+    supabase.from('neighbor_requests').select('id, requester_id, recipient_id, status, created_at').eq('status', 'pending'),
+    supabase.from('neighbor_settings').select('*').eq('user_id', me).maybeSingle(),
+    supabase.from('user_interests').select('interests').eq('user_id', me).maybeSingle(),
+    supabase
+      .from('event_invitations')
+      .select('id, event_id, inviter_id, invitee_id, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200),
+  ]);
+  entities.neighborConnections = (must(connRes, 'neighbor connections') as Row[]).map((c) => ({
+    userId: c.user_a === me ? c.user_b : c.user_a,
+    since: c.created_at,
+  }));
+  entities.neighborRequests = (must(reqRes, 'neighbor requests') as Row[]).map((r) => ({
+    id: r.id,
+    requesterId: r.requester_id,
+    recipientId: r.recipient_id,
+    status: r.status,
+    createdAt: r.created_at,
+  }));
+  entities.neighborSettings = mapNeighborSettings((settingsRes.data as Row | null) ?? null);
+  entities.myInterests = (((interestsRes.data as Row | null)?.interests ?? []) as string[]).filter(isInterest);
+  entities.eventInvitations = (must(invRes, 'event invitations') as Row[]).map((i) => ({
+    id: i.id,
+    eventId: i.event_id,
+    inviterId: i.inviter_id,
+    inviteeId: i.invitee_id,
+    status: i.status,
+    createdAt: i.created_at,
+  }));
+}
+
+export const INTERESTS: Interest[] = [
+  'football',
+  'padel',
+  'running',
+  'cycling',
+  'walking',
+  'fitness',
+  'gaming',
+  'reading',
+  'coffee',
+  'volunteering',
+  'photography',
+  'technology',
+];
+
+export function isInterest(v: unknown): v is Interest {
+  return typeof v === 'string' && (INTERESTS as string[]).includes(v);
+}
+
+/** Server defaults (no row yet) are privacy-first: not discoverable. */
+export function mapNeighborSettings(r: Row | null): NeighborSettings {
+  return {
+    discoverable: r ? !!r.discoverable : false,
+    allowRequests: r ? r.allow_requests !== false : true,
+    showNeighborCount: r ? !!r.show_neighbor_count : false,
+    showInterests: r ? r.show_interests !== false : true,
+    showSharedClubs: r ? !!r.show_shared_clubs : false,
+    allowNeighborMessages: r ? r.allow_neighbor_messages !== false : true,
   };
 }
 

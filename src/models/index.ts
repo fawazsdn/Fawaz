@@ -538,3 +538,81 @@ export interface ReferralStats {
   joinedCount: number | null;
   code?: string;
 }
+
+// -------------------------------------------------------------- neighbors --
+
+/** Interests residents can show on their profile (user_interests check constraint). */
+export type Interest =
+  | 'football'
+  | 'padel'
+  | 'running'
+  | 'cycling'
+  | 'walking'
+  | 'fitness'
+  | 'gaming'
+  | 'reading'
+  | 'coffee'
+  | 'volunteering'
+  | 'photography'
+  | 'technology';
+
+/** Relationship of the signed-in resident to another resident (server-computed). */
+export type NeighborState = 'self' | 'none' | 'request_sent' | 'request_received' | 'connected' | 'blocked';
+
+/** Privacy-first defaults: not discoverable until the resident opts in. */
+export interface NeighborSettings {
+  discoverable: boolean;
+  allowRequests: boolean;
+  showNeighborCount: boolean;
+  showInterests: boolean;
+  showSharedClubs: boolean;
+  allowNeighborMessages: boolean;
+}
+
+export interface NeighborRequest {
+  id: string;
+  requesterId: string;
+  recipientId: string;
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  createdAt: string;
+}
+
+export interface NeighborConnection {
+  /** The other resident. */
+  userId: string;
+  since: string;
+}
+
+export interface EventInvitation {
+  id: string;
+  eventId: string;
+  inviterId: string;
+  inviteeId: string;
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  createdAt: string;
+}
+
+/** A discoverable resident as returned by discover_neighbors (name already privacy-trimmed). */
+export interface DiscoveredNeighbor {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+  bio?: string;
+  sharedInterests: Interest[];
+  /** null when that resident hides their neighbor count. */
+  mutualCount: number | null;
+  state: NeighborState;
+}
+
+/** What the signed-in resident may know about one profile (neighbor_profile RPC). */
+export interface NeighborProfileInfo {
+  state: NeighborState;
+  incomingRequestId: string | null;
+  acceptsRequests: boolean;
+  neighborCount: number | null;
+  mutualCount: number | null;
+  sharedInterests: Interest[];
+  sharedClubs: { id: string; name: string }[];
+  canMessage: boolean;
+}

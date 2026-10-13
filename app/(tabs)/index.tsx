@@ -10,6 +10,7 @@ import { requestSync } from '@/backend/sync';
 import { HomeHeader } from '@/features/home/HomeHeader';
 import { NeighborhoodIdentityCard } from '@/features/home/NeighborhoodIdentityCard';
 import { QuickActions } from '@/features/home/QuickActions';
+import { MeetNeighborsCard } from '@/features/home/MeetNeighborsCard';
 import { NeighborhoodPulse } from '@/features/home/NeighborhoodPulse';
 import { HappeningNow } from '@/features/home/HappeningNow';
 import { DailySummaryCard } from '@/features/home/DailySummaryCard';
@@ -107,6 +108,7 @@ export default function HomeScreen() {
 
           <View style={{ paddingHorizontal: theme.spacing.md, gap: 14, marginBottom: 18 }}>
             <NeighborhoodPulse neighborhoodId={neighborhood.id} />
+            <MeetNeighborsCard />
             <DailySummaryCard neighborhoodId={neighborhood.id} />
             <InviteNeighborhoodCard />
           </View>

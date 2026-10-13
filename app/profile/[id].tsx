@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { BadgeCheck, Calendar, HandHeart, MessageCircle, Settings, Sparkles } from 'lucide-react-native';
+import { BadgeCheck, Calendar, HandHeart, MessageCircle, MoreHorizontal, Settings, Shield, Sparkles, Users } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore, useCurrentUserId } from '@/store/useStore';
 import { useAction } from '@/hooks/useAction';
-import { getOrCreateDirectConversation } from '@/backend/actions';
-import { displayName } from '@/utils/format';
+import { fetchProfile, getOrCreateDirectConversation, toggleBlockUser } from '@/backend/actions';
+import { displayName, localizeDigits } from '@/utils/format';
 import { AppHeader } from '@/components/AppHeader';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
@@ -17,6 +17,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { ThankSheet } from '@/features/profile/ThankSheet';
 import { PostCard } from '@/features/feed/PostCard';
 import { EventCard } from '@/features/events/EventCard';
+import { ActionSheet } from '@/components/ActionSheet';
+import { IconButton } from '@/components/IconButton';
+import { ReportSheet } from '@/components/ReportSheet';
+import { SkeletonCardRow } from '@/components/Skeleton';
+import { NeighborButton } from '@/features/neighbors/NeighborButton';
+import { useNeighborProfile } from '@/features/neighbors/useNeighborProfile';
 
 const TIER_ORDER = ['new_neighbor', 'neighbor', 'contributor', 'community_builder', 'community_champion'] as const;
 
@@ -44,17 +50,47 @@ export default function ProfileScreen() {
     initialTab === 'events' || initialTab === 'recommendations' ? initialTab : 'activity',
   );
   const [thankOpen, setThankOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [loadState, setLoadState] = useState<'loading' | 'done'>('loading');
+  const isOwn = id === me;
+  const { info, reload } = useNeighborProfile(isOwn ? undefined : id);
+  const myInterests = useStore((s) => s.myInterests);
+  const theirInterests = useStore((s) => (id ? s.profileInterests[id] : undefined));
+  const blocked = useStore((s) => s.blockedUserIds.includes(id ?? ''));
+  const existingThread = useStore((s) =>
+    s.conversations.some((c) => c.kind === 'direct' && c.participantIds.includes(id ?? '') && c.participantIds.includes(me)),
+  );
+
+  // Profiles opened from discovery (or a link) may not be in the synced store yet;
+  // RLS decides whether this resident may see them at all.
+  useEffect(() => {
+    if (!id || isOwn) {
+      setLoadState('done');
+      return;
+    }
+    fetchProfile(id)
+      .catch(() => null)
+      .finally(() => setLoadState('done'));
+  }, [id, isOwn]);
 
   if (!user) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader title="" fallbackRoute="/" />
-        <EmptyState title={t.errors.genericTitle} />
+        {loadState === 'loading' ? (
+          <View style={{ padding: theme.spacing.md }}>
+            <SkeletonCardRow count={2} />
+          </View>
+        ) : (
+          <EmptyState title={t.errors.notFound} />
+        )}
       </View>
     );
   }
 
-  const isOwn = user.id === me;
+  const interests = isOwn ? myInterests : (theirInterests ?? []);
+  const canMessage = !isOwn && !blocked && (existingThread || !!info?.canMessage);
   const tierIndex = TIER_ORDER.indexOf(user.reputationTier);
   const progress = ((tierIndex + 1) / TIER_ORDER.length) * 100;
 
@@ -79,7 +115,11 @@ export default function ProfileScreen() {
             <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" hitSlop={8}>
               <Settings size={20} color={theme.colors.textPrimary} />
             </Pressable>
-          ) : undefined
+          ) : (
+            <IconButton accessibilityLabel={t.common.more} onPress={() => setMenuOpen(true)}>
+              <MoreHorizontal size={20} color={theme.colors.textPrimary} />
+            </IconButton>
+          )
         }
       />
 
@@ -99,6 +139,53 @@ export default function ProfileScreen() {
                 {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
               </Text>
               {user.bio ? <Text style={[theme.text('body', theme.colors.textSecondary), styles.bio]}>{user.bio}</Text> : null}
+
+              {info?.neighborCount != null || info?.mutualCount ? (
+                <View style={[theme.row(), { gap: 6, alignItems: 'center', marginTop: 8 }]}>
+                  <Users size={14} color={theme.colors.textMuted} />
+                  <Text style={theme.text('caption', theme.colors.textMuted)}>
+                    {[
+                      info?.neighborCount != null
+                        ? t.neighbors.neighborCount.replace('{n}', localizeDigits(info.neighborCount, locale))
+                        : null,
+                      info?.mutualCount ? t.neighbors.mutual.replace('{n}', localizeDigits(info.mutualCount, locale)) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Text>
+                </View>
+              ) : null}
+
+              {interests.length > 0 ? (
+                <View style={{ width: '100%', marginTop: 12 }}>
+                  <Text style={[theme.text('caption', theme.colors.textMuted), { marginBottom: 6, textAlign: 'center' }]}>
+                    {t.neighbors.interestsTitle}
+                  </Text>
+                  <View style={[theme.row(), { gap: 6, flexWrap: 'wrap', justifyContent: 'center' }]}>
+                    {interests.map((i) => (
+                      <Chip key={i} label={t.neighbors.interests[i]} selected={!isOwn && !!info?.sharedInterests.includes(i)} />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {info && info.sharedClubs.length > 0 ? (
+                <View style={{ width: '100%', marginTop: 12 }}>
+                  <Text style={[theme.text('caption', theme.colors.textMuted), { marginBottom: 6, textAlign: 'center' }]}>
+                    {t.neighbors.sharedClubs}
+                  </Text>
+                  <View style={[theme.row(), { gap: 6, flexWrap: 'wrap', justifyContent: 'center' }]}>
+                    {info.sharedClubs.map((c) => (
+                      <Chip
+                        key={c.id}
+                        label={c.name}
+                        icon={<Shield size={13} color={theme.colors.textSecondary} />}
+                        onPress={() => router.push(`/clubs/${c.id}`)}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
 
               <View style={[styles.tierWrap, { backgroundColor: theme.colors.backgroundAlt, borderRadius: theme.radii.md }]}>
                 <View style={[theme.row(), { alignItems: 'center', gap: 6, marginBottom: 6 }]}>
@@ -124,19 +211,30 @@ export default function ProfileScreen() {
                 {isOwn ? (
                   <Button label={t.profile.editProfile} onPress={() => router.push('/settings/edit-profile')} variant="outline" />
                 ) : (
-                  <>
-                    <Button
-                      label={t.profile.thankNeighbor}
-                      onPress={() => setThankOpen(true)}
-                      icon={<HandHeart size={16} color={theme.colors.onPrimary} />}
-                    />
-                    <Button
-                      label={t.common.message}
-                      onPress={startConversation}
-                      variant="outline"
-                      icon={<MessageCircle size={16} color={theme.colors.primary} />}
-                    />
-                  </>
+                  <View style={{ alignItems: 'center', gap: 10 }}>
+                    <NeighborButton userId={user.id} name={displayName(user)} info={info} onChanged={reload} />
+                    <View style={[theme.row(), { gap: 10 }]}>
+                      <Button
+                        label={t.profile.thankNeighbor}
+                        onPress={() => setThankOpen(true)}
+                        variant="outline"
+                        icon={<HandHeart size={16} color={theme.colors.primary} />}
+                      />
+                      {canMessage ? (
+                        <Button
+                          label={t.common.message}
+                          onPress={startConversation}
+                          variant="outline"
+                          icon={<MessageCircle size={16} color={theme.colors.primary} />}
+                        />
+                      ) : null}
+                    </View>
+                    {!canMessage && !blocked && info?.state !== 'blocked' ? (
+                      <Text style={[theme.text('caption', theme.colors.textMuted), { textAlign: 'center' }]}>
+                        {t.neighbors.messageAfterConnect}
+                      </Text>
+                    ) : null}
+                  </View>
                 )}
               </View>
             </View>
@@ -171,6 +269,31 @@ export default function ProfileScreen() {
       />
 
       <ThankSheet visible={thankOpen} onClose={() => setThankOpen(false)} userId={user.id} />
+      <ActionSheet
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          {
+            key: 'report',
+            label: t.common.report,
+            onPress: () => {
+              setMenuOpen(false);
+              setReportOpen(true);
+            },
+          },
+          {
+            key: 'block',
+            label: blocked ? t.common.unblock : t.common.block,
+            destructive: !blocked,
+            onPress: async () => {
+              setMenuOpen(false);
+              await run(() => toggleBlockUser(user.id));
+              reload();
+            },
+          },
+        ]}
+      />
+      <ReportSheet visible={reportOpen} onClose={() => setReportOpen(false)} targetType="user" targetId={user.id} />
     </View>
   );
 }

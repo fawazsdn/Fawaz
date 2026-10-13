@@ -48,7 +48,7 @@ export default function MarketplaceDetailScreen() {
         : t.marketplace.wanted;
 
   const messageSeller = async () => {
-    const res = await run(() => getOrCreateDirectConversation(listing.sellerId));
+    const res = await run(() => getOrCreateDirectConversation(listing.sellerId, { type: 'listing', id: listing.id }));
     if (!res.ok) return;
     const convo = { id: res.value };
     router.push(`/messages/${convo.id}`);

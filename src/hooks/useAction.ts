@@ -15,6 +15,8 @@ export function useActionErrorMessage() {
       if (reason) {
         const clubErrors = t.clubs.errors as Record<string, string>;
         if (clubErrors[reason]) return clubErrors[reason];
+        const neighborErrors = t.neighbors.errors as Record<string, string>;
+        if (neighborErrors[reason]) return neighborErrors[reason];
         if (reason === 'invalid:custom_category') return t.eventCreate.customCategoryRequired;
         if (reason.startsWith('invalid:')) return t.clubs.fixFields;
       }
