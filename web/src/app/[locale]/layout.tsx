@@ -1,35 +1,13 @@
 import type { Viewport } from 'next';
-import localFont from 'next/font/local';
 import { notFound } from 'next/navigation';
 
 import '../globals.css';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getDictionary } from '@/content/dictionary';
+import { jakarta, tajawal } from '@/lib/fonts';
 import { dirOf, isLocale, LOCALES } from '@/lib/i18n';
 import { isLaunchReady } from '@/lib/site';
-
-const tajawal = localFont({
-  src: [
-    { path: '../../fonts/Tajawal_400Regular.ttf', weight: '400' },
-    { path: '../../fonts/Tajawal_500Medium.ttf', weight: '500' },
-    { path: '../../fonts/Tajawal_700Bold.ttf', weight: '700' },
-    { path: '../../fonts/Tajawal_800ExtraBold.ttf', weight: '800' },
-  ],
-  variable: '--font-tajawal',
-  display: 'swap',
-});
-
-const jakarta = localFont({
-  src: [
-    { path: '../../fonts/PlusJakartaSans_400Regular.ttf', weight: '400' },
-    { path: '../../fonts/PlusJakartaSans_600SemiBold.ttf', weight: '600' },
-    { path: '../../fonts/PlusJakartaSans_700Bold.ttf', weight: '700' },
-    { path: '../../fonts/PlusJakartaSans_800ExtraBold.ttf', weight: '800' },
-  ],
-  variable: '--font-jakarta',
-  display: 'swap',
-});
 
 export const dynamicParams = false;
 export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));

@@ -2,7 +2,7 @@
   "name": "haratna-website",
   "version": "1.0.0",
   "private": true,
-  "description": "Official Haratna (حارتنا) website and support portal.",
+  "description": "Official Haratna (\u062d\u0627\u0631\u062a\u0646\u0627) website and support portal.",
   "scripts": {
     "sync-content": "node scripts/sync-content.mjs",
     "predev": "node scripts/sync-content.mjs",
@@ -12,13 +12,16 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types src/lib/*.test.ts",
-    "e2e": "playwright test"
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts src/lib/admin/*.test.ts",
+    "e2e": "playwright test",
+    "e2e:admin": "playwright test -c playwright.admin.config.ts"
   },
   "engines": {
     "node": ">=20.9"
   },
   "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.119.0",
     "lucide-react": "1.70.0",
     "next": "16.4.5",
     "react": "19.3.1",
