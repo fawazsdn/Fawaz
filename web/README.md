@@ -95,3 +95,48 @@ It sets no cookies and loads no third-party scripts, fonts or analytics. Fonts (
 ## Brand note
 
 The app's current icon (`../assets/icon.png`) is Expo's default template icon, not a Haratna logo. The website therefore uses an interim mark: «ح» on brand green with a Najdi crenellation in gold (`public/brand`, `src/app/icon.png`, `public/og`). Replace these, and the app icon, once the official logo is ready.
+
+## Admin dashboard (`/admin`)
+
+A private support console for Haratna staff: overview statistics, the support request inbox (website and app), ticket details with replies, customers (grouped from tickets only), analytics and settings. It is Arabic-first with English, and works on desktop and mobile.
+
+### Who can sign in
+
+- Only accounts whose `profiles.app_role` is `admin` or `moderator` (and not deleted). These are the same rules the database uses in `private.is_admin_or_moderator()`.
+- Sign-in is a one-time email link (or 6-digit code) sent through Supabase Auth with `shouldCreateUser: false`, so it works for the existing Apple-linked admin account, which has no password. It never creates accounts or grants roles, and it answers the same way whether or not an address exists.
+- After sign-in the role is checked on the server. Non-staff sessions are signed out immediately.
+- To check your account, run this in the Supabase SQL editor:
+  `select p.app_role, p.deleted_at from public.profiles p join auth.users u on u.id = p.id where u.email = '<your email>';`
+  It must return `admin` (or `moderator`) and `deleted_at` null.
+
+### Security model
+
+- **Session:** cookies are `httpOnly`, `Secure`, `SameSite=Lax` and scoped to `Path=/admin`. Page scripts never see a token.
+- **Authorization:** `src/proxy.ts` refreshes the session and redirects signed-out visitors. Every page, server action and API route then re-checks the role (`src/lib/admin/session.ts`). Every database function checks it again and returns `not_authorized` otherwise. Only the publishable key is used; there is no service-role key.
+- **CSRF:** server actions reject cross-origin POSTs, and cookies are SameSite.
+- **XSS:** React escapes all output, and email HTML is escaped.
+- **Rate limits:** sign-in (per IP and per email), replies, emails and status changes.
+- **Not cached or indexed:** admin pages send `no-store`, `noindex` and `no-referrer`.
+- **Open-request badge:** it polls a staff-only count endpoint every 30 seconds instead of using Supabase Realtime, so no access token or ticket data is exposed to browser scripts.
+
+### Email replies (Resend)
+
+- Replying to a website ticket saves the response, then emails it, including the reference number, in the ticket's language.
+- **One send per reply:** a database claim (`claim_support_reply_email`) allows only one send at a time and refuses to re-send a reply the provider already accepted. An `Idempotency-Key` stops Resend from sending twice if a request is retried. Temporary errors (429/5xx/network) are retried automatically. Failures are stored with the provider's error and can be retried from the ticket.
+- **Honest status:** "Accepted by email provider" means Resend accepted the message. "Delivered" is shown only after **Check delivery status** reads `last_event = delivered` from Resend.
+- **App tickets** keep the existing in-app notification (`respond_support_request`).
+
+### Required configuration
+
+| Where                                                         | What                                                                                                                                                                                                                       |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vercel → Environment Variables                                | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (already used by the site), `RESEND_API_KEY`, `SUPPORT_REPLY_FROM` (a verified Resend domain), optional `SUPPORT_REPLY_TO`, and `NEXT_PUBLIC_SITE_URL=https://www.haratna.live` |
+| Supabase → Authentication → URL Configuration → Redirect URLs | add `https://www.haratna.live/admin/auth/callback` (plus the preview URL pattern if you sign in on previews)                                                                                                               |
+| Supabase → Authentication → Emails                            | Magic Link template: keep `{{ .ConfirmationURL }}`; optionally add `{{ .Token }}` to also show the 6-digit code                                                                                                            |
+| Resend                                                        | verify the sending domain (`haratna.live`)                                                                                                                                                                                 |
+
+### Tests
+
+- `npm run e2e:admin`: 18 browser tests that run the production build against a local stub of Supabase and Resend (`e2e/admin/stub-server.mjs`). They cover sign-in (PKCE), refusal of non-staff accounts, cookie flags, rate limits, filters, replies, email failure and retry without duplicates, delivery status, status changes, customers, analytics, settings, Arabic/English and mobile layout.
+- `../supabase/tests/admin_support.sql`: the real database functions, run against Supabase (rolled back).
+- `npm test`: unit tests for email rendering and escaping, retries, idempotency and filter validation.

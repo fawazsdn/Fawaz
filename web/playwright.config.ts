@@ -7,6 +7,7 @@ const executablePath =
 /** Runs against the production build (`npm run build` first). */
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['**/admin/**'],
   timeout: 30_000,
   fullyParallel: false,
   workers: 1,
