@@ -76,7 +76,7 @@ and published contact information.
 | Moderation           | ✅ The admin/moderator queue reviews reports; clubs need approval before they appear.                                                                                                                                                                                                                                                   |
 | Timely response      | 🔧 **New:** an in-app support form (`support_requests`) with a staff inbox at `/admin/support`; staff are notified. 🟡 **Owner:** someone must hold the admin/moderator role and check the queue daily.                                                                                                                                 |
 | Published guidelines | 🔧 Community Guidelines are now in the app (Settings) and on the website.                                                                                                                                                                                                                                                               |
-| Contact information  | 🔧 In-app Contact support, plus the website support page. 🟡 A public support email is still missing.                                                                                                                                                                                                                                   |
+| Contact information  | 🔧 In-app Contact support, plus the website support center with a working ticket form (`web/`). 🟡 A public support email is still missing.                                                                                                                                                                                             |
 
 ## E. Child safety (Guidelines 1.2, 1.3, 5.1.4)
 
@@ -158,7 +158,7 @@ services outside the app). Nothing paid is advertised.
 | Name, subtitle, description, keywords, promo text, What's New | ✅ `metadata.md`; lengths measured. Only built features are described.                           |
 | Screenshots                                                   | 🟡 Kit and captions are ready in `screenshots/`. **No captures yet; they need a Mac or iPhone.** |
 | Age rating                                                    | 🟡 Answers prepared; owner chooses 16+ (recommended) or the computed rating.                     |
-| Privacy Policy URL                                            | ⛔ Needs a public URL: deploy `website/` to the owner's domain.                                  |
+| Privacy Policy URL                                            | ⛔ Needs a public URL: deploy `web/` (Next.js) to the owner's domain.                            |
 | Support URL                                                   | ⛔ Same, plus a support email in `legal-config.json`.                                            |
 | App Review information                                        | 🟡 `review-notes.md`: create the two accounts and verify them with `admin_verify_member`.        |
 | Export compliance                                             | ✅ `ITSAppUsesNonExemptEncryption: false` (HTTPS only).                                          |
@@ -213,7 +213,7 @@ flag, no hidden code and no location spoofing. Steps and notes text are in
 The ordered, complete list is in the final launch readiness report. The
 blockers are:
 
-1. A public privacy and support URL (deploy `website/`).
+1. A public privacy and support URL (deploy `web/`).
 2. A support email.
 3. Real screenshots.
 4. An EAS production build and TestFlight run, after the owner approves.

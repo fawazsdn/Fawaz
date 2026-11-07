@@ -13,7 +13,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
 
-const CATEGORIES: SupportCategory[] = ['account', 'bug', 'safety', 'privacy', 'deletion', 'other'];
+const CATEGORIES: SupportCategory[] = ['account', 'verification', 'bug', 'safety', 'privacy', 'deletion', 'general', 'other'];
 
 /** In-app support: a real request stored in support_requests and answered by Haratna staff. */
 export default function SupportScreen() {

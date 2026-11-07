@@ -1314,11 +1314,17 @@ export async function inviteNeighborToClub(clubId: string, userId: string): Prom
 
 // --------------------------------------------------------------- support --
 
-export type SupportCategory = 'account' | 'bug' | 'safety' | 'privacy' | 'deletion' | 'other';
+export type SupportCategory = 'account' | 'verification' | 'bug' | 'safety' | 'privacy' | 'deletion' | 'general' | 'other';
 
 export interface SupportRequest {
   id: string;
-  userId: string;
+  /** Null for requests filed through the website support form. */
+  userId: string | null;
+  source: 'app' | 'website';
+  reference: string;
+  contactName?: string;
+  contactEmail?: string;
+  subject?: string;
   category: SupportCategory;
   message: string;
   status: 'open' | 'answered' | 'closed';
@@ -1330,7 +1336,12 @@ export interface SupportRequest {
 function mapSupport(r: Record<string, any>): SupportRequest {
   return {
     id: r.id,
-    userId: r.user_id,
+    userId: r.user_id ?? null,
+    source: r.source === 'website' ? 'website' : 'app',
+    reference: r.reference,
+    contactName: r.contact_name ?? undefined,
+    contactEmail: r.contact_email ?? undefined,
+    subject: r.subject ?? undefined,
     category: r.category,
     message: r.message,
     status: r.status,

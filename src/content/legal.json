@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-14",
+  "updated": "2026-11-07",
   "en": {
     "privacy": {
       "title": "Privacy Policy",
@@ -17,7 +17,8 @@
             "Neighborhood: the region, city and neighborhood you choose from the official Saudi address dataset.",
             "Date of birth (only if you choose to create a club): it is self-declared, stored privately, never shown to other residents and only used to check that club organizers are 18 or older. It is not identity verification.",
             "Interests you select (for example padel or reading) and your Neighbors privacy settings.",
-            "Content you create: posts, comments, polls and votes, activities and RSVPs, club applications, announcements and chat messages, marketplace and borrow listings, help requests, lost & found posts (including any contact method you choose to add), issue reports, recommendations, photos, reports you file and support requests."
+            "Content you create: posts, comments, polls and votes, activities and RSVPs, club applications, announcements and chat messages, marketplace and borrow listings, help requests, lost & found posts (including any contact method you choose to add), issue reports, recommendations, photos, reports you file and support requests.",
+            "We do not ask for your phone number, national ID or home address."
           ]
         },
         {
@@ -33,6 +34,7 @@
           "li": [
             "Neighbor connections and requests, club memberships and roles, activity invitations, blocks and mutes, notifications, reputation points and referral codes.",
             "Technical data needed to run the service, such as authentication sessions and server logs kept by our hosting provider for security and troubleshooting.",
+            "The app does not register for push notifications, so no device push token is collected; notifications appear inside the app only. No crash-reporting or analytics service is used.",
             "We do not use advertising, we do not track you across other companies' apps or websites, and the app contains no third-party analytics or advertising SDKs."
           ]
         },
@@ -63,11 +65,26 @@
             "Supabase — database, authentication, file storage and server functions. Data location: {{DATA_REGION}}.",
             "Apple and Google — only if you choose their sign-in.",
             "Apple Maps (on iPhone) — to display maps; map requests do not include your account information.",
-            "Email delivery provider — to send verification and password-reset emails: {{EMAIL_PROVIDER}}."
+            "Email delivery provider — to send verification and password-reset emails: {{EMAIL_PROVIDER}}.",
+            "Website hosting provider — serves the Haratna website and keeps standard server logs (such as IP address, browser type and the page requested) for security and abuse prevention."
           ]
         },
         {
-          "h": "7. How long we keep data",
+          "h": "7. Website and support form",
+          "li": [
+            "If you contact us through the support form on our website, we receive the name (optional), email address, topic, subject and message you send, and use them only to answer you and to keep the community safe.",
+            "Support requests are stored in our secured database and are visible only to Haratna support staff. We keep them as long as needed to resolve your request and keep a record of it; you can ask us to delete them sooner.",
+            "The website does not use cookies, advertising, analytics or tracking. To prevent abuse, the support form briefly limits how many requests can be sent from the same network or email address."
+          ]
+        },
+        {
+          "h": "8. International transfers",
+          "p": [
+            "Some of our providers may store or process data outside the Kingdom of Saudi Arabia (database location: {{DATA_REGION}}). Any transfer outside the Kingdom is made only in line with the Personal Data Protection Law and its regulation on transferring personal data outside the Kingdom. This section is subject to legal review."
+          ]
+        },
+        {
+          "h": "9. How long we keep data",
           "li": [
             "Your account and content are kept while your account is active.",
             "When you delete content, it is removed from the app. When you delete your account, we delete your profile, your posts, comments, messages you sent, activities you host, listings, requests, reports you filed, uploaded photos, connections, interests, settings and your date-of-birth declaration. Clubs you organize pass to an adult member or are archived.",
@@ -75,8 +92,9 @@
           ]
         },
         {
-          "h": "8. Your rights and choices",
+          "h": "10. Your rights and choices",
           "li": [
+            "Under the Personal Data Protection Law you have the right to be informed about how your data is processed, to access it and get a copy, to ask for it to be corrected or completed, to ask for it to be destroyed when it is no longer needed, and to withdraw consent you gave.",
             "Access and correct your profile at any time in Settings → Edit profile.",
             "Control discovery, neighbor requests, messages, interests and what others can see in Settings → Neighbors & privacy.",
             "Withdraw location permission at any time in iPhone Settings; already-verified membership is not affected.",
@@ -85,23 +103,23 @@
           ]
         },
         {
-          "h": "9. Children",
+          "h": "11. Children",
           "p": [
             "Haratna is a community app for residents and is not designed for young children. Residents under 18 cannot create, own or run clubs. Parents and guardians who believe a child has provided information can contact us to have it removed."
           ]
         },
         {
-          "h": "10. Security",
+          "h": "12. Security",
           "p": [
             "Data is transmitted over encrypted connections and protected by access rules enforced on our servers (for example, residents can only read their own neighborhood's content). No system is perfectly secure; please report any concern through support."
           ]
         },
         {
-          "h": "11. Changes",
+          "h": "13. Changes",
           "p": ["We will update this page and the date below when the policy changes, and tell you in the app about significant changes."]
         },
         {
-          "h": "12. Contact",
+          "h": "14. Contact",
           "p": ["{{OPERATOR}} · {{SUPPORT_EMAIL}} · In the app: Settings → Contact support."]
         }
       ]
@@ -308,7 +326,8 @@
             "الحي: المنطقة والمدينة والحي التي تختارها من بيانات العنوان الوطني الرسمية.",
             "تاريخ الميلاد (فقط إذا أردت إنشاء نادٍ): إقرار ذاتي يُحفظ بشكل خاص، ولا يظهر لأي ساكن، ويُستخدم فقط للتحقق من أن منظم النادي بعمر ١٨ سنة فأكثر. وهو ليس توثيقاً للهوية.",
             "الاهتمامات التي تختارها وإعدادات الخصوصية الخاصة بالجيران.",
-            "المحتوى الذي تنشئه: المنشورات والتعليقات والاستطلاعات والتصويت، والأنشطة والتسجيل فيها، وطلبات الأندية والإعلانات ورسائل الدردشة، وإعلانات السوق والاستعارة، وطلبات المساعدة، والمفقودات (مع أي وسيلة تواصل تختار إضافتها)، والبلاغات، والتوصيات، والصور، والبلاغات عن المحتوى، وطلبات الدعم."
+            "المحتوى الذي تنشئه: المنشورات والتعليقات والاستطلاعات والتصويت، والأنشطة والتسجيل فيها، وطلبات الأندية والإعلانات ورسائل الدردشة، وإعلانات السوق والاستعارة، وطلبات المساعدة، والمفقودات (مع أي وسيلة تواصل تختار إضافتها)، والبلاغات، والتوصيات، والصور، والبلاغات عن المحتوى، وطلبات الدعم.",
+            "لا نطلب رقم جوالك أو رقم هويتك أو عنوان منزلك."
           ]
         },
         {
@@ -324,6 +343,7 @@
           "li": [
             "علاقات الجيران وطلباتها، وعضويات الأندية وأدوارها، ودعوات الأنشطة، والحظر والكتم، والإشعارات، ونقاط السمعة ورموز الدعوة.",
             "بيانات تقنية لازمة لتشغيل الخدمة مثل جلسات الدخول وسجلات الخادم لدى مزوّد الاستضافة لأغراض الأمان وحل المشكلات.",
+            "لا يسجّل التطبيق للإشعارات الفورية، لذلك لا نجمع رمز إشعارات الجهاز؛ تظهر الإشعارات داخل التطبيق فقط. ولا نستخدم أي خدمة لتقارير الأعطال أو التحليلات.",
             "لا نستخدم الإعلانات، ولا نتتبعك عبر تطبيقات أو مواقع شركات أخرى، ولا يحتوي التطبيق على أدوات تحليلات أو إعلانات من أطراف ثالثة."
           ]
         },
@@ -352,11 +372,26 @@
             "Supabase — قاعدة البيانات والمصادقة وتخزين الملفات ووظائف الخادم. موقع البيانات: {{DATA_REGION}}.",
             "Apple وGoogle — فقط إذا اخترت تسجيل الدخول عبرهما.",
             "خرائط Apple (على iPhone) — لعرض الخرائط دون إرسال معلومات حسابك.",
-            "مزوّد إرسال البريد — لرسائل التحقق واستعادة كلمة المرور: {{EMAIL_PROVIDER}}."
+            "مزوّد إرسال البريد — لرسائل التحقق واستعادة كلمة المرور: {{EMAIL_PROVIDER}}.",
+            "مزوّد استضافة الموقع — يقدّم موقع حارتنا ويحتفظ بسجلات الخادم المعتادة (مثل عنوان IP ونوع المتصفح والصفحة المطلوبة) لأغراض الأمان ومنع إساءة الاستخدام."
           ]
         },
         {
-          "h": "٧. مدة الاحتفاظ",
+          "h": "٧. الموقع ونموذج الدعم",
+          "li": [
+            "إذا تواصلت معنا عبر نموذج الدعم في موقعنا، نستلم الاسم (اختياري) والبريد الإلكتروني والموضوع والعنوان والرسالة التي ترسلها، ونستخدمها فقط للرد عليك وللحفاظ على سلامة المجتمع.",
+            "تُحفظ طلبات الدعم في قاعدة بياناتنا المحمية ولا يطّلع عليها إلا فريق دعم حارتنا. نحتفظ بها المدة اللازمة لمعالجة طلبك والاحتفاظ بسجل له، ويمكنك طلب حذفها قبل ذلك.",
+            "لا يستخدم الموقع ملفات تعريف الارتباط (الكوكيز) أو الإعلانات أو التحليلات أو التتبع. ولمنع إساءة الاستخدام، يحدّ نموذج الدعم مؤقتاً من عدد الطلبات المرسلة من الشبكة نفسها أو البريد نفسه."
+          ]
+        },
+        {
+          "h": "٨. نقل البيانات خارج المملكة",
+          "p": [
+            "قد يخزّن بعض مزوّدي الخدمة البيانات أو يعالجونها خارج المملكة العربية السعودية (موقع قاعدة البيانات: {{DATA_REGION}}). لا يتم أي نقل خارج المملكة إلا وفق نظام حماية البيانات الشخصية ولائحة نقل البيانات الشخصية خارج المملكة. هذا القسم خاضع للمراجعة القانونية."
+          ]
+        },
+        {
+          "h": "٩. مدة الاحتفاظ",
           "li": [
             "نحتفظ بحسابك ومحتواك طالما حسابك نشط.",
             "عند حذفك لمحتوى يُزال من التطبيق. وعند حذف حسابك نحذف ملفك الشخصي ومنشوراتك وتعليقاتك والرسائل التي أرسلتها والأنشطة التي تنظمها وإعلاناتك وطلباتك والبلاغات التي قدمتها والصور المرفوعة والعلاقات والاهتمامات والإعدادات وإقرار تاريخ الميلاد. أما الأندية التي تنظمها فتنتقل لعضو بالغ أو تُؤرشف.",
@@ -364,8 +399,9 @@
           ]
         },
         {
-          "h": "٨. حقوقك وخياراتك",
+          "h": "١٠. حقوقك وخياراتك",
           "li": [
+            "وفق نظام حماية البيانات الشخصية، لك الحق في العلم بكيفية معالجة بياناتك، والوصول إليها والحصول على نسخة منها، وطلب تصحيحها أو استكمالها، وطلب إتلافها عند انتهاء الحاجة إليها، والرجوع عن موافقتك.",
             "الاطلاع على ملفك وتعديله في أي وقت من الإعدادات ← تعديل الملف الشخصي.",
             "التحكم في الظهور وطلبات الجيران والرسائل والاهتمامات من الإعدادات ← الجيران والخصوصية.",
             "سحب إذن الموقع في أي وقت من إعدادات iPhone دون أن يتأثر توثيقك السابق.",
@@ -374,23 +410,23 @@
           ]
         },
         {
-          "h": "٩. الأطفال",
+          "h": "١١. الأطفال",
           "p": [
             "حارتنا تطبيق مجتمعي للسكان وغير مصمم للأطفال الصغار. لا يمكن لمن هم دون ١٨ سنة إنشاء الأندية أو إدارتها. يمكن لأولياء الأمور التواصل معنا لإزالة أي معلومات قدّمها طفل."
           ]
         },
         {
-          "h": "١٠. الأمان",
+          "h": "١٢. الأمان",
           "p": [
             "تُنقل البيانات عبر اتصالات مشفّرة وتحميها قواعد وصول مطبّقة على خوادمنا (مثلاً لا يرى الساكن إلا محتوى حيّه). لا يوجد نظام آمن تماماً، فنرجو إبلاغنا عن أي ملاحظة عبر الدعم."
           ]
         },
         {
-          "h": "١١. التغييرات",
+          "h": "١٣. التغييرات",
           "p": ["سنحدّث هذه الصفحة والتاريخ أدناه عند تغيّر السياسة، ونبلغك داخل التطبيق بالتغييرات المهمة."]
         },
         {
-          "h": "١٢. التواصل",
+          "h": "١٤. التواصل",
           "p": ["{{OPERATOR}} · {{SUPPORT_EMAIL}} · داخل التطبيق: الإعدادات ← تواصل مع الدعم."]
         }
       ]

@@ -5,7 +5,7 @@ const globals = require('globals');
 module.exports = [
   ...expoConfig,
   {
-    ignores: ['dist/*', 'node_modules/*'],
+    ignores: ['dist/*', 'node_modules/*', 'web/**'],
   },
   {
     rules: {

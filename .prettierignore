@@ -1,2 +1,6 @@
-website/
+web/.next/
+web/src/content/shared/
+web/playwright-report/
+web/test-results/
 docs/app-store/screenshots/out/
+web/next-env.d.ts

@@ -3,7 +3,7 @@
 The privacy policy, terms of use, community guidelines and account-deletion
 pages (Arabic and English) are in `src/content/legal.json`. The app
 (Settings → Privacy, Terms, Community Guidelines) and the website
-(`node scripts/build-website.mjs`) both render from that file, so the two
+(`web/`, Next.js) both render from that file, so the two
 always match.
 
 **Status: DRAFT. Needs legal review before launch.** The policy was written
@@ -15,7 +15,7 @@ review it.
 ## Owner values to fill in `src/content/legal-config.json`
 
 Until these are filled, the app shows "in-app support" wording and the
-website shows a red DRAFT banner with `noindex`.
+website shows a pre-launch banner with `noindex`.
 
 | Key                         | What                                                       | Example format (not a real value)           |
 | --------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
@@ -26,7 +26,7 @@ website shows a red DRAFT banner with `noindex`.
 | `backupRetention`           | How long backups keep deleted data                         | Per your Supabase plan's backup retention   |
 | `websiteBaseUrl`            | Public website origin                                      | https://<your domain>                       |
 
-Then run `node scripts/build-website.mjs`, rebuild the app, and update the
+Then redeploy the website (`web/`), rebuild the app, and update the
 App Store Connect URLs.
 
 ## Questions for counsel

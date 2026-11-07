@@ -78,7 +78,7 @@ Nothing has been run on a real iPhone. Apple approval cannot be guaranteed.
   - `app.json`: privacy manifest, localized purpose strings, explicit
     location and image-picker plugin config, `supportsTablet: false`
   - `locales/ar.json`, `locales/en.json`
-  - `scripts/build-website.mjs` and the generated `website/`
+  - the website, now the Next.js app in `web/` (see `web/README.md`)
   - `docs/app-store/*`
   - `src/features/compliance/__tests__/compliance.test.tsx`
 
@@ -174,15 +174,12 @@ URL.
 
 ## 11. Support website status
 
-`website/` is built (`npm run build:website`): 16 pages, Arabic first with
-English under `/en/`. Pages: Home, About, Help, Support, Privacy, Terms,
-Community Guidelines and Delete Account, plus a 404 page. It is responsive
-(no horizontal scroll at 390 px), uses the brand colors, adapts to dark
-mode and includes a skip link.
+**Updated 2026-11-07.** The website is now a Next.js app in `web/` (see `web/README.md`), replacing the earlier static `website/` folder.
 
-It shows a **DRAFT banner and `noindex`** until the config is filled in. It
-is **not deployed**: there is no Haratna hosting project (the Vercel account
-has only `connectup-app` and `the-dunes-club`), and the domain is unknown.
+- Pages: Home, Support center (searchable FAQ plus a ticket form), FAQ, Contact, Privacy, Terms, Guidelines and Delete Account, in Arabic (`/ar`) and English (`/en`). Short URLs such as `/support` and `/privacy` redirect to the Arabic page.
+- **The support form works.** Tickets go to `support_requests` through the rate-limited `submit_public_support_request()` function. Staff are notified in the app and the visitor gets an `HR-XXXXXXXX` reference. One real ticket was delivered end to end (`HR-01F2269B`, then closed).
+- Tests: production build, ESLint, tsc, unit tests and 63 Playwright tests (all pages in both languages, redirects, links, form validation, API hardening, security headers, SEO, axe WCAG 2.1 AA).
+- **Not deployed yet.** There is no Haratna Vercel project and no domain. A pre-launch banner and `noindex` stay on until `NEXT_PUBLIC_SITE_URL` and `legal-config.json` are set.
 
 ## 12. Apple compliance issues found
 
@@ -210,7 +207,7 @@ Issue 12 is an owner design decision.
 
 ## 14. Remaining Apple compliance blockers
 
-- ⛔ Privacy Policy URL and Support URL (5.1.1(i), 1.5): deploy `website/`
+- ⛔ Privacy Policy URL and Support URL (5.1.1(i), 1.5): deploy `web/`
   to a domain you own.
 - ⛔ A public support email (1.5).
 - ⛔ Real screenshots (2.3.3).
@@ -236,7 +233,7 @@ done and a TestFlight build has passed the QA journeys on a real iPhone.
      email, data region (Supabase → Project Settings), SMTP provider, backup
      retention and website URL.
    - Have counsel review `src/content/legal.json` (see `legal-review.md`).
-2. **Website:** run `npm run build:website`, then deploy `website/` to your
+2. **Website:** deploy `web/` on Vercel (`web/README.md`) to your
    domain (any static host). Check that `/privacy/`, `/en/privacy/`,
    `/support/` and `/delete-account/` load.
 3. **Supabase dashboard:**
@@ -303,7 +300,7 @@ done and a TestFlight build has passed the QA journeys on a real iPhone.
 ### NEEDS OWNER ACTION
 
 - [ ] Fill `legal-config.json`; legal review of the policy and terms
-- [ ] Choose a domain and deploy `website/`
+- [ ] Choose a domain and deploy `web/` to production
 - [ ] Public support email
 - [ ] Apply the pending migration (club successor on deletion)
 - [ ] Assign the admin role; staff moderation and support

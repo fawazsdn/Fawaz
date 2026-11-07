@@ -1,0 +1,10 @@
+{
+  "_comment": "Owner must fill these before public launch. Empty values render as in-app-support text in the app and as a visible TODO banner on the website build.",
+  "operatorEn": "",
+  "operatorAr": "",
+  "supportEmail": "",
+  "dataRegion": "",
+  "emailProvider": "",
+  "backupRetention": "",
+  "websiteBaseUrl": ""
+}

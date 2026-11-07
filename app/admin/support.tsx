@@ -65,9 +65,17 @@ export default function AdminSupportScreen() {
             <View style={[theme.row(), { gap: 6, alignItems: 'center', marginBottom: 6 }]}>
               <Badge label={t.support.categories[r.category]} tone={r.category === 'safety' ? 'danger' : 'neutral'} />
               <Badge label={t.support.status[r.status]} tone={r.status === 'open' ? 'warning' : 'success'} />
+              {r.source === 'website' ? <Badge label={t.support.fromWebsite} tone="neutral" /> : null}
               <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(r.createdAt, locale)}</Text>
             </View>
+            <Text selectable style={theme.text('caption', theme.colors.textMuted)}>
+              {[r.reference, r.contactName, r.contactEmail].filter(Boolean).join(' · ')}
+            </Text>
+            {r.subject ? <Text style={[theme.text('bodySmall'), { fontWeight: '700', marginTop: 4 }]}>{r.subject}</Text> : null}
             <Text style={theme.text('bodySmall')}>{r.message}</Text>
+            {r.source === 'website' && r.status !== 'closed' ? (
+              <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{t.support.websiteReplyNote}</Text>
+            ) : null}
             {r.response ? <Text style={[theme.text('caption', theme.colors.primary), { marginTop: 6 }]}>{r.response}</Text> : null}
             {r.status !== 'closed' ? (
               <View style={{ marginTop: 10, gap: 8 }}>

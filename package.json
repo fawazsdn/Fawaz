@@ -77,7 +77,7 @@
     "test": "jest",
     "validate:geography": "node scripts/validate-geography.mjs",
     "import:geography": "node scripts/import-saudi-geography.mjs",
-    "build:website": "node scripts/build-website.mjs"
+    "web:build": "npm --prefix web run build"
   },
   "private": true
 }

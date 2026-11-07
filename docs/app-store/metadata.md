@@ -141,11 +141,11 @@ Available in Arabic and English, with dark mode.
 
 ## URLs (required before submission)
 
-| Field                    | Value                                                     | Status                                                                              |
-| ------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Privacy Policy URL       | `<WEBSITE_BASE_URL>/privacy/` (Arabic) and `/en/privacy/` | **Needs owner:** deploy `website/` and confirm the domain                           |
-| Support URL              | `<WEBSITE_BASE_URL>/support/`                             | **Needs owner:** same, plus a real support email in `src/content/legal-config.json` |
-| Marketing URL (optional) | `<WEBSITE_BASE_URL>/`                                     | Optional                                                                            |
+| Field                    | Value                                                           | Status                                                                              |
+| ------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Privacy Policy URL       | `<WEBSITE_BASE_URL>/privacy` (Arabic; English at `/en/privacy`) | **Needs owner:** deploy `web/` and confirm the domain                               |
+| Support URL              | `<WEBSITE_BASE_URL>/support`                                    | **Needs owner:** same, plus a real support email in `src/content/legal-config.json` |
+| Marketing URL (optional) | `<WEBSITE_BASE_URL>/`                                           | Optional                                                                            |
 
 ## Copyright
 
