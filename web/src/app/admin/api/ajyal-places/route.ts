@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     if (!allowed.ok) return reply({ error: 'rate_limited' }, 429, { 'Retry-After': String(allowed.retryAfterS) });
     const search = ajyalSearchRequest(await request.json().catch(() => null));
     if (!search) return reply({ error: 'invalid_search' }, 400);
-    const daily = rateLimit('ajyal-places:instance-day', 100, 86_400_000);
+    const perDay = search.action === 'searchNearby' ? 20 : 50;
+    const daily = rateLimit(`ajyal-places:${search.action}:instance-day`, perDay, 86_400_000);
     if (!daily.ok) return reply({ error: 'rate_limited' }, 429, { 'Retry-After': String(daily.retryAfterS) });
     return reply(await discoverAjyalPlaceIds(search, key), 200);
   } catch (error) {
