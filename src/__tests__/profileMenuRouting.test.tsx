@@ -45,6 +45,20 @@ describe('Profile & Settings menu', () => {
     expect(screen.queryByText(/following/i)).toBeNull();
   });
 
+  it('routes verified residents to the neighborhood change request', async () => {
+    await renderWithProvider(<SettingsScreen />);
+    await fireEvent.press(screen.getByText('My Neighborhood'));
+    expect(mockPush).toHaveBeenCalledWith('/settings/neighborhood-change');
+    expect(screen.queryByText('Review neighborhood changes')).toBeNull();
+  });
+
+  it('keeps initial neighborhood selection available before verification', async () => {
+    useStore.getState().setVerification('pending');
+    await renderWithProvider(<SettingsScreen />);
+    await fireEvent.press(screen.getByText('My Neighborhood'));
+    expect(mockPush).toHaveBeenCalledWith('/(auth)/select-city');
+  });
+
   it('routes "My Posts" to the profile screen with the activity tab', async () => {
     await renderWithProvider(<SettingsScreen />);
     await fireEvent.press(screen.getByText('My Posts'));

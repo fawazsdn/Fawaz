@@ -48,7 +48,8 @@ The captions are also in `captions.json`, which `compose.mjs` reads.
    `raw/4-neighbors-ar.png`.
 7. Compose the framed images:
    ```sh
-   npm i -D playwright   # once; Chromium is required
+   npm ci --prefix web
+   npm exec --prefix web -- playwright install chromium
    node docs/app-store/screenshots/compose.mjs
    ```
    Output goes to `out/6.9/` and `out/6.5/`. Missing captures are skipped and

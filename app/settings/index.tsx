@@ -58,6 +58,7 @@ export default function SettingsScreen() {
   const referralCode = useStore((s) => s.referral.code);
   const user = useStore((s) => s.getUser(me));
   const { run, pending } = useAction();
+  const verified = useStore((s) => s.session.verification === 'verified');
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
 
   const [sheet, setSheet] = useState<null | 'language' | 'theme' | 'message'>(null);
@@ -132,7 +133,7 @@ export default function SettingsScreen() {
           icon={MapPin}
           label={t.settings.myNeighborhood}
           value={locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn}
-          onPress={() => router.push('/(auth)/select-city')}
+          onPress={() => router.push(verified ? '/settings/neighborhood-change' : '/(auth)/select-city')}
           Chevron={Chevron}
         />
         <Row icon={FileText} label={t.settings.myPosts} onPress={() => router.push(`/profile/${me}?tab=activity`)} Chevron={Chevron} />
@@ -208,6 +209,10 @@ export default function SettingsScreen() {
         ) : null}
         {user?.role === 'admin' ? (
           <Row icon={Shield} label={t.clubs.admin.entry} onPress={() => router.push('/admin/clubs')} Chevron={Chevron} />
+        ) : null}
+
+        {user?.role === 'admin' ? (
+          <Row icon={Shield} label={t.neighborhoodChange.adminTitle} onPress={() => router.push('/admin/neighborhood-changes')} Chevron={Chevron} />
         ) : null}
 
         <SectionLabel title={t.settings.accountActions} />
