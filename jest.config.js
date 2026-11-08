@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'jest-expo',
   transformIgnorePatterns: [
-    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|lucide-react-native|react-native-svg|react-native-gesture-handler|react-native-reanimated|react-native-worklets|@react-native-async-storage))',
+    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|lucide-react-native|react-native-svg|react-native-gesture-handler|react-native-reanimated|react-native-worklets|@react-native-async-storage|decode-uri-component))',
   ],
   // web/ is the separate Next.js website with its own tests.
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/web/'],

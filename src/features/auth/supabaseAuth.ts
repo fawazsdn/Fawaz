@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as Crypto from 'expo-crypto';
 
@@ -21,6 +20,8 @@ export type AuthErrorReason =
   | 'link_expired'
   | 'unavailable'
   | 'cancelled'
+  | 'google_failed'
+  | 'google_expired'
   | 'unknown';
 
 export type AuthOutcome =
@@ -144,7 +145,7 @@ export function parseAuthLink(params: Record<string, string | string[] | undefin
 /** Exchanges a PKCE code from an email/OAuth link for a real session. */
 export async function exchangeAuthCode(code: string): Promise<AuthOutcome> {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error || !data.user) return { ok: false, reason: classifyAuthError(error), message: error?.message };
+  if (error || !data.user || !data.session) return { ok: false, reason: classifyAuthError(error), message: error?.message };
   return { ok: true, userId: data.user.id, email: data.user.email ?? null, provider: providerOf(data.user) };
 }
 
@@ -190,24 +191,42 @@ export async function signInWithApple(): Promise<AuthOutcome> {
  * (The previous build passed the whole redirect URL to exchangeCodeForSession,
  * which expects only the code, so Google sign-in could never complete.)
  */
+function googleErrorReason(reason: AuthErrorReason): AuthErrorReason {
+  if (reason === 'network' || reason === 'rate_limited') return reason;
+  if (reason === 'link_expired') return 'google_expired';
+  return 'google_failed';
+}
+
 export async function signInWithGoogle(): Promise<AuthOutcome> {
-  const redirectTo = AuthSession.makeRedirectUri({ scheme: 'haratna', path: 'auth/callback' });
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo, skipBrowserRedirect: true } });
-  if (error || !data.url)
-    return { ok: false, reason: classifyAuthError(error), message: error?.message ?? 'Could not start Google sign-in' };
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: AUTH_CALLBACK_URL, skipBrowserRedirect: true, scopes: 'openid email profile' },
+    });
+    if (error || !data.url) return { ok: false, reason: googleErrorReason(classifyAuthError(error)) };
 
-  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  if (result.type === 'cancel' || result.type === 'dismiss') return { ok: false, reason: 'cancelled' };
-  if (result.type !== 'success' || !result.url)
-    return { ok: false, reason: 'unknown', message: `Unexpected auth session result: ${result.type}` };
+    const result = await WebBrowser.openAuthSessionAsync(data.url, AUTH_CALLBACK_URL);
+    if (result.type === 'cancel' || result.type === 'dismiss') return { ok: false, reason: 'cancelled' };
+    if (result.type !== 'success') return { ok: false, reason: 'google_failed' };
 
-  const url = new URL(result.url);
-  const code = url.searchParams.get('code');
-  if (!code) {
-    const desc = url.searchParams.get('error_description') ?? new URLSearchParams(url.hash.replace(/^#/, '')).get('error_description');
-    return { ok: false, reason: 'unknown', message: desc ?? 'Google did not return an authorization code' };
+    const callback = new URL(result.url);
+    if (
+      callback.protocol !== 'haratna:' ||
+      callback.host !== 'auth' ||
+      callback.pathname !== '/callback' ||
+      callback.username ||
+      callback.password
+    )
+      return { ok: false, reason: 'google_failed' };
+    const errorCode = callback.searchParams.get('error') ?? new URLSearchParams(callback.hash.slice(1)).get('error');
+    if (errorCode) return { ok: false, reason: 'google_failed' };
+    const codes = callback.searchParams.getAll('code');
+    if (codes.length !== 1 || !codes[0]) return { ok: false, reason: 'google_failed' };
+    const outcome = await exchangeAuthCode(codes[0]);
+    return outcome.ok ? outcome : { ok: false, reason: googleErrorReason(outcome.reason) };
+  } catch (error) {
+    return { ok: false, reason: googleErrorReason(classifyAuthError(error instanceof Error ? error : undefined)) };
   }
-  return exchangeAuthCode(code);
 }
 
 export async function signOutSupabase(): Promise<void> {

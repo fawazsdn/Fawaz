@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ export default function BusinessRequestScreen() {
   const [items, setItems] = useState<BusinessRequest[]>([]);
   const [message, setMessage] = useState('');
   const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
   const title =
     type === 'suggestion'
       ? local('Suggest a business', 'اقتراح نشاط تجاري')
@@ -47,17 +48,22 @@ export default function BusinessRequestScreen() {
   }, [userId, t.errors.genericBody]);
 
   const send = async () => {
-    if (!userId || !neighborhood || !verified || (type !== 'suggestion' && !business)) return;
+    const description = details.trim();
+    if (submitting.current || !userId || !neighborhood || !verified || description.length < 10 || (type !== 'suggestion' && !business))
+      return;
+    submitting.current = true;
     setPending(true);
     setMessage('');
     try {
-      await submitBusinessRequest(neighborhood, type === 'suggestion' ? null : (business ?? null), type, details);
+      await submitBusinessRequest(neighborhood, type === 'suggestion' ? null : (business ?? null), type, description);
       setDetails('');
       setMessage(local('Sent for staff review.', 'تم الإرسال للمراجعة.'));
-      setItems(await getBusinessRequests({ requester: userId }));
+      const requests = await getBusinessRequests({ requester: userId }).catch(() => null);
+      if (requests) setItems(requests);
     } catch {
       setMessage(t.errors.genericBody);
     } finally {
+      submitting.current = false;
       setPending(false);
     }
   };
@@ -81,8 +87,8 @@ export default function BusinessRequestScreen() {
                     'أضف وسيلة تواصل تجارية عامة أو موقعًا يمكن للفريق استخدامه لتأكيد صفتك. لا تضع كلمات مرور أو وثائق خاصة هنا.',
                   )
                 : local(
-                    'Include the business name, its address, and a link to an official source if available.',
-                    'اذكر اسم النشاط وعنوانه ورابط مصدر رسمي إن أمكن.',
+                    'Include the business name, its neighborhood address or nearest landmark, and an official website or public business contact if available.',
+                    'اذكر اسم النشاط وعنوانه في الحي أو أقرب معلم، وأضف موقعه الرسمي أو وسيلة تواصل تجارية عامة إن أمكن.',
                   )}
             </Text>
             <TextInput

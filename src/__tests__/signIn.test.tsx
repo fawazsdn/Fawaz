@@ -147,6 +147,15 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
     expect(useStore.getState().session.authProvider).toBe('google');
   });
 
+  it('shows a retry message when Google sign-in fails', async () => {
+    process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN = 'true';
+    mockSignInWithGoogle.mockResolvedValue({ ok: false, reason: 'google_failed' });
+    await renderWithProvider(<SignInScreen />);
+    await fireEvent.press(screen.getByText('Continue with Google'));
+    expect(await screen.findByText(/Google sign-in couldn’t finish/)).toBeTruthy();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
   it('a cancelled Google sign-in does not authenticate and shows no error', async () => {
     process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN = 'true';
     mockSignInWithGoogle.mockResolvedValue({ ok: false, reason: 'cancelled' });
