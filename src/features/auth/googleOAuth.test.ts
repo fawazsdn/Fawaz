@@ -23,7 +23,7 @@ test.each([
   'not a URL',
 ])('rejects malformed or foreign callbacks without exchanging a code', async (url) => {
   open.mockResolvedValue({ type: 'success', url });
-  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'unknown' });
+  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'google_failed' });
   expect(exchange).not.toHaveBeenCalled();
 });
 
@@ -50,17 +50,17 @@ test('exchanges only the code from the registered callback', async () => {
   expect(exchange).toHaveBeenCalledWith('example-code');
 });
 
-test('maps an expired PKCE flow to the existing expired-link state', async () => {
+test('maps an expired PKCE flow to a Google-specific retry', async () => {
   open.mockResolvedValue({ type: 'success', url: 'haratna://auth/callback?code=expired-code' });
   exchange.mockResolvedValue({
     data: { user: null, session: null },
     error: { code: 'flow_state_expired', message: 'Auth flow expired' },
   } as Awaited<ReturnType<typeof exchange>>);
-  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'link_expired', message: 'Auth flow expired' });
+  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'google_expired' });
 });
 
-test('handles declined consent without exchanging an authorization code', async () => {
+test('shows a recoverable error when Google denies access without exchanging a code', async () => {
   open.mockResolvedValue({ type: 'success', url: 'haratna://auth/callback#error=access_denied' });
-  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'cancelled' });
+  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'google_failed' });
   expect(exchange).not.toHaveBeenCalled();
 });

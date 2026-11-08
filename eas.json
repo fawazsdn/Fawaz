@@ -28,6 +28,13 @@
       "ios": {
         "resourceClass": "m-medium"
       }
+    },
+    "google-testflight": {
+      "extends": "production",
+      "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN": "true"
+      }
     }
   },
   "submit": {

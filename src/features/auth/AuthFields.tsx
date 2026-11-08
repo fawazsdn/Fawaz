@@ -87,6 +87,10 @@ export function useAuthErrorText() {
     switch (reason) {
       case 'cancelled':
         return null;
+      case 'google_failed':
+        return t.auth.errGoogleSignIn;
+      case 'google_expired':
+        return t.auth.errGoogleExpired;
       case 'invalid_credentials':
         return t.auth.errInvalidCredentials;
       case 'email_not_confirmed':

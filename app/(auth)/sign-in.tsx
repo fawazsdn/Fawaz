@@ -69,6 +69,7 @@ export default function SignInScreen() {
   const onGoogle = async () => {
     setPending('google');
     setError(null);
+    setNeedsConfirmation(false);
     await finish(await signInWithGoogle());
   };
 

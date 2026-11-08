@@ -20,6 +20,8 @@ export type AuthErrorReason =
   | 'link_expired'
   | 'unavailable'
   | 'cancelled'
+  | 'google_failed'
+  | 'google_expired'
   | 'unknown';
 
 export type AuthOutcome =
@@ -143,7 +145,7 @@ export function parseAuthLink(params: Record<string, string | string[] | undefin
 /** Exchanges a PKCE code from an email/OAuth link for a real session. */
 export async function exchangeAuthCode(code: string): Promise<AuthOutcome> {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error || !data.user) return { ok: false, reason: classifyAuthError(error), message: error?.message };
+  if (error || !data.user || !data.session) return { ok: false, reason: classifyAuthError(error), message: error?.message };
   return { ok: true, userId: data.user.id, email: data.user.email ?? null, provider: providerOf(data.user) };
 }
 
@@ -189,17 +191,23 @@ export async function signInWithApple(): Promise<AuthOutcome> {
  * (The previous build passed the whole redirect URL to exchangeCodeForSession,
  * which expects only the code, so Google sign-in could never complete.)
  */
+function googleErrorReason(reason: AuthErrorReason): AuthErrorReason {
+  if (reason === 'network' || reason === 'rate_limited') return reason;
+  if (reason === 'link_expired') return 'google_expired';
+  return 'google_failed';
+}
+
 export async function signInWithGoogle(): Promise<AuthOutcome> {
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: AUTH_CALLBACK_URL, skipBrowserRedirect: true, scopes: 'openid email profile' },
     });
-    if (error || !data.url) return { ok: false, reason: classifyAuthError(error) };
+    if (error || !data.url) return { ok: false, reason: googleErrorReason(classifyAuthError(error)) };
 
     const result = await WebBrowser.openAuthSessionAsync(data.url, AUTH_CALLBACK_URL);
     if (result.type === 'cancel' || result.type === 'dismiss') return { ok: false, reason: 'cancelled' };
-    if (result.type !== 'success') return { ok: false, reason: 'unknown' };
+    if (result.type !== 'success') return { ok: false, reason: 'google_failed' };
 
     const callback = new URL(result.url);
     if (
@@ -209,14 +217,15 @@ export async function signInWithGoogle(): Promise<AuthOutcome> {
       callback.username ||
       callback.password
     )
-      return { ok: false, reason: 'unknown' };
+      return { ok: false, reason: 'google_failed' };
     const errorCode = callback.searchParams.get('error') ?? new URLSearchParams(callback.hash.slice(1)).get('error');
-    if (errorCode) return { ok: false, reason: errorCode === 'access_denied' ? 'cancelled' : 'unknown' };
+    if (errorCode) return { ok: false, reason: 'google_failed' };
     const codes = callback.searchParams.getAll('code');
-    if (codes.length !== 1 || !codes[0]) return { ok: false, reason: 'unknown' };
-    return await exchangeAuthCode(codes[0]);
+    if (codes.length !== 1 || !codes[0]) return { ok: false, reason: 'google_failed' };
+    const outcome = await exchangeAuthCode(codes[0]);
+    return outcome.ok ? outcome : { ok: false, reason: googleErrorReason(outcome.reason) };
   } catch (error) {
-    return { ok: false, reason: classifyAuthError(error instanceof Error ? error : undefined) };
+    return { ok: false, reason: googleErrorReason(classifyAuthError(error instanceof Error ? error : undefined)) };
   }
 }
 

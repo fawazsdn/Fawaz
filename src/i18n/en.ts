@@ -121,6 +121,8 @@ const en: typeof ar = {
     errUserExists: 'An account with this email already exists. Sign in or reset your password.',
     errRateLimited: 'Too many attempts. Please wait a moment and try again.',
     errNetwork: "Couldn't connect. Check your internet and try again.",
+    errGoogleSignIn: 'Google sign-in couldn’t finish. Try again with your Google account, or use email or Apple.',
+    errGoogleExpired: 'Your Google sign-in session expired. Tap Continue with Google to try again.',
     errLinkExpired: 'This link has expired or was already used. Request a new one.',
     errWeakPasswordServer: 'That password is too weak. Choose a stronger one.',
     checkEmailTitle: 'Check your email',
