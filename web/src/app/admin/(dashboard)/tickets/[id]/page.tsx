@@ -93,7 +93,7 @@ export default async function TicketPage({ params }: PageProps<'/admin/tickets/[
                 hint: t.ticket.responseHint,
                 save: t.ticket.save,
                 saveSend: t.ticket.saveSend,
-                saveClose: t.ticket.saveClose,
+                saveClose: isWebsite ? t.ticket.sendClose : t.ticket.saveClose,
               }}
             />
           </Card>
