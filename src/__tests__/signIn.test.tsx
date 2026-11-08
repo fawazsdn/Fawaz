@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { resetStoreForTests } from '@/testing/fixtures';
@@ -13,14 +14,22 @@ jest.mock('expo-router', () => ({
 }));
 
 const mockSignInWithGoogle = jest.fn();
+const mockSignInWithApple = jest.fn();
 jest.mock('@/features/auth/supabaseAuth', () => {
   const actual = jest.requireActual('@/features/auth/supabaseAuth');
-  return { ...actual, signInWithApple: jest.fn(), signInWithGoogle: () => mockSignInWithGoogle() };
+  return { ...actual, signInWithApple: () => mockSignInWithApple(), signInWithGoogle: () => mockSignInWithGoogle() };
 });
 jest.mock('@/features/auth/routeAfterAuth', () => ({ routeAfterAuth: jest.fn(async () => '/(auth)/profile-setup') }));
 
 jest.mock('expo-apple-authentication', () => ({
-  AppleAuthenticationButton: () => null,
+  AppleAuthenticationButton: ({ onPress }: { onPress: () => void }) => {
+    const { Pressable, Text } = jest.requireActual('react-native');
+    return (
+      <Pressable onPress={onPress}>
+        <Text>Continue with Apple</Text>
+      </Pressable>
+    );
+  },
   AppleAuthenticationButtonType: { CONTINUE: 'continue' },
   AppleAuthenticationButtonStyle: { BLACK: 'black', WHITE: 'white' },
   isAvailableAsync: async () => false,
@@ -35,12 +44,20 @@ jest.mock('expo-crypto', () => ({
 
 const insetsFrame = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
 const renderWithProvider = (ui: React.ReactElement) => render(<SafeAreaProvider initialMetrics={insetsFrame}>{ui}</SafeAreaProvider>);
+const googleSignInSetting = process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN;
+afterEach(() => {
+  if (googleSignInSetting === undefined) delete process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN;
+  else process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN = googleSignInSetting;
+});
+
 const signInWithPassword = supabase.auth.signInWithPassword as jest.Mock;
 
 beforeEach(() => {
+  delete process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN;
   mockReplace.mockClear();
   mockPush.mockClear();
   mockSignInWithGoogle.mockReset();
+  mockSignInWithApple.mockReset();
   signInWithPassword.mockReset();
   resetStoreForTests();
   useStore.getState().setLocale('en');
@@ -55,7 +72,7 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
     expect(screen.getByText('Sign In')).toBeTruthy();
     expect(screen.getByText('Forgot password?')).toBeTruthy();
     expect(screen.getByText('Sign up')).toBeTruthy();
-    expect(screen.getByText('Continue with Google')).toBeTruthy();
+    expect(screen.queryByText('Continue with Google')).toBeNull();
     expect(screen.queryByText(/phone/i)).toBeNull();
   });
 
@@ -106,7 +123,22 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(auth)/check-email', params: { email: 'a@example.test' } });
   });
 
+  it('keeps Apple sign-in available on iOS when Google is disabled', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'ios');
+    try {
+      mockSignInWithApple.mockResolvedValue({ ok: true, userId: 'apple-user', email: null, provider: 'apple' });
+      await renderWithProvider(<SignInScreen />);
+      await fireEvent.press(screen.getByText('Continue with Apple'));
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(auth)/profile-setup'));
+      expect(useStore.getState().session.authProvider).toBe('apple');
+      expect(screen.queryByText('Continue with Google')).toBeNull();
+    } finally {
+      platform.restore();
+    }
+  });
+
   it('a successful Google sign-in stores the real Supabase user id', async () => {
+    process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN = 'true';
     mockSignInWithGoogle.mockResolvedValue({ ok: true, userId: 'real-supabase-user-id-123', email: null, provider: 'google' });
     await renderWithProvider(<SignInScreen />);
     await fireEvent.press(screen.getByText('Continue with Google'));
@@ -116,6 +148,7 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
   });
 
   it('a cancelled Google sign-in does not authenticate and shows no error', async () => {
+    process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN = 'true';
     mockSignInWithGoogle.mockResolvedValue({ ok: false, reason: 'cancelled' });
     await renderWithProvider(<SignInScreen />);
     await fireEvent.press(screen.getByText('Continue with Google'));
