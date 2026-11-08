@@ -87,6 +87,15 @@ test.describe('access control', () => {
     expect((await request.get('/admin/api/open-count')).status()).toBe(401);
   });
 
+  test('staff sign-in from a phone ticket link returns to that ticket', async ({ page, context }) => {
+    const ticketPath = '/admin/tickets/11111111-1111-4111-8111-111111111111';
+    await page.goto(ticketPath);
+    await expect(page).toHaveURL(/\/admin\/login$/);
+    await signIn(page, 'admin@haratna.test');
+    await expect(page).toHaveURL(new RegExp(`${ticketPath}$`));
+    expect((await context.cookies()).find((cookie) => cookie.name === 'haratna-admin-ticket-return')?.value ?? '').toBe('');
+  });
+
   test('session cookies are httpOnly, SameSite=Lax and scoped to /admin', async ({ page, context }) => {
     await signIn(page, 'admin@haratna.test');
     await expect(page).toHaveURL(/\/admin$/);
