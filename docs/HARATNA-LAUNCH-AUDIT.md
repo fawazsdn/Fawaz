@@ -24,7 +24,7 @@ The pending migration seeds three source-confirmed branches in Ajyal, Dhahran. I
 - [Domino’s Pizza](https://store.dominos.sa/ar/almntk%D8%A9-alshrky%D8%A9/althhran/domino-s-pizza-domynoz-bytza-169) lists its Ajyal branch, address, phone, and hours.
 - [Tamimi Markets](https://ae.linkedin.com/posts/tamimi-markets_%D8%AA%D9%85-%D8%A8%D8%AD%D9%85%D8%AF-%D8%A7%D9%84%D9%84%D9%87-%D8%B5%D8%A8%D8%A7%D8%AD-%D8%A7%D9%84%D9%8A%D9%88%D9%85-%D8%A7%D9%81%D8%AA%D8%AA%D8%A7%D8%AD-%D9%81%D8%B1%D8%B9-%D8%AC%D8%AF%D9%8A%D8%AF-activity-7031630821849456640-Nura) announced the branch. Confirm current branch details before adding it.
 
-The three seed entries have no independently verified coordinates. Their detail pages use the merchant-provided address for directions. The existing map continues to plot listings with coordinates. Other named candidates and service categories remain unverified. The directory is scoped to the resident’s neighborhood using the existing Supabase rules. Listing suggestions, corrections, ownership claims, and the associated staff queue remain open work.
+The Domino’s pin is the center of the Plus Code published on its branch page, checked against the repository’s Ajyal boundary. Soma and Knock use the merchant-provided address for directions. Other named candidates and service categories remain unverified. The directory uses the resident’s verified neighborhood scope. Residents can file suggestions, corrections, and claims for staff review. A platform administrator can approve an unowned business claim. Suggestions and corrections record the decision while staff verifies and edits the listing separately.
 
 ## Verification
 
@@ -36,4 +36,8 @@ The three seed entries have no independently verified coordinates. Their detail 
 
 ## Release gate
 
-The signed build and App Store draft still need verification after the directory and support changes are ready. Remaining device checks cover registration and email receipt, Apple sign-in, GPS verification and change approvals, camera and upload permissions, posts and interactions, messaging and notifications, groups, clubs, marketplace, Lost & Found, reporting and blocking, and account deletion. Review privacy declarations and collect App Store screenshots on a real iPhone. Keep the App Review demo credentials in App Store Connect and the existing secure credential store.
+The signed build and App Store draft still need verification after the directory and support changes are ready. The business seed and request migrations require production approval before release. Remaining device checks cover registration and email receipt, Apple sign-in, GPS verification and change approvals, camera and upload permissions, posts and interactions, messaging and notifications, groups, clubs, marketplace, Lost & Found, reporting and blocking, and account deletion. Review privacy declarations and collect App Store screenshots on a real iPhone. Keep the App Review demo credentials in App Store Connect and the existing secure credential store.
+
+## Dependency and App Store status
+
+The mobile lockfile removes the critical shell-quote advisory and updates compatible transitive dependencies. After a clean install, the mobile suite passed 332 tests and iOS export succeeded. The registry audit reported zero critical and five high findings after the updates. The remaining high Expo Router chain is reported as fixed by a major Expo Router update and requires compatibility testing. The App Store Connect draft currently selects build 8, uses manual release, and has review credentials and notes saved. Its one existing screenshot is from a simulator. Real iPhone screenshots and verification of the final App Privacy declarations remain required.

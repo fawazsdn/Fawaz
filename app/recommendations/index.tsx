@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { IconButton } from '@/components/IconButton';
 import { AppHeader } from '@/components/AppHeader';
+import { Button } from '@/components/Button';
 import { FilterBar } from '@/components/FilterBar';
 import { SearchBar } from '@/components/SearchBar';
 import { normalizeForSearch } from '@/utils/searchNormalize';
@@ -95,6 +96,13 @@ export default function RecommendationsScreen() {
           options={[{ key: 'all', label: t.common.all }, ...CATEGORIES.map((c) => ({ key: c, label: categoryLabel(c) }))]}
           selected={category}
           onSelect={(k) => setCategory(k as Category | 'all')}
+        />
+      </View>
+      <View style={{ paddingHorizontal: theme.spacing.md, marginTop: 6 }}>
+        <Button
+          label={locale === 'ar' ? 'اقتراح نشاط تجاري' : 'Suggest a business'}
+          variant="outline"
+          onPress={() => router.push('/business/request')}
         />
       </View>
       <FlatList

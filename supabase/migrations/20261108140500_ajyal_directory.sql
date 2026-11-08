@@ -42,20 +42,22 @@ for each row execute function private.guard_business_verification();
 
 -- Provider-owned sources are recorded per branch. This seed never edits a
 -- listing already entered by an administrator or linked to another area.
-with candidates(id, name, name_ar, category, location_label, phone, hours, source_url) as (
+-- Domino’s coordinates are the centre of the Plus Code on its store page.
+with candidates(id, name, name_ar, category, location_label, phone, hours, source_url, approx_lat, approx_lng) as (
   values
     ('8325c364-be09-4c33-951b-b614fcb28d51'::uuid, 'Soma Grape Leaves', 'ورق عنب سوما', 'restaurant',
       '3J Street, Ajyal, Dhahran', '+966539800382', '24h',
-      'https://www.soma.sa/ajyal'),
+      'https://www.soma.sa/ajyal', null, null),
     ('30ad6700-4009-445f-a5e3-c251a6200d26'::uuid, 'Knock Café', 'نوك كافيه', 'cafe',
-      '3705, Ajyal District, Dhahran', null, null, 'https://linktr.ee/knock.saudi'),
+      '3705, Ajyal District, Dhahran', null, null, 'https://linktr.ee/knock.saudi', null, null),
     ('0186c238-31a8-426c-a082-6bdd027d27c7'::uuid, 'Domino’s Pizza', 'دومينوز بيتزا', 'restaurant',
       '738C+56M, Ajyal, Dhahran 34513', '+966920012345', null,
-      'https://store.dominos.sa/ar/almntk%D8%A9-alshrky%D8%A9/althhran/domino-s-pizza-domynoz-bytza-169')
+      'https://store.dominos.sa/ar/almntk%D8%A9-alshrky%D8%A9/althhran/domino-s-pizza-domynoz-bytza-169',
+      26.265462, 50.070547)
 ), seeded as (
-  insert into public.businesses (id, name, name_ar, name_en, category, location_label, phone, hours, source_url, source_checked_on, city_id, verified)
+  insert into public.businesses (id, name, name_ar, name_en, category, location_label, phone, hours, source_url, source_checked_on, city_id, verified, approx_lat, approx_lng)
   select c.id, c.name, c.name_ar, c.name, c.category, c.location_label, c.phone, c.hours, c.source_url,
-    date '2026-11-08', n.city_id, true
+    date '2026-11-08', n.city_id, true, c.approx_lat, c.approx_lng
   from candidates c
   join public.neighborhoods n on n.id = 'sa-district-10500227013'
   where not exists (

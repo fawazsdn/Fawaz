@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Linking, ScrollView, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BadgeCheck, Clock, Phone, Share2 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -21,6 +21,7 @@ import { recommendBusiness } from '@/backend/actions';
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const theme = useTheme();
   const { t, locale } = useI18n();
 
@@ -144,6 +145,22 @@ export default function BusinessDetailScreen() {
               <Text accessibilityLiveRegion="polite" style={theme.text('bodySmall', theme.colors.danger)}>
                 {t.errors.genericTitle}
               </Text>
+            ) : null}
+            {business.communityVerified ? (
+              <>
+                <Button
+                  label={locale === 'ar' ? 'الإبلاغ عن معلومات غير صحيحة' : 'Report incorrect information'}
+                  onPress={() => router.push({ pathname: '/business/request', params: { business: business.id, kind: 'correction' } })}
+                  variant="outline"
+                  fullWidth
+                />
+                <Button
+                  label={locale === 'ar' ? 'طلب ملكية النشاط التجاري' : 'Claim this business'}
+                  onPress={() => router.push({ pathname: '/business/request', params: { business: business.id, kind: 'claim' } })}
+                  variant="outline"
+                  fullWidth
+                />
+              </>
             ) : null}
             <Button label={t.recommendations.recommend} onPress={() => setSheetOpen(true)} variant="outline" fullWidth />
           </View>
