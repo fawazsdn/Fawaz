@@ -48,7 +48,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "sa.haratna.app",
-      "buildNumber": "3",
+      "buildNumber": "6",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "حارتنا يستخدم الصور التي تختارها فقط لمشاركتها في المنشورات والأنشطة والأندية وصورتك الشخصية.",
