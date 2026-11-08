@@ -1,33 +1,46 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Star } from 'lucide-react-native';
+import { MapPin, Star } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
+import { IconButton } from '@/components/IconButton';
 import { AppHeader } from '@/components/AppHeader';
 import { FilterBar } from '@/components/FilterBar';
+import { SearchBar } from '@/components/SearchBar';
+import { normalizeForSearch } from '@/utils/searchNormalize';
 import { EmptyState } from '@/components/EmptyState';
 import type { ServiceCategory } from '@/models';
 
-const CATEGORIES: ServiceCategory[] = [
-  'electrician',
-  'plumber',
-  'ac_repair',
-  'car_wash',
-  'cleaning',
-  'restaurant',
-  'cafe',
-  'barber',
-  'tailor',
-  'tutor',
-  'pet_services',
-];
+const LABELS: Record<ServiceCategory | 'home_services', readonly [string, string]> = {
+  electrician: ['Electricians', 'كهربائيون'],
+  plumber: ['Plumbers', 'سباكون'],
+  ac_repair: ['AC Repair', 'صيانة التكييف'],
+  car_wash: ['Car Washes', 'مغاسل السيارات'],
+  cleaning: ['Cleaning', 'التنظيف'],
+  restaurant: ['Restaurants', 'المطاعم'],
+  cafe: ['Cafés', 'المقاهي'],
+  barber: ['Salons & Barbers', 'الصالونات والحلاقة'],
+  tailor: ['Tailors', 'الخياطون'],
+  tutor: ['Tutors', 'المعلمون الخصوصيون'],
+  pet_services: ['Pet Services', 'خدمات الحيوانات الأليفة'],
+  grocery: ['Grocery Stores', 'متاجر المواد الغذائية'],
+  retail: ['Retail Shops', 'متاجر التجزئة'],
+  healthcare: ['Healthcare & Pharmacies', 'الرعاية الصحية والصيدليات'],
+  entertainment: ['Entertainment', 'الترفيه'],
+  home_services: ['Home Services', 'خدمات المنزل'],
+};
+type Category = keyof typeof LABELS;
+const CATEGORIES = Object.keys(LABELS) as Category[];
+const HOME_SERVICES: ServiceCategory[] = ['electrician', 'plumber', 'ac_repair', 'cleaning'];
 
 export default function RecommendationsScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const categoryLabel = (category: Category) => LABELS[category]?.[locale === 'ar' ? 1 : 0] ?? category;
+  const [query, setQuery] = useState('');
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
   const neighborhoodId = useStore((s) => s.session.neighborhoodId);
@@ -42,22 +55,46 @@ export default function RecommendationsScreen() {
     [allBusinesses, neighborhoodId],
   );
 
-  const [category, setCategory] = useState<ServiceCategory | 'all'>(
-    initialCategory && (CATEGORIES as string[]).includes(initialCategory) ? (initialCategory as ServiceCategory) : 'all',
+  const [category, setCategory] = useState<Category | 'all'>(
+    initialCategory && (CATEGORIES as string[]).includes(initialCategory) ? (initialCategory as Category) : 'all',
   );
-  const filtered = useMemo(
-    () => (category === 'all' ? businesses : businesses.filter((b) => b.category === category)),
-    [businesses, category],
-  );
+  const filtered = useMemo(() => {
+    const needle = normalizeForSearch(query);
+    return businesses.filter((business) => {
+      const inCategory = category === 'home_services' ? HOME_SERVICES.includes(business.category) : business.category === category;
+      return (
+        (category === 'all' || inCategory) &&
+        (!needle ||
+          normalizeForSearch(
+            [business.name, business.nameAr, business.nameEn, business.description, business.locationLabel].filter(Boolean).join(' '),
+          ).includes(needle))
+      );
+    });
+  }, [businesses, category, query]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={t.recommendations.title} fallbackRoute="/(tabs)/discover" />
+      <AppHeader
+        title={t.recommendations.title}
+        fallbackRoute="/(tabs)/discover"
+        right={
+          <IconButton
+            accessibilityLabel={t.map.title}
+            variant="surface"
+            onPress={() => router.push({ pathname: '/(tabs)/map', params: { filter: 'businesses' } })}
+          >
+            <MapPin size={20} color={theme.colors.primary} />
+          </IconButton>
+        }
+      />
+      <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 10 }}>
+        <SearchBar value={query} onChangeText={setQuery} placeholder={t.common.search} />
+      </View>
       <View style={{ marginBottom: 10 }}>
         <FilterBar
           options={[{ key: 'all', label: t.common.all }, ...CATEGORIES.map((c) => ({ key: c, label: categoryLabel(c) }))]}
           selected={category}
-          onSelect={(k) => setCategory(k as ServiceCategory | 'all')}
+          onSelect={(k) => setCategory(k as Category | 'all')}
         />
       </View>
       <FlatList
@@ -76,7 +113,7 @@ export default function RecommendationsScreen() {
             }}
           >
             <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
-              <Text style={theme.text('title')}>{item.name}</Text>
+              <Text style={theme.text('title')}>{(locale === 'ar' ? item.nameAr : item.nameEn) ?? item.name}</Text>
               {item.communityVerified ? <Star size={13} color={theme.colors.warning} fill={theme.colors.warning} /> : null}
             </View>
             <Text style={theme.text('caption', theme.colors.textMuted)}>{categoryLabel(item.category)}</Text>
@@ -89,21 +126,4 @@ export default function RecommendationsScreen() {
       />
     </View>
   );
-}
-
-function categoryLabel(c: ServiceCategory) {
-  const map: Record<ServiceCategory, string> = {
-    electrician: 'كهربائي',
-    plumber: 'سباك',
-    ac_repair: 'تكييف',
-    car_wash: 'غسيل سيارات',
-    cleaning: 'تنظيف',
-    restaurant: 'مطعم',
-    cafe: 'مقهى',
-    barber: 'حلاق',
-    tailor: 'خياط',
-    tutor: 'معلم خصوصي',
-    pet_services: 'خدمات حيوانات أليفة',
-  };
-  return map[c];
 }

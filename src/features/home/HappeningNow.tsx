@@ -100,7 +100,7 @@ export function HappeningNow({ neighborhoodId }: { neighborhoodId: string }) {
   if (items.length === 0) return null;
 
   return (
-    <View>
+    <View style={{ marginBottom: 12 }}>
       <Text style={[theme.text('title'), styles.heading]}>{t.home.happeningNow}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, theme.row()]}>
         {items.map((item) => (

@@ -294,11 +294,19 @@ export type ServiceCategory =
   | 'barber'
   | 'tailor'
   | 'tutor'
-  | 'pet_services';
+  | 'pet_services'
+  | 'grocery'
+  | 'retail'
+  | 'healthcare'
+  | 'entertainment';
 
 export interface Business {
   id: string;
   name: string;
+  nameAr?: string;
+  nameEn?: string;
+  sourceUrl?: string;
+  sourceCheckedOn?: string;
   category: ServiceCategory;
   coverImage?: string;
   logo?: string;

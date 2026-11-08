@@ -29,6 +29,8 @@ export function NeighborhoodPulse({ neighborhoodId }: { neighborhoodId: string }
     listings: t.home.pulseListings,
   };
 
+  if (!stats.some((stat) => stat.value > 0)) return null;
+
   return (
     <Card>
       <Text style={[theme.text('title'), { marginBottom: 12 }]}>{t.home.pulseTitle}</Text>
