@@ -41,3 +41,26 @@ The signed build and App Store draft still need verification after the directory
 ## Dependency and App Store status
 
 The mobile lockfile removes the critical shell-quote advisory and updates compatible transitive dependencies. After a clean install, the mobile suite passed 332 tests and iOS export succeeded. The registry audit reported zero critical and five high findings after the updates. The remaining high Expo Router chain is reported as fixed by a major Expo Router update and requires compatibility testing. The App Store Connect draft currently selects build 8, uses manual release, and has review credentials and notes saved. Its one existing screenshot is from a simulator. Real iPhone screenshots and verification of the final App Privacy declarations remain required.
+
+## Build 10 follow-up
+
+| Priority | Finding | State |
+| --- | --- | --- |
+| Critical | Fresh Gmail signup, delivery, OTP entry, login, and neighborhood onboarding on a physical iPhone | OTP autofocus, native code autofill, paste, and Change Email are in the candidate. Device confirmation is pending. |
+| High | Missing back controls on the city picker, neighborhood picker, GPS verification, and authentication routes | Shared headers or the auth shell now expose back actions. The city picker has a direct-entry regression test. See the [route inventory](HARATNA-ROUTE-INVENTORY.md). |
+| High | Google Sign-In was disabled in production | An OAuth test client exists in Haratna Production with the exact Supabase callback. Provider activation and device testing are pending. |
+| High | Native Google Maps requires project access and billing authorization | The candidate can select the Google iOS provider when a restricted build key is configured. Google Maps directions open through the Google app or browser. The current build has no Maps SDK key. |
+| Medium | Business category coverage and supply | Added bilingual category entry points and retained verified-neighborhood listing filters. Three businesses are published. Tamimi is confirmed as an Ajyal opening by the neighborhood council. Razeen is independently confirmed as an Ajyal commercial center with recent events. They remain research entries pending current branch details and approved publication. |
+| Future | Improve retention without synthetic activity | Prioritize local events, invite sharing and useful empty-state actions, which are present in the app. Evaluate ranking after genuine neighborhood activity provides enough data. |
+
+### Google Maps budget model
+
+Assumption for a pilot month: 500 active residents, four native map opens, two Nearby Search Pro calls, two Text Search Pro calls, and four Place Details Pro calls per resident. This is 2,000 map opens and 1,000, 1,000, and 2,000 Places calls respectively. Under current published SKU allowances the modeled charge is USD 0 before tax. At 5,000 active residents with identical use, the modeled charge is USD 575 before tax. The calculation is two search SKUs at 5,000 billable calls each × USD 32 per thousand, plus 15,000 billable Details Pro calls × USD 17 per thousand.
+
+Use a bundle-restricted key for `sa.haratna.app` and restrict it to Maps SDK for iOS. Use a separate server credential restricted to Places API (New) and an approved egress IP where available. Use narrowly scoped field masks to avoid higher-cost SKUs, set service quotas before rollout, and configure billing alerts. Budget alerts do not stop usage. Keep Place IDs as lookup identifiers and separate independently verified Haratna records from live Google content. [Google pricing](https://developers.google.com/maps/billing-and-pricing/pricing) · [Key restrictions](https://developers.google.com/maps/api-security-best-practices) · [Places billing](https://developers.google.com/maps/documentation/places/web-service/usage-and-billing)
+
+### Production checks and privacy
+
+Production Auth reported email and Apple enabled, Google disabled, and email auto-confirmation disabled. Public DNS exposed SPF for the sending subdomain, a Resend DKIM selector, and DMARC in monitoring mode. This checks DNS publication. Gmail reception and mailbox authentication results need the device test.
+
+The older root privacy map documents the mock prototype. Use the [App Store privacy inventory](app-store/age-rating-and-privacy.md), the current bilingual policy, and the production schema to review disclosures. Supabase stores account identifiers, email, profile data, user content, support and moderation data. Neighborhood verification uses location to evaluate the boundary. Clubs collect a self-declared date of birth for age eligibility. The mobile app displays in-app notifications and declares no push-token registration or third-party analytics SDK. The auth client currently persists its session through AsyncStorage. Review actual App Store Connect answers and update disclosures before shipping a build that includes Google Maps SDK.
