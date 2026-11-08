@@ -1,6 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { LucideIcon } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react-native';
+import { useI18n } from '@/i18n/useI18n';
+import { useSafeBack } from '@/hooks/useSafeBack';
+import { IconButton } from '@/components/IconButton';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { useTheme } from '@/theme/useTheme';
@@ -32,14 +35,26 @@ export function OnboardingPage({
   secondaryContent,
 }: OnboardingPageProps) {
   const theme = useTheme();
+  const { isRTL, t } = useI18n();
+  const BackIcon = isRTL ? ChevronRight : ChevronLeft;
+  const goBack = useSafeBack('/onboarding/welcome');
   const insets = useSafeAreaInsets();
   const tone = iconTone ?? theme.colors.primary;
 
   return (
-    <View
-      style={[styles.wrap, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24, backgroundColor: theme.colors.background }]}
+    <ScrollView
+      style={{ backgroundColor: theme.colors.background }}
+      contentContainerStyle={[
+        styles.wrap,
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24, backgroundColor: theme.colors.background },
+      ]}
     >
       <View style={[theme.row(), styles.topRow]}>
+        {step > 0 ? (
+          <IconButton accessibilityLabel={t.common.back} onPress={goBack} variant="surface">
+            <BackIcon size={22} color={theme.colors.textPrimary} />
+          </IconButton>
+        ) : null}
         <View style={[theme.row(), styles.dots]}>
           {Array.from({ length: totalSteps }).map((_, i) => (
             <View
@@ -74,16 +89,16 @@ export function OnboardingPage({
       </View>
 
       <Button label={primaryLabel} onPress={onPrimary} fullWidth size="lg" />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, paddingHorizontal: 24, justifyContent: 'space-between' },
+  wrap: { flexGrow: 1, paddingHorizontal: 24, justifyContent: 'space-between' },
   topRow: { alignItems: 'center', justifyContent: 'space-between', minHeight: 32 },
   dots: { alignItems: 'center', gap: 6 },
   dot: { height: 7, borderRadius: 4 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  center: { flexGrow: 1, paddingVertical: 20, alignItems: 'center', justifyContent: 'center', gap: 10 },
   iconWrap: { width: 128, height: 128, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   title: { textAlign: 'center' },
   body: { textAlign: 'center', maxWidth: 320 },

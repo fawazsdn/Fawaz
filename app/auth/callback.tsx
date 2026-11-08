@@ -37,7 +37,7 @@ export default function AuthCallbackScreen() {
       const outcome = await exchangeAuthCode(code);
       if (!alive) return;
       if (!outcome.ok) {
-        setMessage(outcome.reason === 'link_expired' ? t.auth.emailConfirmedSignIn : (errorText(outcome.reason) ?? t.auth.signInError));
+        setMessage(errorText(outcome.reason) ?? t.auth.signInError);
         return;
       }
       setSupabaseAuth(outcome.userId, outcome.provider, outcome.email);

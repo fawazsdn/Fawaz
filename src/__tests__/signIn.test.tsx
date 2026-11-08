@@ -119,7 +119,7 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
     await fireEvent.changeText(screen.getByLabelText('Password'), 'secret123');
     await fireEvent.press(screen.getByText('Sign In'));
     expect(await screen.findByText(/isn't confirmed yet/)).toBeTruthy();
-    await fireEvent.press(screen.getByText('Resend link'));
+    await fireEvent.press(screen.getByText('Resend email'));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(auth)/check-email', params: { email: 'a@example.test' } });
   });
 

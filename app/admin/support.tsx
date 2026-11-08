@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
@@ -23,6 +23,7 @@ export default function AdminSupportScreen() {
     return role === 'admin' || role === 'moderator';
   });
   const [rows, setRows] = useState<SupportRequest[]>([]);
+  const [openError, setOpenError] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
@@ -77,7 +78,19 @@ export default function AdminSupportScreen() {
               <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 6 }]}>{t.support.websiteReplyNote}</Text>
             ) : null}
             {r.response ? <Text style={[theme.text('caption', theme.colors.primary), { marginTop: 6 }]}>{r.response}</Text> : null}
-            {r.status !== 'closed' ? (
+            {r.status !== 'closed' && r.source === 'website' ? (
+              <View style={{ marginTop: 10 }}>
+                <Button
+                  label={locale === 'ar' ? 'فتح الرد بالبريد' : 'Open email reply'}
+                  onPress={() => {
+                    setOpenError(false);
+                    Linking.openURL(`https://www.haratna.live/admin/tickets/${encodeURIComponent(r.id)}`).catch(() => setOpenError(true));
+                  }}
+                />
+                {openError ? <Text accessibilityLiveRegion="polite">{t.errors.genericTitle}</Text> : null}
+              </View>
+            ) : null}
+            {r.status !== 'closed' && r.source !== 'website' ? (
               <View style={{ marginTop: 10, gap: 8 }}>
                 <TextInput
                   value={drafts[r.id] ?? ''}

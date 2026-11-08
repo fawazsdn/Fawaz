@@ -106,6 +106,12 @@ export async function signInWithEmail(email: string, password: string): Promise<
   return { ok: true, userId: data.user.id, email: data.user.email ?? null, provider: providerOf(data.user) };
 }
 
+export async function verifySignupCode(email: string, token: string): Promise<AuthOutcome> {
+  const { data, error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: 'email' });
+  if (error || !data.session || !data.user) return { ok: false, reason: classifyAuthError(error) };
+  return { ok: true, userId: data.user.id, email: data.user.email ?? null, provider: providerOf(data.user) };
+}
+
 export async function resendConfirmation(email: string): Promise<{ ok: boolean; reason?: AuthErrorReason }> {
   const { error } = await supabase.auth.resend({
     type: 'signup',
