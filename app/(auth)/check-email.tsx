@@ -109,6 +109,7 @@ export default function CheckEmailScreen() {
                   .slice(0, 8),
               )
             }
+            autoFocus
             keyboardType="number-pad"
             textContentType="oneTimeCode"
             editable={!action}
@@ -133,6 +134,13 @@ export default function CheckEmailScreen() {
           variant="outline"
           loading={action === 'resend'}
           disabled={!!action || !email || remaining > 0}
+          fullWidth
+        />
+        <Button
+          label={t.auth.changeEmail}
+          onPress={() => router.replace('/(auth)/sign-up')}
+          variant="ghost"
+          disabled={!!action}
           fullWidth
         />
         <Button label={t.auth.backToSignIn} onPress={() => router.replace('/(auth)/sign-in')} variant="primary" fullWidth />

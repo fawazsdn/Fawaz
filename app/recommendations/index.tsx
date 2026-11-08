@@ -30,12 +30,23 @@ const LABELS: Record<ServiceCategory | 'home_services', readonly [string, string
   grocery: ['Grocery Stores', 'متاجر المواد الغذائية'],
   retail: ['Retail Shops', 'متاجر التجزئة'],
   healthcare: ['Healthcare & Pharmacies', 'الرعاية الصحية والصيدليات'],
+  bakery: ['Bakeries & Desserts', 'المخابز والحلويات'],
+  supermarket: ['Supermarkets', 'الأسواق المركزية'],
+  pharmacy: ['Pharmacies', 'الصيدليات'],
+  clinic: ['Clinics', 'العيادات'],
+  laundry: ['Laundries', 'مغاسل الملابس'],
+  car_services: ['Car Services', 'خدمات السيارات'],
+  other: ['Other Local Businesses', 'أعمال محلية أخرى'],
   entertainment: ['Entertainment', 'الترفيه'],
   home_services: ['Home Services', 'خدمات المنزل'],
 };
 type Category = keyof typeof LABELS;
 const CATEGORIES = Object.keys(LABELS) as Category[];
-const HOME_SERVICES: ServiceCategory[] = ['electrician', 'plumber', 'ac_repair', 'cleaning'];
+const RELATED_CATEGORIES: Partial<Record<Category, ServiceCategory[]>> = {
+  home_services: ['electrician', 'plumber', 'ac_repair', 'cleaning'],
+  healthcare: ['healthcare', 'pharmacy', 'clinic'],
+  car_services: ['car_services', 'car_wash'],
+};
 
 export default function RecommendationsScreen() {
   const theme = useTheme();
@@ -62,7 +73,8 @@ export default function RecommendationsScreen() {
   const filtered = useMemo(() => {
     const needle = normalizeForSearch(query);
     return businesses.filter((business) => {
-      const inCategory = category === 'home_services' ? HOME_SERVICES.includes(business.category) : business.category === category;
+      const inCategory =
+        category !== 'all' && (RELATED_CATEGORIES[category]?.includes(business.category) ?? business.category === category);
       return (
         (category === 'all' || inCategory) &&
         (!needle ||

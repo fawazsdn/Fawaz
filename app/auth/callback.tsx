@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { Button } from '@/components/Button';
+import { AppHeader } from '@/components/AppHeader';
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
@@ -41,8 +41,11 @@ export default function AuthCallbackScreen() {
         return;
       }
       setSupabaseAuth(outcome.userId, outcome.provider, outcome.email);
-      router.replace(await routeAfterAuth());
-    })();
+      const next = await routeAfterAuth();
+      if (alive) router.replace(next);
+    })().catch(() => {
+      if (alive) setMessage(t.auth.errNetwork);
+    });
     return () => {
       alive = false;
     };
@@ -50,18 +53,20 @@ export default function AuthCallbackScreen() {
   }, []);
 
   return (
-    <View style={[styles.wrap, { backgroundColor: theme.colors.background }]}>
-      {message ? (
-        <>
-          <Text style={[theme.text('body'), styles.text]}>{message}</Text>
-          <Button label={t.auth.backToSignIn} onPress={() => router.replace('/(auth)/sign-in')} />
-        </>
-      ) : (
-        <>
-          <ActivityIndicator color={theme.colors.primary} />
-          <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.text]}>{t.auth.confirmingEmail}</Text>
-        </>
-      )}
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <AppHeader fallbackRoute="/(auth)/sign-in" />
+      <View style={styles.wrap}>
+        {message ? (
+          <>
+            <Text style={[theme.text('body'), styles.text]}>{message}</Text>
+          </>
+        ) : (
+          <>
+            <ActivityIndicator color={theme.colors.primary} />
+            <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.text]}>{t.auth.confirmingEmail}</Text>
+          </>
+        )}
+      </View>
     </View>
   );
 }

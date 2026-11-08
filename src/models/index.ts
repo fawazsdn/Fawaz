@@ -298,6 +298,13 @@ export type ServiceCategory =
   | 'grocery'
   | 'retail'
   | 'healthcare'
+  | 'bakery'
+  | 'supermarket'
+  | 'pharmacy'
+  | 'clinic'
+  | 'laundry'
+  | 'car_services'
+  | 'other'
   | 'entertainment';
 
 export interface Business {

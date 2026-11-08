@@ -129,6 +129,7 @@ const en: typeof ar = {
     verificationCode: 'Verification code',
     confirmCode: 'Verify email',
     verificationCodeInvalid: 'This code is invalid or has expired. Enter the latest code or request a new email.',
+    changeEmail: 'Change email',
     resendEmail: 'Resend email',
     emailResent: 'A new confirmation email is on its way.',
     backToSignIn: 'Back to sign in',

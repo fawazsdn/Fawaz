@@ -10,8 +10,9 @@ import SelectNeighborhoodScreen from '../../app/(auth)/select-neighborhood';
 jest.mock('@/backend/sync', () => ({ requestSync: jest.fn(async () => {}) }));
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn(), canGoBack: () => false }),
 }));
 
 // react-native-gesture-handler isn't available in this test environment
@@ -35,6 +36,7 @@ beforeEach(() => {
   resetStoreForTests();
   useStore.getState().setSupabaseAuth(TEST_ME, 'email', 'resident.a@example.test');
   mockPush.mockClear();
+  mockReplace.mockClear();
 });
 
 // Full Region -> City -> Neighborhood -> Continue onboarding flow, exercised
@@ -43,6 +45,12 @@ beforeEach(() => {
 // single screen — carrying the selected region/city across steps via the
 // store, exactly as the real navigation between routes would.
 describe('select location onboarding flow (UI)', () => {
+  it('provides a back destination when Choose Your City is the first screen', async () => {
+    await renderWithProvider(<SelectCityScreen />);
+    await fireEvent.press(screen.getByLabelText('رجوع'));
+    expect(mockReplace).toHaveBeenCalledWith('/(auth)/profile-setup');
+  });
+
   it('region step -> city step: drilling into a region and picking a city', async () => {
     await renderWithProvider(<SelectCityScreen />);
 

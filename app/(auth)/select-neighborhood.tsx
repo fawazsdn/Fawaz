@@ -1,3 +1,4 @@
+import { AppHeader } from '@/components/AppHeader';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -123,8 +124,8 @@ export default function SelectNeighborhoodScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top + 16 }}>
-      <Text style={[theme.text('heading1'), styles.title]}>{t.neighborhood.title}</Text>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <AppHeader title={t.neighborhood.title} fallbackRoute="/(auth)/select-city" />
 
       <View style={[styles.searchWrap, theme.row(), { gap: 10 }]}>
         <View style={{ flex: 1 }}>
@@ -304,7 +305,6 @@ function NeighborhoodRow({ n, locale, onPress }: { n: SaudiNeighborhood; locale:
 }
 
 const styles = StyleSheet.create({
-  title: { paddingHorizontal: 24, marginBottom: 16 },
   searchWrap: { paddingHorizontal: 24, marginBottom: 12 },
   toggleRow: { paddingHorizontal: 24, gap: 8, marginBottom: 12 },
   row: { alignItems: 'center', gap: 12, padding: 14, borderWidth: StyleSheet.hairlineWidth },

@@ -127,6 +127,7 @@ const ar = {
     verificationCode: 'رمز التحقق',
     confirmCode: 'تأكيد البريد',
     verificationCodeInvalid: 'الرمز غير صحيح أو منتهي. أدخل أحدث رمز أو اطلب رسالة جديدة.',
+    changeEmail: 'تغيير البريد الإلكتروني',
     resendEmail: 'إعادة إرسال البريد',
     emailResent: 'تم إرسال رسالة تأكيد جديدة.',
     backToSignIn: 'الرجوع لتسجيل الدخول',

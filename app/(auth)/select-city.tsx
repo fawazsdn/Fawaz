@@ -1,3 +1,4 @@
+import { AppHeader } from '@/components/AppHeader';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -197,23 +198,14 @@ export default function SelectCityScreen() {
       ? regionCities.filter((c) => normalizeForSearch(c.nameAr).includes(q) || normalizeForSearch(c.nameEn).includes(q))
       : regionCities;
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top + 16 }}>
-        <View style={[theme.row(), styles.headerRow]}>
-          <Pressable
-            onPress={() => {
-              setSelectedRegion(null);
-              setQuery('');
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={t.city.changeRegion}
-            hitSlop={10}
-          >
-            <ChevronLeft size={22} color={theme.colors.textPrimary} style={locale === 'ar' ? styles.flip : undefined} />
-          </Pressable>
-          <Text style={[theme.text('heading1'), { flex: 1 }]} numberOfLines={1}>
-            {regionLabel(selectedRegion)}
-          </Text>
-        </View>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AppHeader
+          title={regionLabel(selectedRegion)}
+          onBack={() => {
+            setSelectedRegion(null);
+            setQuery('');
+          }}
+        />
         <View style={styles.searchWrap}>
           <SearchBar value={query} onChangeText={setQuery} placeholder={t.city.searchPlaceholder} />
         </View>
@@ -241,8 +233,8 @@ export default function SelectCityScreen() {
   const showingSearch = query.trim().length > 0;
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background, paddingTop: insets.top + 16 }}>
-      <Text style={[theme.text('heading1'), styles.title]}>{t.city.title}</Text>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <AppHeader title={t.city.title} fallbackRoute="/(auth)/profile-setup" />
       <View style={styles.searchWrap}>
         <SearchBar value={query} onChangeText={setQuery} placeholder={t.city.searchPlaceholder} />
       </View>
@@ -336,8 +328,6 @@ export default function SelectCityScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { paddingHorizontal: 24, marginBottom: 16 },
-  headerRow: { paddingHorizontal: 24, marginBottom: 16, alignItems: 'center', gap: 10 },
   searchWrap: { paddingHorizontal: 24, marginBottom: 16 },
   sectionLabel: { marginBottom: 8, textTransform: 'uppercase' },
   row: { alignItems: 'center', gap: 12, padding: 14, borderWidth: StyleSheet.hairlineWidth },

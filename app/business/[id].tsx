@@ -133,7 +133,7 @@ export default function BusinessDetailScreen() {
             {destination ? (
               <Button
                 label={locale === 'ar' ? 'الاتجاهات' : 'Directions'}
-                onPress={() => open(`https://maps.apple.com/?daddr=${encodeURIComponent(destination)}`)}
+                onPress={() => open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`)}
                 variant="outline"
                 fullWidth
               />

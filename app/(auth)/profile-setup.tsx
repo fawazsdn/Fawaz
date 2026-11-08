@@ -68,7 +68,7 @@ export default function ProfileSetupScreen() {
   return (
     <AuthShell
       title={t.profileSetup.title}
-      showBack={false}
+      fallbackRoute="/(auth)/sign-in"
       footer={
         <Button
           label={t.profileSetup.continue}
