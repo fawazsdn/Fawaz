@@ -1,19 +1,14 @@
 # App Store screenshot kit
 
-**Status: no screenshots have been captured yet.** This environment is a
-Linux container with no iOS Simulator and no device, so it cannot take
-genuine iOS captures. `raw/` is empty on purpose. Do not upload mock-ups:
-Guideline 2.3.3 requires screenshots that show the app in use.
+**Status:** App Store Connect has one older simulator image. The physical-iPhone set for the release candidate is pending. Use actual app screens from the approved build.
 
-## What Apple needs
+## Capture sizes
 
-- **iPhone 6.9"**: 1320 × 2868 portrait (iPhone 16/17 Pro Max). This set is
-  required, and App Store Connect scales it down for smaller iPhones.
-- **iPhone 6.5"**: 1284 × 2778 portrait. Optional when 6.9" is supplied;
-  `compose.mjs` produces it anyway.
-- No iPad set is needed, because `supportsTablet` is `false`.
-- Provide one set for **Arabic** and one for **English (U.S.)**, 6 images each
-  (up to 10 are allowed).
+- Capture original portrait PNGs at **1290 × 2796** on an iPhone 15 Pro Max or **1320 × 2868** on an iPhone 16 or 17 Pro Max. Apple accepts both sizes in the large Dynamic Island display set.
+- No iPad set is needed because the app is iPhone-only.
+- Prepare Arabic and English (U.S.) captures for the corresponding listing locales. Apple allows up to ten per set.
+
+[Apple screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)
 
 ## The six screenshots
 
@@ -33,20 +28,13 @@ The captions are also in `captions.json`, which `compose.mjs` reads.
 1. Use the **review neighborhood** from `../review-notes.md`, never a real
    neighborhood. Screenshots must not show real residents' names, photos or
    messages without their consent.
-2. Create the content with the Haratna team accounts and label it honestly
-   (for example "Haratna team: Friday walk"). Use names of team members who
-   have agreed to appear. Do not invent fake residents.
-3. Install the TestFlight build, or run it in the iOS Simulator on an
-   **iPhone 17 Pro Max** (6.9").
-4. Set the device to **Arabic** (Settings → General → Language & Region) and
-   capture each of the six screens. In the Simulator, use File → Save Screen
-   (⌘S); on a device, press side button + volume up. Make sure the status bar
-   is clean:
-   `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4`
+2. Choose existing privacy-safe screens and approved public business information. Any new demonstration content must be team-created, clearly labeled, and approved for the review neighborhood.
+3. Install the release candidate from internal TestFlight on the iPhone.
+4. Switch Haratna to Arabic and capture the six screens with the side and volume-up buttons. Keep the original dimensions and avoid notification banners.
 5. Switch to **English** and capture the same six screens.
 6. Save them as `raw/<file id>-ar.png` and `raw/<file id>-en.png`, for example
    `raw/4-neighbors-ar.png`.
-7. Compose the framed images:
+7. Keep the original captures. If using optional frames and captions, compose and verify them against the original images:
    ```sh
    npm ci --prefix web
    npm exec --prefix web -- playwright install chromium
