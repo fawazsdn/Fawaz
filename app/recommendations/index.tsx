@@ -134,7 +134,7 @@ export default function RecommendationsScreen() {
           >
             <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
               <Text style={theme.text('title')}>{(locale === 'ar' ? item.nameAr : item.nameEn) ?? item.name}</Text>
-              {item.communityVerified ? <Star size={13} color={theme.colors.warning} fill={theme.colors.warning} /> : null}
+              {item.recommendationCount > 0 ? <Star size={13} color={theme.colors.warning} fill={theme.colors.warning} /> : null}
             </View>
             <Text style={theme.text('caption', theme.colors.textMuted)}>{categoryLabel(item.category)}</Text>
             <Text style={[theme.text('bodySmall', theme.colors.textSecondary), { marginTop: 6 }]}>

@@ -239,6 +239,7 @@ export default function MapScreen() {
           ref={mapRef}
           center={center}
           delta={0.025}
+          clusterMarkers
           markers={filtered.map((i) => ({ id: i.id, coordinate: i.coordinate, title: i.title, color: i.color }))}
           polygons={polygons}
           onMarkerPress={setSelectedId}
