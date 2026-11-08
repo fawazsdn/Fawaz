@@ -28,7 +28,9 @@ test.each([
 });
 
 test('handles cancellation and an offline auth session', async () => {
-  open.mockResolvedValueOnce({ type: 'cancel' as WebBrowser.WebBrowserResultType.CANCEL }).mockRejectedValueOnce(new Error('Network unavailable'));
+  open
+    .mockResolvedValueOnce({ type: 'cancel' as WebBrowser.WebBrowserResultType.CANCEL })
+    .mockRejectedValueOnce(new Error('Network unavailable'));
   expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'cancelled' });
   expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'network' });
   expect(exchange).not.toHaveBeenCalled();
@@ -46,4 +48,19 @@ test('exchanges only the code from the registered callback', async () => {
     options: { redirectTo: 'haratna://auth/callback', skipBrowserRedirect: true, scopes: 'openid email profile' },
   });
   expect(exchange).toHaveBeenCalledWith('example-code');
+});
+
+test('maps an expired PKCE flow to the existing expired-link state', async () => {
+  open.mockResolvedValue({ type: 'success', url: 'haratna://auth/callback?code=expired-code' });
+  exchange.mockResolvedValue({
+    data: { user: null, session: null },
+    error: { code: 'flow_state_expired', message: 'Auth flow expired' },
+  } as Awaited<ReturnType<typeof exchange>>);
+  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'link_expired', message: 'Auth flow expired' });
+});
+
+test('handles declined consent without exchanging an authorization code', async () => {
+  open.mockResolvedValue({ type: 'success', url: 'haratna://auth/callback#error=access_denied' });
+  expect(await signInWithGoogle()).toEqual({ ok: false, reason: 'cancelled' });
+  expect(exchange).not.toHaveBeenCalled();
 });

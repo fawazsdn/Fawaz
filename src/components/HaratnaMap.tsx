@@ -1,7 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { Platform, type StyleProp, type ViewStyle } from 'react-native';
-import Constants from 'expo-constants';
-import MapView, { Marker, Polygon, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import type { StyleProp, ViewStyle } from 'react-native';
+import MapView, { Marker, Polygon, type Region } from 'react-native-maps';
 
 import { groupMapMarkers } from '@/features/map/clusterMarkers';
 import { useTheme } from '@/theme/useTheme';
@@ -38,7 +37,7 @@ export interface HaratnaMapHandle {
 }
 
 /**
- * The native provider is selected from the build's map configuration.
+ * The default native provider is Apple Maps on iOS.
  * Zoom/pan/rotate are native. Only records passed in as `markers` are drawn —
  * the map never adds pins of its own.
  */
@@ -72,7 +71,6 @@ export const HaratnaMap = forwardRef<HaratnaMapHandle, HaratnaMapProps>(function
   return (
     <MapView
       ref={mapRef}
-      provider={Platform.OS === 'ios' && Constants.expoConfig?.extra?.googleMapsIosEnabled === true ? PROVIDER_GOOGLE : undefined}
       style={[{ flex: 1 }, style]}
       initialRegion={{ ...center, latitudeDelta: delta, longitudeDelta: delta }}
       onRegionChangeComplete={
