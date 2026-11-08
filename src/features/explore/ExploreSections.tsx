@@ -20,25 +20,42 @@ export function useExploreSections() {
         row(t.events.title, '/events'),
         row(t.explore.categorySports, '/events?category=sports'),
         row(local('Entertainment', 'الترفيه'), '/recommendations?category=entertainment'),
-        row(local('Parks & Places', 'الحدائق والأماكن'), '/map'),
       ],
     },
     {
-      id: 'business',
-      label: local('Local Businesses & Services', 'المتاجر والخدمات المحلية'),
+      id: 'shopping',
+      label: local('Shopping & Essentials', 'التسوق والاحتياجات الأساسية'),
       rows: [
         row(local('Supermarkets', 'الأسواق المركزية'), '/recommendations?category=supermarket'),
         row(local('Grocery Stores', 'متاجر المواد الغذائية'), '/recommendations?category=grocery'),
         row(local('Retail Shops', 'متاجر التجزئة'), '/recommendations?category=retail'),
-        row(local('Salons & Barbers', 'الصالونات والحلاقة'), '/recommendations?category=barber'),
+      ],
+    },
+    {
+      id: 'wellness',
+      label: local('Health & Wellness', 'الصحة والعافية'),
+      rows: [
         row(local('Pharmacies', 'الصيدليات'), '/recommendations?category=pharmacy'),
         row(local('Clinics', 'العيادات'), '/recommendations?category=clinic'),
+        row(t.explore.categorySports, '/events?category=sports'),
+      ],
+    },
+    {
+      id: 'business',
+      label: local('Services', 'الخدمات'),
+      rows: [
+        row(local('Salons & Barbers', 'الصالونات والحلاقة'), '/recommendations?category=barber'),
         row(local('Laundries', 'مغاسل الملابس'), '/recommendations?category=laundry'),
         row(local('Car Services', 'خدمات السيارات'), '/recommendations?category=car_services'),
         row(local('Home Services', 'خدمات المنزل'), '/recommendations?category=home_services'),
         row(local('Other Local Businesses', 'أعمال محلية أخرى'), '/recommendations?category=other'),
         row(t.explore.categoryBusinesses, '/recommendations'),
       ],
+    },
+    {
+      id: 'parks',
+      label: local('Parks & Places', 'الحدائق والأماكن'),
+      rows: [row(local('Explore the Map', 'استكشف الخريطة'), '/map')],
     },
     {
       id: 'community',

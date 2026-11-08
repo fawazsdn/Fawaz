@@ -64,7 +64,10 @@ describe('Home / Explore / Map do not render blank when a neighborhood is select
     await renderWithProvider(<DiscoverScreen />);
     expect(screen.getByPlaceholderText(/search/i)).toBeTruthy();
     expect(screen.getByText('Food & Entertainment')).toBeTruthy();
-    expect(screen.getByText('Local Businesses & Services')).toBeTruthy();
+    expect(screen.getByText('Shopping & Essentials')).toBeTruthy();
+    expect(screen.getByText('Health & Wellness')).toBeTruthy();
+    expect(screen.getByText('Services')).toBeTruthy();
+    expect(screen.getByText('Parks & Places')).toBeTruthy();
     expect(screen.getByText('Buy & Sell')).toBeTruthy();
     expect(screen.queryByText(/couldn.t load your neighborhood/i)).toBeNull();
   });
