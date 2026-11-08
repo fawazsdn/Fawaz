@@ -145,6 +145,44 @@ export async function chooseNeighborhood(neighborhoodId: string) {
   });
 }
 
+export interface NeighborhoodChangeRequest {
+  id: string;
+  user_id: string;
+  from_neighborhood_id: string;
+  to_neighborhood_id: string;
+  source: { name_ar: string; name_en: string } | null;
+  destination: { name_ar: string; name_en: string } | null;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  review_note: string | null;
+}
+
+export async function fetchNeighborhoodChanges(queue: boolean) {
+  return run(async () => {
+    const caller = me();
+    const query = supabase.from('neighborhood_change_requests').select(
+      'id,user_id,from_neighborhood_id,to_neighborhood_id,reason,status,review_note,source:neighborhoods!from_neighborhood_id(name_ar,name_en),destination:neighborhoods!to_neighborhood_id(name_ar,name_en)',
+    ).order('created_at', { ascending: queue });
+    const result = await (queue ? query.eq('status', 'pending') : query.eq('user_id', caller))
+      .returns<NeighborhoodChangeRequest[]>();
+    return check(result) ?? [];
+  }, { resync: false });
+}
+
+export async function requestNeighborhoodChange(target: string, reason: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('request_neighborhood_change', { target_neighborhood_id: target, reason }));
+  }, { resync: false });
+}
+
+export async function reviewNeighborhoodChange(id: string, approve: boolean, note: string) {
+  return run(async () => {
+    me();
+    check(await supabase.rpc('review_neighborhood_change', { request_id: id, approve, note }));
+  }, { resync: false });
+}
+
 // ------------------------------------------------------------------ posts --
 
 export async function createPost(input: {

@@ -6,7 +6,10 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+
+const require = createRequire(new URL('../../../web/package.json', import.meta.url));
+const { chromium } = require('@playwright/test');
 
 const here = dirname(fileURLToPath(import.meta.url));
 const captions = JSON.parse(readFileSync(join(here, 'captions.json'), 'utf8'));
