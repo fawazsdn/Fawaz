@@ -44,7 +44,7 @@ export default function MapScreen() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const params = useLocalSearchParams<{ focus?: string }>();
+  const params = useLocalSearchParams<{ focus?: string; filter?: string }>();
   const mapRef = useRef<HaratnaMapHandle>(null);
 
   const neighborhood = useCurrentNeighborhood();
@@ -55,7 +55,7 @@ export default function MapScreen() {
   const users = useStore((s) => s.users);
   const clubs = useStore((s) => s.clubs);
 
-  const [filter, setFilter] = useState<FilterKey>('all');
+  const [filter, setFilter] = useState<FilterKey>(() => (params.filter === 'businesses' ? 'businesses' : 'all'));
   const [query, setQuery] = useState('');
   const [places, setPlaces] = useState<GeographySearchResult[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -103,7 +103,7 @@ export default function MapScreen() {
         kind: 'businesses',
         coordinate: { latitude: b.approxLat, longitude: b.approxLng },
         color: theme.colors.accent,
-        title: b.name,
+        title: (locale === 'ar' ? b.nameAr : b.nameEn) ?? b.name,
         route: `/business/${b.id}`,
       });
     }
@@ -130,7 +130,7 @@ export default function MapScreen() {
       });
     }
     return list;
-  }, [allEvents, allBusinesses, allPosts, allIssues, theme, t, now]);
+  }, [allEvents, allBusinesses, allPosts, allIssues, theme, t, now, locale]);
 
   const filtered = useMemo(() => {
     let list = filter === 'all' ? items : items.filter((i) => i.kind === filter);

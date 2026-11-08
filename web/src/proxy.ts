@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { ADMIN_TICKET_RETURN_COOKIE, adminTicketPath } from '@/lib/admin/return-path';
+
 /**
  * Runs for /admin only. Refreshes the staff session cookies and sends
  * signed-out visitors to the sign-in page. This is a first gate only: every
@@ -50,7 +52,10 @@ export async function proxy(request: NextRequest) {
       return noStore(NextResponse.json({ error: 'not_authorized' }, { status: 401 }));
     }
     const login = new URL('/admin/login', request.url);
-    return noStore(NextResponse.redirect(login));
+    const redirect = NextResponse.redirect(login);
+    const ticket = adminTicketPath(path);
+    if (ticket) redirect.cookies.set(ADMIN_TICKET_RETURN_COOKIE, ticket, { ...COOKIE_OPTIONS, maxAge: 900 });
+    return noStore(redirect);
   }
   return noStore(response);
 }

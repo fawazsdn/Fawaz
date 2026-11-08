@@ -1,3 +1,4 @@
+import { AppHeader } from '@/components/AppHeader';
 import { useEffect, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -126,62 +127,61 @@ export default function VerificationScreen() {
   const openSettings = () => Linking.openSettings();
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-      contentContainerStyle={{ paddingTop: insets.top + 24, paddingHorizontal: 24, paddingBottom: insets.bottom + 32 }}
-    >
-      <Text style={theme.text('heading1')}>{t.verification.title}</Text>
-      <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 8, marginBottom: 24 }]}>{t.verification.body}</Text>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <AppHeader title={t.verification.title} fallbackRoute="/(auth)/select-neighborhood" />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 24, paddingBottom: insets.bottom + 32 }}>
+        <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 8, marginBottom: 24 }]}>{t.verification.body}</Text>
 
-      <StatusCard status={status} />
+        <StatusCard status={status} />
 
-      <View style={{ height: 24 }} />
+        <View style={{ height: 24 }} />
 
-      {status === 'not_started' || status === 'outside_boundary' || status === 'rate_limited' || status === 'error' ? (
-        <Button
-          label={t.verification.verifyButton}
-          onPress={startCheck}
-          icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
-          fullWidth
-          size="lg"
-          disabled={!neighborhoodId}
-        />
-      ) : null}
+        {status === 'not_started' || status === 'outside_boundary' || status === 'rate_limited' || status === 'error' ? (
+          <Button
+            label={t.verification.verifyButton}
+            onPress={startCheck}
+            icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
+            fullWidth
+            size="lg"
+            disabled={!neighborhoodId}
+          />
+        ) : null}
 
-      {status === 'permission_denied' ? (
-        <Button
-          label={t.verification.tryAgain}
-          onPress={startCheck}
-          fullWidth
-          size="lg"
-          icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
-        />
-      ) : null}
+        {status === 'permission_denied' ? (
+          <Button
+            label={t.verification.tryAgain}
+            onPress={startCheck}
+            fullWidth
+            size="lg"
+            icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
+          />
+        ) : null}
 
-      {status === 'permission_denied_forever' ? (
-        <Button label={t.verification.openSettings} onPress={openSettings} fullWidth size="lg" variant="outline" />
-      ) : null}
+        {status === 'permission_denied_forever' ? (
+          <Button label={t.verification.openSettings} onPress={openSettings} fullWidth size="lg" variant="outline" />
+        ) : null}
 
-      {status === 'location_unavailable' ? (
-        <Button
-          label={t.verification.tryAgain}
-          onPress={startCheck}
-          fullWidth
-          size="lg"
-          icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
-        />
-      ) : null}
+        {status === 'location_unavailable' ? (
+          <Button
+            label={t.verification.tryAgain}
+            onPress={startCheck}
+            fullWidth
+            size="lg"
+            icon={<MapPinned size={17} color={theme.colors.onPrimary} />}
+          />
+        ) : null}
 
-      {status === 'boundary_unavailable' ? <Button label={t.verification.continueToApp} onPress={goToApp} fullWidth size="lg" /> : null}
+        {status === 'boundary_unavailable' ? <Button label={t.verification.continueToApp} onPress={goToApp} fullWidth size="lg" /> : null}
 
-      {status === 'verified' ? <Button label={t.verification.continueToApp} onPress={goToApp} fullWidth size="lg" /> : null}
+        {status === 'verified' ? <Button label={t.verification.continueToApp} onPress={goToApp} fullWidth size="lg" /> : null}
 
-      {status !== 'verified' ? (
-        <Text onPress={goToApp} style={[theme.text('bodySmall', theme.colors.textMuted), styles.skipText]}>
-          {t.verification.skipForNow}
-        </Text>
-      ) : null}
-    </ScrollView>
+        {status !== 'verified' ? (
+          <Text onPress={goToApp} style={[theme.text('bodySmall', theme.colors.textMuted), styles.skipText]}>
+            {t.verification.skipForNow}
+          </Text>
+        ) : null}
+      </ScrollView>
+    </View>
   );
 }
 

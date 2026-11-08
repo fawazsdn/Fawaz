@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Linking, ScrollView, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BadgeCheck, Clock, Phone, Share2 } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -21,6 +21,7 @@ import { recommendBusiness } from '@/backend/actions';
 
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const theme = useTheme();
   const { t, locale } = useI18n();
 
@@ -37,6 +38,7 @@ export default function BusinessDetailScreen() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [text, setText] = useState('');
+  const [linkError, setLinkError] = useState(false);
 
   if (!business) {
     return (
@@ -46,6 +48,19 @@ export default function BusinessDetailScreen() {
       </View>
     );
   }
+
+  const title = (locale === 'ar' ? business.nameAr : business.nameEn) ?? business.name;
+  const phone = business.phoneMasked.replace(/[\s()-]/g, '');
+  const dialable = /^\+?[0-9]{7,15}$/.test(phone);
+  const source = business.sourceUrl?.startsWith('https://') ? business.sourceUrl : null;
+  const destination =
+    business.approxLat != null && business.approxLng != null ? `${business.approxLat},${business.approxLng}` : business.locationLabel;
+
+  const open = (url: string) => {
+    Linking.openURL(url).catch(() => {
+      setLinkError(true);
+    });
+  };
 
   const submit = async () => {
     if (!text.trim() || recommending) return;
@@ -58,8 +73,7 @@ export default function BusinessDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader
-        title=""
-        transparent
+        title={title}
         fallbackRoute="/recommendations"
         right={
           <IconButton
@@ -73,31 +87,41 @@ export default function BusinessDetailScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {business.coverImage ? (
           <Image source={{ uri: business.coverImage }} style={{ width: '100%', height: 180 }} contentFit="cover" />
-        ) : (
-          <View style={{ height: 80 }} />
-        )}
+        ) : null}
         <View style={{ padding: theme.spacing.md }}>
           <View style={{ ...theme.row(), alignItems: 'center', gap: 6 }}>
-            <Text style={theme.text('heading1')}>{business.name}</Text>
+            <Text style={theme.text('heading1')}>{title}</Text>
             {business.communityVerified ? <BadgeCheck size={20} color={theme.colors.primary} /> : null}
           </View>
-          {business.communityVerified ? (
+          {business.communityVerified && !source ? (
             <View style={{ marginTop: 6 }}>
               <Badge label={t.common.demoVerified} tone="primary" />
             </View>
           ) : null}
 
-          <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 12 }]}>{business.description}</Text>
+          {business.description ? (
+            <Text style={[theme.text('body', theme.colors.textSecondary), { marginTop: 12 }]}>{business.description}</Text>
+          ) : null}
+          {business.locationLabel ? <Text style={theme.text('bodySmall')}>{business.locationLabel}</Text> : null}
+          {source && business.sourceCheckedOn ? (
+            <Text style={theme.text('caption', theme.colors.textSecondary)}>
+              {locale === 'ar' ? 'تاريخ التحقق من المصدر' : 'Source checked'} {business.sourceCheckedOn}
+            </Text>
+          ) : null}
 
           <View style={{ marginTop: 12, gap: 8 }}>
-            <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
-              <Clock size={15} color={theme.colors.textMuted} />
-              <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{business.hours}</Text>
-            </View>
-            <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
-              <Phone size={15} color={theme.colors.textMuted} />
-              <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{business.phoneMasked}</Text>
-            </View>
+            {business.hours ? (
+              <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
+                <Clock size={15} color={theme.colors.textMuted} />
+                <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{business.hours}</Text>
+              </View>
+            ) : null}
+            {business.phoneMasked ? (
+              <View style={{ ...theme.row(), alignItems: 'center', gap: 8 }}>
+                <Phone size={15} color={theme.colors.textMuted} />
+                <Text style={theme.text('bodySmall', theme.colors.textSecondary)}>{business.phoneMasked}</Text>
+              </View>
+            ) : null}
           </View>
 
           <Text style={[theme.text('title'), { marginTop: 18 }]}>
@@ -105,7 +129,39 @@ export default function BusinessDetailScreen() {
           </Text>
 
           <View style={{ marginTop: 16, gap: 10 }}>
-            <Button label={t.common.call} icon={<Phone size={16} color={theme.colors.onPrimary} />} fullWidth />
+            {dialable ? <Button label={t.common.call} onPress={() => open(`tel:${phone}`)} fullWidth /> : null}
+            {destination ? (
+              <Button
+                label={locale === 'ar' ? 'الاتجاهات' : 'Directions'}
+                onPress={() => open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`)}
+                variant="outline"
+                fullWidth
+              />
+            ) : null}
+            {source ? (
+              <Button label={locale === 'ar' ? 'المصدر' : 'Source'} onPress={() => open(source)} variant="outline" fullWidth />
+            ) : null}
+            {linkError ? (
+              <Text accessibilityLiveRegion="polite" style={theme.text('bodySmall', theme.colors.danger)}>
+                {t.errors.genericTitle}
+              </Text>
+            ) : null}
+            {business.communityVerified ? (
+              <>
+                <Button
+                  label={locale === 'ar' ? 'الإبلاغ عن معلومات غير صحيحة' : 'Report incorrect information'}
+                  onPress={() => router.push({ pathname: '/business/request', params: { business: business.id, kind: 'correction' } })}
+                  variant="outline"
+                  fullWidth
+                />
+                <Button
+                  label={locale === 'ar' ? 'طلب ملكية النشاط التجاري' : 'Claim this business'}
+                  onPress={() => router.push({ pathname: '/business/request', params: { business: business.id, kind: 'claim' } })}
+                  variant="outline"
+                  fullWidth
+                />
+              </>
+            ) : null}
             <Button label={t.recommendations.recommend} onPress={() => setSheetOpen(true)} variant="outline" fullWidth />
           </View>
 

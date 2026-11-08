@@ -212,7 +212,20 @@ export default function SettingsScreen() {
         ) : null}
 
         {user?.role === 'admin' ? (
-          <Row icon={Shield} label={t.neighborhoodChange.adminTitle} onPress={() => router.push('/admin/neighborhood-changes')} Chevron={Chevron} />
+          <>
+            <Row
+              icon={Shield}
+              label={t.neighborhoodChange.adminTitle}
+              onPress={() => router.push('/admin/neighborhood-changes')}
+              Chevron={Chevron}
+            />
+            <Row
+              icon={Shield}
+              label={locale === 'ar' ? 'طلبات دليل الأعمال' : 'Business directory requests'}
+              onPress={() => router.push('/admin/business-requests')}
+              Chevron={Chevron}
+            />
+          </>
         ) : null}
 
         <SectionLabel title={t.settings.accountActions} />

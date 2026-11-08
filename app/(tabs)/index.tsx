@@ -21,11 +21,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { SkeletonCardRow } from '@/components/Skeleton';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
 import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
+import { ExploreLinks } from '@/features/explore/ExploreSections';
 import { EventCard } from '@/features/events/EventCard';
 
 export default function HomeScreen() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const me = useCurrentUserId();
   const neighborhood = useStore((s) => s.neighborhoods.find((n) => n.id === s.session.neighborhoodId));
@@ -33,12 +34,17 @@ export default function HomeScreen() {
   const ramadanMode = useStore((s) => s.settings.ramadanMode);
   const syncStatus = useStore((s) => s.sync.status);
   const allPosts = useStore((s) => s.posts);
+  const allBusinesses = useStore((s) => s.businesses);
   const allEvents = useStore((s) => s.events);
   const blocked = useStore((s) => s.blockedUserIds);
   const muted = useStore((s) => s.mutedUserIds);
   const needsVerification = useNeedsVerification();
   const [refreshing, setRefreshing] = useState(false);
 
+  const localBusinesses = useMemo(
+    () => allBusinesses.filter((business) => business.neighborhoodIds.includes(neighborhood?.id ?? '')).slice(0, 3),
+    [allBusinesses, neighborhood?.id],
+  );
   const posts = useMemo(
     () =>
       allPosts
@@ -116,9 +122,7 @@ export default function HomeScreen() {
           <SyncNotice />
           {needsVerification ? <VerifyGate compact /> : null}
 
-          <View style={{ marginBottom: 20 }}>
-            <HappeningNow neighborhoodId={neighborhood.id} />
-          </View>
+          <HappeningNow neighborhoodId={neighborhood.id} />
 
           {upcoming.length > 0 ? (
             <View style={{ marginBottom: 20 }}>
@@ -134,6 +138,20 @@ export default function HomeScreen() {
                   </View>
                 ))}
               </ScrollView>
+            </View>
+          ) : null}
+
+          {localBusinesses.length > 0 ? (
+            <View style={{ marginBottom: 12 }}>
+              <SectionHeader title={t.explore.categoryBusinesses} onSeeAll={() => router.push('/recommendations')} />
+              <View style={{ paddingHorizontal: theme.spacing.md }}>
+                <ExploreLinks
+                  rows={localBusinesses.map((business) => ({
+                    label: (locale === 'ar' ? business.nameAr : business.nameEn) ?? business.name,
+                    href: { pathname: '/business/[id]', params: { id: business.id } },
+                  }))}
+                />
+              </View>
             </View>
           ) : null}
 

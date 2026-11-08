@@ -83,16 +83,23 @@ export async function respondAction(_: ActionResult, form: FormData): Promise<Ac
     const m = await messages();
     if (!response || response.length > 3000) return { kind: 'error', message: m.errors['invalid:response'], at: Date.now() };
     const ticketId = id as string;
-    await respondToTicket(ticketId, response, mode === 'close');
     const ticket = await getTicket(ticketId);
+    if (!ticket) throw new AdminDataError('not found');
+    const sendByEmail = ticket.source === 'website' && !!ticket.contact_email;
+    await respondToTicket(ticketId, response, mode === 'close' && !sendByEmail);
     revalidatePath('/admin', 'layout');
-    if (!ticket) return { kind: 'ok', message: m.saved, at: Date.now() };
     if (ticket.source === 'app') return { kind: 'ok', message: m.savedNotified, at: Date.now() };
-    if (ticket.source === 'website' && ticket.contact_email && mode !== 'save-only') {
+    if (sendByEmail && mode !== 'save-only') {
       const outcome = await sendReplyEmail(ticketId).catch(async (e) => {
         if (e instanceof AdminDataError && e.code === 'email:already_sent') return 'accepted' as const;
         throw e;
       });
+      if (outcome === 'accepted' && mode === 'close') {
+        const latest = await getTicket(ticketId);
+        if (latest?.response === response && ['sent', 'delivered', 'delivery_delayed'].includes(latest.email_status ?? '')) {
+          await setTicketStatus(ticketId, 'closed');
+        }
+      }
       revalidatePath('/admin', 'layout');
       if (outcome === 'accepted') return { kind: 'ok', message: m.emailAccepted, at: Date.now() };
       if (outcome === 'skipped') return { kind: 'warn', message: m.emailSkipped, at: Date.now() };

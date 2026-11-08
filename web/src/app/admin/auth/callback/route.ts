@@ -2,7 +2,8 @@ import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { checkStaff } from '@/lib/admin/session';
-import { createAdminClient } from '@/lib/admin/supabase';
+import { ADMIN_COOKIE_OPTIONS, createAdminClient } from '@/lib/admin/supabase';
+import { ADMIN_TICKET_RETURN_COOKIE, adminTicketPath } from '@/lib/admin/return-path';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,5 +34,8 @@ export async function GET(request: NextRequest) {
     await supabase.auth.signOut({ scope: 'local' });
     return to('/admin/login?error=not_authorized');
   }
-  return to('/admin');
+  const ticket = adminTicketPath(request.cookies.get(ADMIN_TICKET_RETURN_COOKIE)?.value);
+  const response = to(ticket ?? '/admin');
+  response.cookies.set(ADMIN_TICKET_RETURN_COOKIE, '', { ...ADMIN_COOKIE_OPTIONS, expires: new Date(0), maxAge: 0 });
+  return response;
 }

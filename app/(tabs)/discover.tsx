@@ -9,14 +9,13 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { SearchBar } from '@/components/SearchBar';
 import { SectionHeader } from '@/components/SectionHeader';
-import { EmptyState } from '@/components/EmptyState';
 import { IssueCard } from '@/features/issues/IssueCard';
 import { EventCard } from '@/features/events/EventCard';
 import { MarketplaceCard } from '@/features/marketplace/MarketplaceCard';
 import { HelpRequestCard } from '@/features/help/HelpRequestCard';
 import { PostCard } from '@/features/feed/PostCard';
 import { LostFoundCard } from '@/features/lostFound/LostFoundCard';
-import { ExploreCategoryGrid } from '@/features/explore/ExploreCategoryGrid';
+import { ExploreSections } from '@/features/explore/ExploreSections';
 import { ClubCard } from '@/features/clubs/ClubCard';
 import { discoverableClubs } from '@/features/clubs/clubLogic';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
@@ -119,7 +118,7 @@ export default function DiscoverScreen() {
 
       <View style={[theme.row(), { gap: 10, marginHorizontal: theme.spacing.md, marginBottom: 20 }]}>
         <Pressable
-          onPress={() => router.push('/map')}
+          onPress={() => router.navigate('/(tabs)/map')}
           style={{
             flex: 1,
             backgroundColor: theme.colors.primary,
@@ -131,7 +130,7 @@ export default function DiscoverScreen() {
           }}
         >
           <MapIcon size={20} color={theme.colors.onPrimary} />
-          <Text style={theme.text('title', theme.colors.onPrimary)}>{t.discover.map}</Text>
+          <Text style={[theme.text('bodySmall', theme.colors.onPrimary), { flex: 1 }]}>{t.discover.map}</Text>
         </Pressable>
         <Pressable
           onPress={() => router.push('/assistant')}
@@ -146,57 +145,47 @@ export default function DiscoverScreen() {
           }}
         >
           <Sparkles size={20} color={theme.colors.onSecondary} />
-          <Text style={theme.text('title', theme.colors.onSecondary)}>{t.assistant.title}</Text>
+          <Text style={[theme.text('bodySmall', theme.colors.onSecondary), { flex: 1 }]}>{t.assistant.title}</Text>
         </Pressable>
       </View>
 
       <View style={{ paddingHorizontal: theme.spacing.md, marginBottom: 22 }}>
-        <ExploreCategoryGrid />
+        <ExploreSections />
       </View>
 
       <SyncNotice />
       {needsVerification ? <VerifyGate compact /> : null}
 
-      <Section title={t.events.title} onSeeAll={() => router.push('/events')}>
-        {events.length === 0 ? (
-          <EmptyState title={t.events.noActivities} actionLabel={t.events.create} onAction={() => router.push('/event/create')} compact />
-        ) : (
+      {events.length > 0 ? (
+        <Section title={t.events.title} onSeeAll={() => router.push('/events')}>
           <HorizontalList items={events} render={(e) => <EventCard event={e} compact />} width={220} />
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.clubs.title} onSeeAll={() => router.push('/clubs')}>
-        {clubs.length === 0 ? (
-          <EmptyState title={t.clubs.emptyTitle} actionLabel={t.clubs.createClub} onAction={() => router.push('/clubs/create')} compact />
-        ) : (
+      {clubs.length > 0 ? (
+        <Section title={t.clubs.title} onSeeAll={() => router.push('/clubs')}>
           <HorizontalList items={clubs} render={(c) => <ClubCard club={c} compact />} width={240} />
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.discover.trending}>
-        {trendingPosts.length === 0 ? (
-          <EmptyState title={t.emptyStates.noPosts} compact />
-        ) : (
+      {trendingPosts.length > 0 ? (
+        <Section title={t.discover.trending}>
           <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
             {trendingPosts.map((p) => (
               <PostCard key={p.id} post={p} />
             ))}
           </View>
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.discover.issuesAround} onSeeAll={() => router.push('/community')}>
-        {issues.length === 0 ? (
-          <EmptyState title={t.emptyStates.noIssues} compact />
-        ) : (
+      {issues.length > 0 ? (
+        <Section title={t.discover.issuesAround} onSeeAll={() => router.push('/community')}>
           <HorizontalList items={issues} render={(i) => <IssueCard issue={i} />} width={260} />
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.discover.services}>
-        {businesses.length === 0 ? (
-          <EmptyState title={t.emptyStates.noResults} compact />
-        ) : (
+      {businesses.length > 0 ? (
+        <Section title={t.discover.services}>
           <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
             {businesses.map((b) => (
               <Pressable
@@ -217,13 +206,11 @@ export default function DiscoverScreen() {
               </Pressable>
             ))}
           </View>
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.discover.marketplace} onSeeAll={() => router.push('/marketplace')}>
-        {listings.length === 0 ? (
-          <EmptyState title={t.emptyStates.noMarketplace} compact />
-        ) : (
+      {listings.length > 0 ? (
+        <Section title={t.discover.marketplace} onSeeAll={() => router.push('/marketplace')}>
           <View
             style={{
               ...theme.row(),
@@ -237,28 +224,24 @@ export default function DiscoverScreen() {
               <MarketplaceCard key={l.id} listing={l} />
             ))}
           </View>
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.lostFound.title} onSeeAll={() => router.push('/lost-found')}>
-        {lostFound.length === 0 ? (
-          <EmptyState title={t.emptyStates.noResults} compact />
-        ) : (
+      {lostFound.length > 0 ? (
+        <Section title={t.lostFound.title} onSeeAll={() => router.push('/lost-found')}>
           <View style={{ paddingHorizontal: theme.spacing.md, gap: 10 }}>
             {lostFound.map((l) => (
               <LostFoundCard key={l.id} item={l} />
             ))}
           </View>
-        )}
-      </Section>
+        </Section>
+      ) : null}
 
-      <Section title={t.discover.requests}>
-        {helpRequests.length === 0 ? (
-          <EmptyState title={t.emptyStates.noResults} compact />
-        ) : (
+      {helpRequests.length > 0 ? (
+        <Section title={t.discover.requests}>
           <HorizontalList items={helpRequests} render={(h) => <HelpRequestCard request={h} />} width={240} />
-        )}
-      </Section>
+        </Section>
+      ) : null}
     </ScrollView>
   );
 }

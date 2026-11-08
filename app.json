@@ -5,7 +5,7 @@
     "scheme": "haratna",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/haratna-n2.png",
     "userInterfaceStyle": "automatic",
     "primaryColor": "#1F5D45",
     "backgroundColor": "#FAF6EF",
@@ -37,7 +37,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#FAF6EF",
-          "image": "./assets/icon.png",
+          "image": "./assets/haratna-n2.png",
           "imageWidth": 140
         }
       ]
@@ -48,7 +48,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "sa.haratna.app",
-      "buildNumber": "7",
+      "buildNumber": "10",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "حارتنا يستخدم الصور التي تختارها فقط لمشاركتها في المنشورات والأنشطة والأندية وصورتك الشخصية.",

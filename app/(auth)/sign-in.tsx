@@ -73,6 +73,8 @@ export default function SignInScreen() {
   };
 
   const busy = pending !== null;
+  const showApple = Platform.OS === 'ios';
+  const showGoogle = process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN === 'true';
 
   return (
     <AuthShell title={t.auth.signInTitle} body={t.auth.signInBody} showBack={false}>
@@ -137,37 +139,43 @@ export default function SignInScreen() {
         </Pressable>
       </View>
 
-      <View style={[theme.row(), styles.dividerRow]}>
-        <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
-        <Text style={theme.text('caption', theme.colors.textMuted)}>{t.auth.or}</Text>
-        <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
-      </View>
+      {showApple || showGoogle ? (
+        <>
+          <View style={[theme.row(), styles.dividerRow]}>
+            <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+            <Text style={theme.text('caption', theme.colors.textMuted)}>{t.auth.or}</Text>
+            <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+          </View>
 
-      <View style={{ gap: 12 }}>
-        {Platform.OS === 'ios' ? (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-            buttonStyle={
-              theme.scheme === 'dark'
-                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-            }
-            cornerRadius={theme.radii.md}
-            style={styles.appleButton}
-            onPress={busy ? () => {} : onApple}
-          />
-        ) : null}
-        <Button
-          label={t.auth.continueWithGoogle}
-          onPress={onGoogle}
-          variant="outline"
-          fullWidth
-          size="lg"
-          loading={pending === 'google'}
-          disabled={busy}
-          icon={<LogIn size={17} color={theme.colors.textPrimary} />}
-        />
-      </View>
+          <View style={{ gap: 12 }}>
+            {showApple ? (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                buttonStyle={
+                  theme.scheme === 'dark'
+                    ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                    : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                }
+                cornerRadius={theme.radii.md}
+                style={styles.appleButton}
+                onPress={busy ? () => {} : onApple}
+              />
+            ) : null}
+            {showGoogle ? (
+              <Button
+                label={t.auth.continueWithGoogle}
+                onPress={onGoogle}
+                variant="outline"
+                fullWidth
+                size="lg"
+                loading={pending === 'google'}
+                disabled={busy}
+                icon={<LogIn size={17} color={theme.colors.textPrimary} />}
+              />
+            ) : null}
+          </View>
+        </>
+      ) : null}
       <ConsentNotice />
     </AuthShell>
   );

@@ -95,7 +95,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <AuthShell title={t.auth.resetTitle} body={done ? t.auth.passwordUpdated : t.auth.resetBody} showBack={false}>
+    <AuthShell title={t.auth.resetTitle} body={done ? t.auth.passwordUpdated : t.auth.resetBody} fallbackRoute="/(auth)/sign-in">
       {done ? (
         <Button label={t.common.continue} onPress={async () => router.replace(await routeAfterAuth())} fullWidth size="lg" />
       ) : (

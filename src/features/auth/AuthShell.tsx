@@ -20,7 +20,7 @@ interface AuthShellProps {
 
 export function AuthShell({ title, body, children, footer, showBack = true, fallbackRoute = '/' }: AuthShellProps) {
   const theme = useTheme();
-  const { isRTL } = useI18n();
+  const { isRTL, t } = useI18n();
   const insets = useSafeAreaInsets();
   const BackIcon = isRTL ? ChevronRight : ChevronLeft;
   const safeBack = useSafeBack(fallbackRoute);
@@ -35,7 +35,7 @@ export function AuthShell({ title, body, children, footer, showBack = true, fall
         keyboardShouldPersistTaps="handled"
       >
         {showBack ? (
-          <IconButton accessibilityLabel="back" onPress={safeBack} variant="surface">
+          <IconButton accessibilityLabel={t.common.back} onPress={safeBack} variant="surface">
             <BackIcon size={20} color={theme.colors.textPrimary} />
           </IconButton>
         ) : (

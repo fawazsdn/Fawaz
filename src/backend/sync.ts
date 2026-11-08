@@ -856,6 +856,10 @@ function mapBusiness(b: Row, img: (p?: string | null) => string | undefined): Bu
   return {
     id: b.id,
     name: b.name,
+    nameAr: b.name_ar ?? undefined,
+    nameEn: b.name_en ?? undefined,
+    sourceUrl: b.source_url ?? undefined,
+    sourceCheckedOn: b.source_checked_on ?? undefined,
     category: b.category,
     coverImage: img(b.cover_image_path),
     logo: b.logo_path ?? undefined,

@@ -60,11 +60,12 @@ describe('Home / Explore / Map do not render blank when a neighborhood is select
     expect(screen.getByText('Nothing has been posted here yet.')).toBeTruthy();
   });
 
-  it('Explore renders real, visible primary content (search + category grid)', async () => {
+  it('Explore renders real, visible primary content (search and grouped categories)', async () => {
     await renderWithProvider(<DiscoverScreen />);
     expect(screen.getByPlaceholderText(/search/i)).toBeTruthy();
-    expect(screen.getAllByText('Events').length).toBeGreaterThan(0);
-    expect(screen.getByText('Marketplace')).toBeTruthy();
+    expect(screen.getByText('Food & Entertainment')).toBeTruthy();
+    expect(screen.getByText('Local Businesses & Services')).toBeTruthy();
+    expect(screen.getByText('Buy & Sell')).toBeTruthy();
     expect(screen.queryByText(/couldn.t load your neighborhood/i)).toBeNull();
   });
 

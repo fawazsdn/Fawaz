@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CalendarPlus } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -15,7 +15,7 @@ import { SkeletonCardRow } from '@/components/Skeleton';
 import { SyncNotice, VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
 import { EventCard, eventState } from '@/features/events/EventCard';
 import type { CommunityEvent, EventCategory } from '@/models';
-import { ALL_EVENT_CATEGORIES, CATEGORY_ICON } from '@/features/events/categories';
+import { ALL_EVENT_CATEGORIES, CATEGORY_ICON, EVENT_CATEGORY_GROUPS } from '@/features/events/categories';
 import { isSameSaudiDay } from '@/utils/format';
 
 type KindFilter = 'all' | 'activity' | 'event';
@@ -47,7 +47,10 @@ export default function ActivitiesScreen() {
   const syncStatus = useStore((s) => s.sync.status);
   const needsVerification = useNeedsVerification();
   const [kind, setKind] = useState<KindFilter>('all');
-  const [category, setCategory] = useState<EventCategory | 'all'>('all');
+  const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
+  const [category, setCategory] = useState<EventCategory | 'all' | 'sports'>(
+    initialCategory === 'sports' ? 'sports' : (ALL_EVENT_CATEGORIES.find((value) => value === initialCategory) ?? 'all'),
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -60,7 +63,12 @@ export default function ActivitiesScreen() {
     () =>
       allEvents.filter(
         (e) =>
-          e.neighborhoodId === neighborhoodId && (kind === 'all' || e.kind === kind) && (category === 'all' || e.category === category),
+          e.neighborhoodId === neighborhoodId &&
+          (kind === 'all' || e.kind === kind) &&
+          (category === 'all' ||
+            (category === 'sports'
+              ? (EVENT_CATEGORY_GROUPS.sports as readonly EventCategory[]).includes(e.category)
+              : e.category === category)),
       ),
     [allEvents, neighborhoodId, kind, category],
   );
@@ -69,8 +77,8 @@ export default function ActivitiesScreen() {
   // Only offer categories that real activities in this neighborhood use.
   const categories = useMemo<(EventCategory | 'all')[]>(() => {
     const used = new Set(allEvents.filter((e) => e.neighborhoodId === neighborhoodId).map((e) => e.category));
-    return ['all', ...ALL_EVENT_CATEGORIES.filter((c) => used.has(c))];
-  }, [allEvents, neighborhoodId]);
+    return ['all', ...ALL_EVENT_CATEGORIES.filter((c) => used.has(c) || c === initialCategory)];
+  }, [allEvents, neighborhoodId, initialCategory]);
   const labels = t.eventCreate.categories as Record<string, string>;
   const loading = syncStatus === 'loading' && allEvents.length === 0;
   const empty =
@@ -99,7 +107,7 @@ export default function ActivitiesScreen() {
           <View style={{ marginBottom: 10 }}>
             <FilterBar
               options={categories.map((c) => ({ key: c, label: c === 'all' ? t.common.all : `${CATEGORY_ICON[c]} ${labels[c]}` }))}
-              selected={category}
+              selected={category === 'sports' ? '' : category}
               onSelect={(k) => setCategory(k as EventCategory | 'all')}
             />
           </View>

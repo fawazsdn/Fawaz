@@ -87,6 +87,15 @@ test.describe('access control', () => {
     expect((await request.get('/admin/api/open-count')).status()).toBe(401);
   });
 
+  test('staff sign-in from a phone ticket link returns to that ticket', async ({ page, context }) => {
+    const ticketPath = '/admin/tickets/11111111-1111-4111-8111-111111111111';
+    await page.goto(ticketPath);
+    await expect(page).toHaveURL(/\/admin\/login$/);
+    await signIn(page, 'admin@haratna.test');
+    await expect(page).toHaveURL(new RegExp(`${ticketPath}$`));
+    expect((await context.cookies()).find((cookie) => cookie.name === 'haratna-admin-ticket-return')?.value ?? '').toBe('');
+  });
+
   test('session cookies are httpOnly, SameSite=Lax and scoped to /admin', async ({ page, context }) => {
     await signIn(page, 'admin@haratna.test');
     await expect(page).toHaveURL(/\/admin$/);
@@ -183,6 +192,20 @@ test.describe('dashboard (staff)', () => {
     await expect(page.getByText('وقَبِل مزوّد البريد الرسالة')).toBeVisible();
     const state = await stub('/__state');
     expect(state.uniqueSends).toBe(1);
+  });
+
+  test('Reply & Close waits for email acceptance', async ({ page }) => {
+    await stub('/__control', { resendMode: 'fail' });
+    await page.goto('/admin/tickets?q=HR-WEB00001');
+    await page.getByRole('link', { name: /HR-WEB00001/ }).click();
+    await page.getByLabel('اكتب الرد').fill('Please try again.');
+    await page.getByRole('button', { name: 'إرسال الرد وإغلاق', exact: true }).click();
+    await expect(page.getByText('فشل إرسال البريد')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('h1').locator('..')).not.toContainText('مغلق');
+    await stub('/__control', { resendMode: 'ok' });
+    await page.getByRole('button', { name: 'إرسال الرد وإغلاق', exact: true }).click();
+    await expect(page.locator('h1').locator('..')).toContainText('مغلق');
+    expect((await stub('/__state')).uniqueSends).toBe(1);
   });
 
   test('app requests keep the in-app reply flow; status can be closed and reopened', async ({ page }) => {
