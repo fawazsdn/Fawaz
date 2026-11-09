@@ -9,11 +9,16 @@ import { create } from 'zustand';
 interface SocialState {
   available: boolean | null;
   setAvailable: (v: boolean) => void;
+  /** True once profiles expose avatar_path (private profile photos are deployed). */
+  privatePhotos: boolean;
+  setPrivatePhotos: (v: boolean) => void;
 }
 
 export const useSocialStore = create<SocialState>((set) => ({
   available: null,
   setAvailable: (available) => set({ available }),
+  privatePhotos: false,
+  setPrivatePhotos: (privatePhotos) => set({ privatePhotos }),
 }));
 
 export const useSocialAvailable = () => useSocialStore((s) => s.available === true);

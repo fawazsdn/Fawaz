@@ -15,6 +15,8 @@ import { ZoomableImage } from '@/components/ZoomableImage';
 interface ProfilePhotoViewerProps {
   visible: boolean;
   uri?: string;
+  /** Private storage path, when the photo lives there. */
+  path?: string;
   name: string;
   isOwn: boolean;
   onClose: () => void;
@@ -28,7 +30,7 @@ const { width: W, height: H } = Dimensions.get('window');
  * there's no photo. The owner can change or remove it. Only shown for a
  * profile the viewer is already allowed to open, so it never widens access.
  */
-export function ProfilePhotoViewer({ visible, uri, name, isOwn, onClose, onChanged }: ProfilePhotoViewerProps) {
+export function ProfilePhotoViewer({ visible, uri, path, name, isOwn, onClose, onChanged }: ProfilePhotoViewerProps) {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { run, pending } = useAction();
@@ -38,12 +40,12 @@ export function ProfilePhotoViewer({ visible, uri, name, isOwn, onClose, onChang
   const change = async () => {
     const local = await pickImage();
     if (!local) return;
-    const res = await run(() => changeAvatar(local, uri));
+    const res = await run(() => changeAvatar(local, { path, url: uri }));
     if (res.ok) onChanged?.();
   };
   const remove = async () => {
     setConfirmRemove(false);
-    const res = await run(() => removeAvatar(uri));
+    const res = await run(() => removeAvatar({ path, url: uri }));
     if (res.ok) {
       onChanged?.();
       onClose();

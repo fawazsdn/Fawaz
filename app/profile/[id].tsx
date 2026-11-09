@@ -140,6 +140,7 @@ export default function ProfileScreen() {
   };
   const name = displayName(person);
   const avatarUrl = user?.avatarUrl ?? sp?.avatarUrl;
+  const avatarPath = user?.avatarPath ?? sp?.avatarPath;
   const verified = sp ? sp.verified : user?.verification === 'verified';
   const bio = user?.bio ?? sp?.bio;
   const interests = isOwn ? myInterests : (theirInterests ?? []);
@@ -472,6 +473,7 @@ export default function ProfileScreen() {
       <ProfilePhotoViewer
         visible={photoOpen}
         uri={avatarUrl}
+        path={avatarPath}
         name={name}
         isOwn={isOwn}
         onClose={() => setPhotoOpen(false)}

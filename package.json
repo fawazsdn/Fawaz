@@ -76,6 +76,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "jest",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "validate:geography": "node scripts/validate-geography.mjs",
     "import:geography": "node scripts/import-saudi-geography.mjs",
     "web:build": "npm --prefix web run build",

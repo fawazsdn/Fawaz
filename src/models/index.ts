@@ -38,6 +38,8 @@ export interface User {
   firstName: string;
   lastName: string;
   avatarUrl?: string;
+  /** Path in the private profile-photos bucket (avatarUrl is then a short-lived signed URL). */
+  avatarPath?: string;
   bio?: string;
   namePrivacy: NamePrivacy;
   neighborhoodId: string;

@@ -36,6 +36,7 @@ import type {
 } from '@/models';
 import { resolveMediaUrls } from './media';
 import { useSocialStore } from './socialState';
+import { ensurePrivateAvatar, notePrivatePhotoSupport, publicAvatarPath, withSignedAvatars } from './profilePhotos';
 
 type Row = Record<string, any>;
 
@@ -470,7 +471,14 @@ export async function syncAll(): Promise<void> {
       fromUserId: r.actor_id ?? undefined,
       createdAt: r.created_at,
     }));
-    entities.users = (must(profilesRes, 'profiles') as Row[]).map((p) =>
+    const profileRows = must(profilesRes, 'profiles') as Row[];
+    const ownRow = profileRows.find((p) => p.id === me);
+    notePrivatePhotoSupport(ownRow);
+    // Move my own legacy public photo into private storage (once deployed), then refresh.
+    if (ownRow && publicAvatarPath(ownRow.avatar_url) && useSocialStore.getState().privatePhotos) {
+      void ensurePrivateAvatar(me, ownRow).then((moved) => (moved ? requestSync() : undefined));
+    }
+    entities.users = (await withSignedAvatars(profileRows)).map((p) =>
       mapProfile(p, {
         isSelf: p.id === me,
         neighborhoodId: neighborhoodId ?? '',
@@ -571,6 +579,7 @@ export function mapProfile(
     firstName: p.first_name ?? '',
     lastName: p.last_name ?? '',
     avatarUrl: p.avatar_url ?? undefined,
+    avatarPath: p.avatar_path ?? undefined,
     bio: p.bio ?? undefined,
     namePrivacy: p.name_privacy ?? 'first_last_initial',
     neighborhoodId: extra.neighborhoodId,

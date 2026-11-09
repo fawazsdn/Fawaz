@@ -34,6 +34,7 @@ import { resolveMediaUrls, uploadAvatar, uploadCommunityImage, uploadCommunityIm
 import { isInterest, mapClub, mapNeighborSettings, mapProfile, requestSync } from './sync';
 import { discardUploads, uploadPostPhotos } from './social';
 import { useSocialStore } from './socialState';
+import { deleteOwnPhoto, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
 
 /**
  * Every mutation in the app. Each one writes to Supabase (RLS decides what's
@@ -115,8 +116,14 @@ export async function saveProfile(input: {
 }) {
   return run(async () => {
     const uid = me();
+    // Private storage once deployed; the legacy public bucket otherwise.
+    const privatePhotos = useSocialStore.getState().privatePhotos;
+    const newPhoto = input.localAvatarUri && !/^https?:/.test(input.localAvatarUri) ? input.localAvatarUri : undefined;
     let avatarUrl: string | undefined;
-    if (input.localAvatarUri && !/^https?:/.test(input.localAvatarUri)) avatarUrl = await uploadAvatar(input.localAvatarUri, uid);
+    let avatarPath: string | undefined;
+    if (newPhoto && privatePhotos) avatarPath = await uploadProfilePhoto(newPhoto, uid);
+    else if (newPhoto) avatarUrl = await uploadAvatar(newPhoto, uid);
+    const before = newPhoto ? useStore.getState().users.find((u) => u.id === uid) : undefined;
     check(
       await supabase
         .from('profiles')
@@ -128,9 +135,11 @@ export async function saveProfile(input: {
           profile_completed: true,
           ...(input.locale ? { locale: input.locale } : {}),
           ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+          ...(avatarPath ? { avatar_path: avatarPath, avatar_url: null } : {}),
         })
         .eq('id', uid),
     );
+    if (avatarPath && before) await deleteOwnPhoto(uid, { path: before.avatarPath, url: before.avatarUrl });
     useStore.getState().markProfileCreated();
   });
 }
@@ -1297,8 +1306,9 @@ export async function fetchProfile(userId: string): Promise<User | null> {
         supabase.from('profiles').select('*').eq('id', userId).is('deleted_at', null).maybeSingle(),
         supabase.from('user_interests').select('interests').eq('user_id', userId).maybeSingle(),
       ]);
-      const row = check(profileRes) as Record<string, any> | null;
-      if (!row) return null;
+      const raw = check(profileRes) as Record<string, any> | null;
+      if (!raw) return null;
+      const [row] = await withSignedAvatars([raw]);
       const { session, users } = useStore.getState();
       const user = mapProfile(row, {
         isSelf: row.id === session.supabaseUserId,

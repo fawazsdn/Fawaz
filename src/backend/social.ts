@@ -4,8 +4,9 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUserId, useStore } from '@/store/useStore';
 import type { Post, PostAudience } from '@/models';
 import { ActionError } from './actions';
-import { AVATAR_BUCKET, COMMUNITY_BUCKET, recordAttachment, resolveMediaUrls, uploadAvatar } from './media';
+import { COMMUNITY_BUCKET, recordAttachment, resolveMediaUrls, uploadAvatar } from './media';
 import { mapPost, requestSync } from './sync';
+import { deleteOwnPhoto, ensurePrivateAvatar, notePrivatePhotoSupport, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
 import { useSocialAvailable, useSocialStore } from './socialState';
 
 /**
@@ -29,6 +30,7 @@ export interface SocialProfile {
   lastName: string;
   namePrivacy: 'full' | 'first_last_initial' | 'first_only';
   avatarUrl?: string;
+  avatarPath?: string;
   bio?: string;
   isPrivate: boolean;
   verified: boolean;
@@ -108,6 +110,7 @@ export function mapSocialProfile(j: Row): SocialProfile {
     lastName: j.last_name ?? '',
     namePrivacy: j.name_privacy ?? 'first_last_initial',
     avatarUrl: j.avatar_url ?? undefined,
+    avatarPath: j.avatar_path ?? undefined,
     bio: j.bio ?? undefined,
     isPrivate: !!j.is_private,
     verified: !!j.verified,
@@ -128,7 +131,10 @@ export function mapSocialProfile(j: Row): SocialProfile {
 /** The profile card for any resident whose id you have, or null when unavailable to you. */
 export async function fetchSocialProfile(userId: string): Promise<SocialProfile | null> {
   const data = await rpc<Row | null>('social_profile', { target: userId });
-  return data ? mapSocialProfile(data) : null;
+  if (!data) return null;
+  notePrivatePhotoSupport(data);
+  const [signed] = await withSignedAvatars([data]);
+  return mapSocialProfile(signed);
 }
 
 export async function followUser(userId: string): Promise<FollowState> {
@@ -157,8 +163,16 @@ export async function removeFollower(userId: string) {
 }
 
 export async function setAccountPrivate(isPrivate: boolean) {
-  me();
+  const uid = me();
+  if (isPrivate) {
+    // Move a legacy public photo into private storage before going private, so
+    // no public link to it outlives the switch. (The database also clears it.)
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+    notePrivatePhotoSupport(data as Row | null);
+    await ensurePrivateAvatar(uid, data as Row | null);
+  }
   await rpc('set_account_private', { make_private: isPrivate });
+  void requestSync();
 }
 
 function mapEntry(r: Row): FollowEntry {
@@ -177,12 +191,12 @@ function mapEntry(r: Row): FollowEntry {
 
 export async function listFollows(userId: string, kind: 'followers' | 'following', search?: string): Promise<FollowEntry[]> {
   const rows = await rpc<Row[]>('list_follows', { target: userId, kind, search: search?.trim() || null, lim: 100, off: 0 });
-  return (rows ?? []).map(mapEntry);
+  return (await withSignedAvatars(rows ?? [])).map(mapEntry);
 }
 
 export async function listFollowRequests(): Promise<FollowEntry[]> {
   const rows = await rpc<Row[]>('list_follow_requests', {});
-  return (rows ?? []).map((r) => mapEntry({ ...r, follow_state: 'none', is_private: false }));
+  return (await withSignedAvatars(rows ?? [])).map((r) => mapEntry({ ...r, follow_state: 'none', is_private: false }));
 }
 
 // ------------------------------------------------------------------- posts --
@@ -311,35 +325,32 @@ export async function discardUploads(paths: string[]) {
 
 // ------------------------------------------------------------ profile photo --
 
-function avatarPath(url?: string | null): string | null {
-  const m = url?.match(/\/storage\/v1\/object\/public\/avatars\/(.+?)(\?|$)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
-
-async function deleteOldAvatar(uid: string, oldUrl?: string | null) {
-  const path = avatarPath(oldUrl);
-  // Only ever touch files in your own folder.
-  if (!path || !path.startsWith(`${uid}/`)) return;
-  await supabase.storage.from(AVATAR_BUCKET).remove([path]).catch(() => undefined);
-  await supabase.from('media_attachments').delete().eq('object_path', path);
-}
-
 /** Replaces the profile photo (already cropped and re-encoded by the editor) and deletes the old file. */
-export async function changeAvatar(localUri: string, oldUrl?: string | null) {
+export async function changeAvatar(localUri: string, old?: { path?: string | null; url?: string | null }) {
   const uid = me();
-  const url = await uploadAvatar(localUri, uid);
-  const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', uid);
-  if (error) fail(error);
-  await deleteOldAvatar(uid, oldUrl);
+  if (useSocialStore.getState().privatePhotos) {
+    const path = await uploadProfilePhoto(localUri, uid);
+    const { error } = await supabase.from('profiles').update({ avatar_path: path, avatar_url: null }).eq('id', uid);
+    if (error) {
+      await deleteOwnPhoto(uid, { path });
+      fail(error);
+    }
+  } else {
+    const url = await uploadAvatar(localUri, uid);
+    const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', uid);
+    if (error) fail(error);
+  }
+  if (old) await deleteOwnPhoto(uid, old);
   await requestSync();
-  return url;
 }
 
-/** Removes the profile photo; the app falls back to the initials avatar. */
-export async function removeAvatar(oldUrl?: string | null) {
+/** Removes the profile photo (both storage locations); the app falls back to the initials avatar. */
+export async function removeAvatar(old?: { path?: string | null; url?: string | null }) {
   const uid = me();
-  const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('id', uid);
+  const patch: Row = { avatar_url: null };
+  if (useSocialStore.getState().privatePhotos) patch.avatar_path = null;
+  const { error } = await supabase.from('profiles').update(patch).eq('id', uid);
   if (error) fail(error);
-  await deleteOldAvatar(uid, oldUrl);
+  if (old) await deleteOwnPhoto(uid, old);
   await requestSync();
 }
