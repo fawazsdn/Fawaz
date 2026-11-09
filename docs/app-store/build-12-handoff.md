@@ -4,7 +4,7 @@ Verified November 9, 2026. App Store Connect version 1.0 is in Prepare for Submi
 
 ## Account deletion
 
-Apple registered the dedicated Haratna Apple Account Revocation key for the primary App ID. Supabase lists `HARATNA_APPLE_CLIENT_SECRET`. The JWT was signed locally and sent directly to Supabase, with a 90-day lifetime. Rotate it before February 7, 2027. The Apple private key is stored in the owner-only Haratna Credentials directory under macOS Application Support. The approved v2 function is active and authenticated capability discovery passed. The legacy endpoint remains on v5. The compatible iOS client is in the handoff branch.
+Apple registered the dedicated Haratna Apple Account Revocation key for the primary App ID. Supabase lists `HARATNA_APPLE_CLIENT_SECRET`. The JWT was signed locally and sent directly to Supabase, with a 90-day lifetime. Rotate it before February 7, 2027. The Apple private key is stored in the owner-only Haratna Credentials directory under macOS Application Support. The approved v2 function is active and authenticated capability discovery passed. The legacy endpoint remains on v5. The compatible iOS client is in the handoff and release-candidate branches.
 
 For rotation, use the dedicated Sign in with Apple key associated with the primary App ID for `sa.haratna.app`. Generate the ES256 client-secret JWT locally with the Apple key ID as `kid`, the team ID as `iss`, `https://appleid.apple.com` as `aud`, and `sa.haratna.app` as `sub`. Set a short operational expiry within Apple's six-month limit and track its rotation. Install the JWT in Supabase Edge Function Secrets as `HARATNA_APPLE_CLIENT_SECRET`. Keep the private key outside Supabase, the app bundle, Git and logs. Verify the key association and secret name without retrieving the secret value. Deploying the replacement function and deleting a disposable production account each require separate approval. A coordinated rollout needs a safe server prerequisite and a device test for the linked Apple account and data cleanup.
 
@@ -18,7 +18,7 @@ The owner approved five genuine iPhone 15 Pro Max captures from Haratna 1.0.0 (1
 
 ## App Privacy
 
-The eleven saved answers include Precise Location and linked Other Data for App Functionality without tracking. The new Other Data answer covers date of birth stored for club eligibility. App Store Connect still shows Publish. The live GPS function records the result and timestamp without inserting the raw coordinates into its tables. Confirm request-log retention before narrowing the existing precise-location disclosure, and reconcile policy and retention wording. Confirm whether the User ID and Other User Content personalization purposes accurately describe the release, then publish the reconciled answers with owner sign-off.
+The eleven saved answers include Precise Location and linked Other Data for App Functionality without tracking. The new Other Data answer covers date of birth stored for club eligibility. The owner approved the eleven answers, and App Store Connect confirmed publication on November 9, 2026. The live GPS function records the result and timestamp without inserting the raw coordinates into its tables. Confirm request-log retention before narrowing the existing precise-location disclosure, and reconcile policy and retention wording. User ID and Other User Content retain their personalization purpose because account and neighborhood context shape the feed and saved items.
 
 [Apple App Privacy details](https://developer.apple.com/app-store/app-privacy-details/)
 
