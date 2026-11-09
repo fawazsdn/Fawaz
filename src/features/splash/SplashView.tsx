@@ -1,12 +1,15 @@
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
 
-import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 
+/** Same dark Haratna Forest as the native splash (app.json), so the hand-off is seamless. */
+export const SPLASH_BACKGROUND = '#0D4939';
+const SPLASH_LOGO = require('../../../assets/haratna-n2.png');
+
 export function SplashView() {
-  const theme = useTheme();
   const { t } = useI18n();
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(0.9);
@@ -24,26 +27,31 @@ export function SplashView() {
   const taglineStyle = useAnimatedStyle(() => ({ opacity: taglineOpacity.value, transform: [{ translateY: taglineTranslate.value }] }));
 
   return (
-    <View style={[styles.wrap, { backgroundColor: theme.colors.background }]}>
+    <View style={styles.wrap} testID="splash">
       <Animated.View style={logoStyle}>
-        <View style={[styles.mark, { backgroundColor: theme.colors.primary, borderRadius: theme.radii.xl }]}>
-          <Text style={styles.markText}>ح</Text>
-        </View>
+        <Image
+          source={SPLASH_LOGO}
+          style={styles.logo}
+          contentFit="cover"
+          accessibilityRole="image"
+          accessibilityLabel={t.appName}
+          testID="splash-logo"
+        />
       </Animated.View>
       <Animated.View style={logoStyle}>
-        <Text style={[theme.text('display'), styles.appName]}>{t.appName}</Text>
+        <Text style={styles.appName}>{t.appName}</Text>
       </Animated.View>
       <Animated.View style={taglineStyle}>
-        <Text style={[theme.text('body', theme.colors.textSecondary), styles.tagline]}>{t.tagline}</Text>
+        <Text style={styles.tagline}>{t.tagline}</Text>
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  mark: { width: 76, height: 76, alignItems: 'center', justifyContent: 'center' },
-  markText: { fontSize: 38, color: '#fff', fontFamily: 'Tajawal_800ExtraBold' },
-  appName: { textAlign: 'center' },
-  tagline: { textAlign: 'center' },
+  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, backgroundColor: SPLASH_BACKGROUND },
+  // iOS app-icon corner ratio (22.37%), matching the Home Screen icon.
+  logo: { width: 140, height: 140, borderRadius: 31, marginBottom: 6 },
+  appName: { textAlign: 'center', color: '#FAF6EF', fontSize: 34, lineHeight: 44, fontFamily: 'Tajawal_800ExtraBold' },
+  tagline: { textAlign: 'center', color: '#D9CFA8', fontSize: 16, lineHeight: 24, fontFamily: 'Tajawal_500Medium' },
 });
