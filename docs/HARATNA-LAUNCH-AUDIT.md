@@ -142,6 +142,8 @@ Build 11 has no external group assignment or physical-iPhone test result.
 
 EAS signed iOS 1.0.0 (13) from the recovered commit `3ce82a1103f66b4e69af26a8e59d9a312a82d66f`. The archive contains the v2 deletion route, Apple Sign-In entitlement, Google Sign-In button, N2 icon, and the Haratna callback. The 354 mobile tests, three Deno tests, 20 stubbed admin browser tests, TypeScript and iOS export passed. The production npm audit reported no high or critical findings.
 
-[EAS build](https://expo.dev/accounts/fawazsdn/projects/haratna/builds/e9807db1-47d6-4341-8c34-928b10d03568) · [Internal upload](https://expo.dev/accounts/fawazsdn/projects/haratna/submissions/f605c8b4-9fe5-4825-9a25-42b8d084436c)
+[EAS build](https://expo.dev/accounts/fawazsdn/projects/haratna/builds/e9807db1-47d6-4341-8c34-928b10d03568) · [App Store Connect TestFlight](https://appstoreconnect.apple.com/apps/6821993919/testflight/ios)
+
+App Store Connect reports build 13 as VALID and IN_BETA_TESTING for Team (Expo). Build ID is `f937fd0c-17cb-42d1-88f9-1c46e1e480ca`. The draft still selects stable build 12 pending device acceptance.
 
 Physical-iPhone acceptance includes Apple and Google sign-in, Gmail OTP, navigation, Apple Maps, and opening then cancelling the Apple deletion prompt. Confirm actual revocation and cleanup only after the owner explicitly approves deleting the named disposable account. Run moderation, messaging, blocking and live support delivery with authorized fixtures before selecting the final reviewed build.
