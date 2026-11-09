@@ -1,11 +1,60 @@
 import { supabase } from '@/lib/supabase';
-import { ActionError, approximateCoordinate, createEvent, createPost } from '@/backend/actions';
+import { ActionError, approximateCoordinate, createEvent, createPost, deleteAccount } from '@/backend/actions';
 import { resetStoreForTests, signInVerifiedForTests, TEST_ME, TEST_NEIGHBORHOOD_ID } from '@/testing/fixtures';
+import { requestAppleDeletionCode } from '@/features/auth/supabaseAuth';
 import { useStore } from '@/store/useStore';
 import { groupActivities } from '../../../app/events';
 import type { CommunityEvent } from '@/models';
 
 jest.mock('@/backend/sync', () => ({ requestSync: jest.fn(async () => {}) }));
+
+jest.mock('@/features/auth/supabaseAuth', () => ({
+  ...jest.requireActual('@/features/auth/supabaseAuth'),
+  requestAppleDeletionCode: jest.fn(),
+}));
+
+describe('account deletion rollout', () => {
+  const authorize = jest.mocked(requestAppleDeletionCode);
+  const invoke = jest.mocked(supabase.functions.invoke);
+
+  beforeEach(() => {
+    signInVerifiedForTests();
+    jest.clearAllMocks();
+  });
+
+  it('sends Apple deletion only to the revocation-capable endpoint', async () => {
+    authorize.mockResolvedValueOnce('fresh-code');
+    invoke.mockResolvedValueOnce({ data: { deleted: true }, error: null });
+    await expect(deleteAccount()).resolves.toBe(true);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledWith('delete-account-v2', {
+      method: 'POST',
+      body: { appleAuthorizationCode: 'fresh-code' },
+    });
+  });
+
+  it('preserves the legacy endpoint for accounts without Apple', async () => {
+    authorize.mockResolvedValueOnce(undefined);
+    invoke.mockResolvedValueOnce({ data: { deleted: true }, error: null });
+    await expect(deleteAccount()).resolves.toBe(true);
+    expect(invoke).toHaveBeenCalledWith('delete-account', { method: 'POST' });
+  });
+
+  it('leaves the account signed in and sends no request when Apple is cancelled', async () => {
+    authorize.mockRejectedValueOnce({ code: 'ERR_REQUEST_CANCELED' });
+    await expect(deleteAccount()).resolves.toBe(false);
+    expect(invoke).not.toHaveBeenCalled();
+    expect(useStore.getState().session.supabaseUserId).toBe(TEST_ME);
+  });
+
+  it('does not fall back to legacy deletion after a revocation failure', async () => {
+    authorize.mockResolvedValueOnce('fresh-code');
+    invoke.mockResolvedValueOnce({ data: null, error: new Error('Apple revocation failed') });
+    await expect(deleteAccount()).rejects.toBeInstanceOf(ActionError);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(useStore.getState().session.supabaseUserId).toBe(TEST_ME);
+  });
+});
 
 describe('actions', () => {
   beforeEach(() => {

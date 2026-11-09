@@ -229,6 +229,28 @@ export async function signInWithGoogle(): Promise<AuthOutcome> {
   }
 }
 
+export const APPLE_ACCOUNT_DELETION_FUNCTION = 'delete-account-v2';
+
+/** Request a fresh Apple code only for accounts with a linked Apple identity. */
+export async function requestAppleDeletionCode(): Promise<string | undefined> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw new Error('Could not verify the current account');
+  const { identities, app_metadata } = data.user;
+  const hasApple = identities?.some((identity) => identity.provider === 'apple') ||
+    app_metadata.provider === 'apple' || app_metadata.providers?.includes('apple');
+  if (!hasApple) return undefined;
+  if (Platform.OS !== 'ios' || !(await AppleAuthentication.isAvailableAsync())) {
+    throw new Error('Apple authorization unavailable');
+  }
+  const capability = await supabase.functions.invoke(APPLE_ACCOUNT_DELETION_FUNCTION, { method: 'GET' });
+  if (capability.error || capability.data?.appleRevocation !== true) {
+    throw new Error('Apple authorization unavailable');
+  }
+  const credential = await AppleAuthentication.signInAsync();
+  if (!credential.authorizationCode) throw new Error('Apple authorization code missing');
+  return credential.authorizationCode;
+}
+
 export async function signOutSupabase(): Promise<void> {
   await supabase.auth.signOut();
 }

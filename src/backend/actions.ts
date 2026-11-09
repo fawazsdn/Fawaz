@@ -1,3 +1,4 @@
+import { APPLE_ACCOUNT_DELETION_FUNCTION, requestAppleDeletionCode } from '@/features/auth/supabaseAuth';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId, useStore } from '@/store/useStore';
 import type {
@@ -877,11 +878,21 @@ export async function recordShare(channel: 'whatsapp' | 'native_share' | 'copy' 
 export async function deleteAccount() {
   try {
     me();
-    const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+    let appleAuthorizationCode: string | undefined;
+    try {
+      appleAuthorizationCode = await requestAppleDeletionCode();
+    } catch (error) {
+      if ((error as { code?: string } | null)?.code === 'ERR_REQUEST_CANCELED') return false;
+      throw error;
+    }
+    const { data, error } = await (appleAuthorizationCode
+      ? supabase.functions.invoke(APPLE_ACCOUNT_DELETION_FUNCTION, { method: 'POST', body: { appleAuthorizationCode } })
+      : supabase.functions.invoke('delete-account', { method: 'POST' }));
     if (error) throw error;
     if (!(data as { deleted?: boolean } | null)?.deleted) throw new ActionError('unknown', 'Account deletion did not complete');
     await supabase.auth.signOut().catch(() => {});
     useStore.getState().signOut();
+    return true;
   } catch (err) {
     throw toActionError(err);
   }

@@ -310,7 +310,7 @@ export default function SettingsScreen() {
         onConfirm={async () => {
           setDeleteOpen(false);
           const res = await run(() => deleteAccount());
-          if (res.ok) router.replace('/');
+          if (res.ok && res.value) router.replace('/');
         }}
       />
     </View>
