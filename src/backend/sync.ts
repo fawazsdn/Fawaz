@@ -36,7 +36,7 @@ import type {
 } from '@/models';
 import { resolveMediaUrls } from './media';
 import { useSocialStore } from './socialState';
-import { ensurePrivateAvatar, notePrivatePhotoSupport, publicAvatarPath, withSignedAvatars } from './profilePhotos';
+import { ensurePrivateAvatar, notePrivatePhotoSupport, privateCopyPath, publicAvatarPath, withSignedAvatars } from './profilePhotos';
 
 type Row = Record<string, any>;
 
@@ -474,8 +474,10 @@ export async function syncAll(): Promise<void> {
     const profileRows = must(profilesRes, 'profiles') as Row[];
     const ownRow = profileRows.find((p) => p.id === me);
     notePrivatePhotoSupport(ownRow);
-    // Move my own legacy public photo into private storage (once deployed), then refresh.
-    if (ownRow && publicAvatarPath(ownRow.avatar_url) && useSocialStore.getState().privatePhotos) {
+    // Copy my own legacy public photo into private storage (once deployed), then refresh.
+    // Non-destructive and idempotent: runs only until avatar_path points at the copy.
+    const ownLegacy = ownRow ? publicAvatarPath(ownRow.avatar_url) : null;
+    if (ownRow && ownLegacy && ownRow.avatar_path !== privateCopyPath(me, ownLegacy) && useSocialStore.getState().privatePhotos) {
       void ensurePrivateAvatar(me, ownRow).then((moved) => (moved ? requestSync() : undefined));
     }
     entities.users = (await withSignedAvatars(profileRows)).map((p) =>

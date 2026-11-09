@@ -1,20 +1,49 @@
 -- Rollback for 20261109130000_private_profile_photos.sql (run before rolling
 -- back 20261109120000_social_follows_photo_posts.sql). Requires owner approval.
 --
--- Before running it, make sure no account depends on avatar_path alone:
---   select count(*) from public.profiles where avatar_path is not null and avatar_url is null;
--- Those people would fall back to initials. Their files stay in the private
--- `profile-photos` bucket (nothing here deletes storage objects); remove the
--- bucket's files with the Storage API afterwards if the rollback is final.
+-- Data safety:
+--   * No storage file is deleted. Private copies stay in `profile-photos`.
+--   * avatar_path values are kept in private.rollback_20261109_avatar_paths.
+--   * Profiles whose public link was archived (went private / moved) get it
+--     back from private.avatar_legacy_urls, as long as the public file has not
+--     been removed by the approved cleanup. The archive table is kept.
+--   * People who only have a private photo (uploaded in the new build, or whose
+--     public original was already cleaned up) would show initials. Run
+--     `node scripts/migrate-avatars-to-private.mjs --restore-public --apply`
+--     BEFORE this file to give them a public copy again; the check below
+--     stops the rollback if anyone would lose their photo.
 begin;
+do $$
+declare n int;
+begin
+  select count(*) into n from public.profiles p
+  where p.avatar_path is not null and p.avatar_url is null
+    and not exists (select 1 from private.avatar_legacy_urls a
+                    where a.user_id = p.id and a.reason in ('went_private', 'migrated') and a.file_removed_at is null);
+  if n > 0 and coalesce(current_setting('haratna.allow_photo_fallback', true), '') <> 'on' then
+    raise exception 'rollback stopped: % profile(s) have only a private photo; run --restore-public first (or set haratna.allow_photo_fallback=on to accept initials)', n;
+  end if;
+end $$;
+create table if not exists private.rollback_20261109_avatar_paths as
+  select id as user_id, avatar_path, now() as saved_at from public.profiles where avatar_path is not null limit 0;
+insert into private.rollback_20261109_avatar_paths select id, avatar_path, now() from public.profiles where avatar_path is not null;
+revoke all on private.rollback_20261109_avatar_paths from public, anon, authenticated;
+-- Drop the archiving trigger first, or it would clear the restored links again.
+drop trigger if exists profiles_archive_public_avatar on public.profiles;
+drop function if exists private.archive_public_avatar();
+update public.profiles p set avatar_url = a.url
+from (select distinct on (user_id) user_id, url from private.avatar_legacy_urls
+      where reason in ('went_private', 'migrated') and file_removed_at is null
+      order by user_id, archived_at desc) a
+where p.id = a.user_id and p.avatar_url is null;
 drop trigger if exists post_comments_guard_update on public.post_comments;
 drop function if exists private.guard_comment_update();
 drop policy if exists media_select on public.media_attachments;
 create policy media_select on public.media_attachments as permissive for select to authenticated
   using ((owner_id = (select auth.uid())) or ((neighborhood_id is not null) and (select private.is_verified_neighborhood_member(media_attachments.neighborhood_id))) or (select private.is_admin_or_moderator()));
 
-drop trigger if exists profiles_private_clears_public_avatar on public.profiles;
-drop function if exists private.clear_public_avatar_when_private();
+drop function if exists public.legacy_avatar_inventory();
+drop function if exists public.mark_legacy_avatar_removed(uuid, text);
 drop policy if exists profile_photos_insert_own on storage.objects;
 drop policy if exists profile_photos_update_own on storage.objects;
 drop policy if exists profile_photos_delete_own on storage.objects;
@@ -105,11 +134,11 @@ end; $$;
 
 drop function if exists private.can_view_profile_photo_folder(text);
 drop function if exists private.can_view_profile_photo(uuid);
+drop function if exists private.profile_visible_in_neighborhood(uuid);
 alter table public.profiles drop constraint if exists profiles_avatar_path_own_folder;
 alter table public.profiles drop column if exists avatar_path;
-delete from public.media_attachments where bucket_id = 'profile-photos';
-alter table public.media_attachments drop constraint media_attachments_bucket_id_check;
-alter table public.media_attachments add constraint media_attachments_bucket_id_check
-  check (bucket_id = any (array['avatars'::text, 'community-media'::text]));
--- The bucket row is kept (it may still hold files); it stays private.
+-- Keep the attachment records of private photos (account deletion still needs
+-- them) by keeping the widened bucket check.
+-- Kept on purpose: the profile-photos bucket (private, with its files),
+-- private.avatar_legacy_urls and private.rollback_20261109_avatar_paths.
 commit;

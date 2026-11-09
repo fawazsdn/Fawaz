@@ -210,6 +210,22 @@ begin
   update public.post_comments set deleted_at = now() where id = target_comment;
 end; $$;
 
+/**
+ * Deletes (soft) a post: its author or staff. A direct UPDATE of deleted_at is
+ * refused by RLS on today's schema (the updated row no longer passes the read
+ * policy), which is why build 13's delete button fails; the new build uses this.
+ */
+create or replace function public.delete_post(target_post uuid)
+returns void language plpgsql security definer set search_path to '' as $$
+declare caller uuid := (select auth.uid()); author uuid;
+begin
+  if caller is null then raise exception 'not_signed_in' using errcode = '42501'; end if;
+  select p.author_id into author from public.posts p where p.id = target_post and p.deleted_at is null;
+  if author is null then raise exception 'not_found' using errcode = '22023'; end if;
+  if caller <> author and not private.is_admin_or_moderator() then raise exception 'forbidden' using errcode = '42501'; end if;
+  update public.posts set deleted_at = now() where id = target_post;
+end; $$;
+
 -- ---------------------------------------------------------- notifications --
 alter table public.notifications drop constraint notifications_type_check;
 alter table public.notifications add constraint notifications_type_check check (type = any (array[
@@ -606,9 +622,10 @@ revoke all on function public.set_account_private(boolean) from public, anon;
 revoke all on function public.list_follows(uuid, text, text, integer, integer) from public, anon;
 revoke all on function public.list_follow_requests() from public, anon;
 revoke all on function public.delete_post_comment(uuid) from public, anon;
+revoke all on function public.delete_post(uuid) from public, anon;
 grant execute on function public.social_profile(uuid), public.follow_user(uuid), public.unfollow_user(uuid),
   public.respond_follow_request(uuid, boolean), public.remove_follower(uuid), public.set_account_private(boolean),
-  public.list_follows(uuid, text, text, integer, integer), public.list_follow_requests(), public.delete_post_comment(uuid)
-  to authenticated;
+  public.list_follows(uuid, text, text, integer, integer), public.list_follow_requests(), public.delete_post_comment(uuid),
+  public.delete_post(uuid) to authenticated;
 revoke all on function public.purge_account_data(uuid) from public, anon, authenticated;
 grant execute on function public.purge_account_data(uuid) to service_role;

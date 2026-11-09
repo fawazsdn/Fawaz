@@ -90,16 +90,32 @@ it('serves private photos through short-lived signed URLs, never the stored path
   expect(sign?.args[1]).toBe(3600);
 });
 
-it('moves the user\'s own public photo: private copy first, then the profile, then deletes the public file', async () => {
+it('copies the user\'s own public photo into private storage without touching the original', async () => {
   const ok = await ensurePrivateAvatar(TEST_ME, { id: TEST_ME, avatar_url: legacy(`${TEST_ME}/old.jpg`), avatar_path: null });
   expect(ok).toBe(true);
   const order = calls.map((c) => `${c.bucket}:${c.op}`);
   expect(order.indexOf('avatars:download')).toBeLessThan(order.indexOf('profile-photos:upload'));
-  expect(order.indexOf('profile-photos:upload')).toBeLessThan(order.indexOf('avatars:remove'));
-  const upload = calls.find((c) => c.op === 'upload');
-  expect(String(upload?.args[0])).toMatch(new RegExp(`^${TEST_ME}/`));
-  expect(updates[0]).toMatchObject({ avatar_url: null });
-  expect(String(updates[0].avatar_path)).toMatch(new RegExp(`^${TEST_ME}/`));
+  expect(order).not.toContain('avatars:remove');
+  expect(calls.find((c) => c.op === 'upload')?.args[0]).toBe(`${TEST_ME}/legacy-old.jpg`);
+  expect(updates).toEqual([{ avatar_path: `${TEST_ME}/legacy-old.jpg` }]);
+});
+
+it('does not copy again once the private copy is in place', async () => {
+  const ok = await ensurePrivateAvatar(TEST_ME, {
+    id: TEST_ME,
+    avatar_url: legacy(`${TEST_ME}/old.jpg`),
+    avatar_path: `${TEST_ME}/legacy-old.jpg`,
+  });
+  expect(ok).toBe(true);
+  expect(calls).toHaveLength(0);
+});
+
+it('a newer build-13 upload replaces the earlier private copy (never the public file)', async () => {
+  await ensurePrivateAvatar(TEST_ME, { id: TEST_ME, avatar_url: legacy(`${TEST_ME}/newer.jpg`), avatar_path: `${TEST_ME}/legacy-old.jpg` });
+  expect(updates).toEqual([{ avatar_path: `${TEST_ME}/legacy-newer.jpg` }]);
+  expect(calls.filter((c) => c.op === 'remove').map((c) => `${c.bucket}:${(c.args[0] as string[])[0]}`)).toEqual([
+    `profile-photos:${TEST_ME}/legacy-old.jpg`,
+  ]);
 });
 
 it('keeps the public photo when the copy cannot be made', async () => {
@@ -127,6 +143,13 @@ it('uploads a new profile photo to private storage once deployed', async () => {
   expect(calls.find((c) => c.op === 'upload')?.bucket).toBe('profile-photos');
   expect(updates[0]).toMatchObject({ avatar_url: null });
   expect(calls.some((c) => c.op === 'remove' && c.bucket === 'profile-photos')).toBe(true);
+  expect(calls.some((c) => c.op === 'remove' && c.bucket === 'avatars')).toBe(false);
+});
+
+it('replacing or removing a photo never deletes a public original (cleanup is owner-approved)', async () => {
+  global.fetch = jest.fn(() => Promise.resolve({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)) })) as never;
+  await changeAvatar('file:///new.jpg', { url: legacy(`${TEST_ME}/old.jpg`) });
+  expect(calls.some((c) => c.op === 'remove' && c.bucket === 'avatars')).toBe(false);
 });
 
 it('moves a public photo before switching the account to private', async () => {
@@ -134,6 +157,6 @@ it('moves a public photo before switching the account to private', async () => {
   await setAccountPrivate(true);
   const order = calls.map((c) => `${c.bucket}:${c.op}`);
   expect(order).toContain('profile-photos:upload');
-  expect(order).toContain('avatars:remove');
+  expect(order).not.toContain('avatars:remove');
   expect(supabase.rpc).toHaveBeenCalledWith('set_account_private', { make_private: true });
 });

@@ -55,51 +55,55 @@ export async function uploadProfilePhoto(localUri: string, userId: string): Prom
   return path;
 }
 
-/** Deletes a photo file the user owns, in either bucket, plus its attachment row. */
+/**
+ * Deletes one of the user's own private profile-photo files plus its record.
+ * Legacy files in the public `avatars` bucket are never deleted by the app:
+ * clearing avatar_url archives the link on the server, and the originals are
+ * removed only by the owner-approved cleanup after device tests.
+ */
 export async function deleteOwnPhoto(userId: string, ref: { path?: string | null; url?: string | null }) {
-  const targets: [string, string][] = [];
-  if (ref.path && ref.path.startsWith(`${userId}/`)) targets.push([PROFILE_PHOTO_BUCKET, ref.path]);
-  const legacy = publicAvatarPath(ref.url);
-  if (legacy && legacy.startsWith(`${userId}/`)) targets.push([AVATAR_BUCKET, legacy]);
-  for (const [bucket, path] of targets) {
-    await supabase.storage.from(bucket).remove([path]).catch(() => undefined);
-    await supabase.from('media_attachments').delete().eq('object_path', path);
-  }
+  if (!ref.path || !ref.path.startsWith(`${userId}/`)) return;
+  await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove([ref.path]).catch(() => undefined);
+  await supabase.from('media_attachments').delete().eq('object_path', ref.path);
+}
+
+/** Private copy name for a legacy photo; the same rule as the operator script, so copies are never duplicated. */
+export function privateCopyPath(userId: string, legacyPath: string): string {
+  const base = (legacyPath.split('/').pop() ?? 'photo.jpg').replace(/[^A-Za-z0-9._-]/g, '_');
+  return `${userId}/legacy-${base}`;
 }
 
 let selfMigration: Promise<boolean> | null = null;
 
 /**
- * Moves the signed-in user's own legacy public avatar into private storage
- * (copy -> point the profile at it -> delete the public file). Idempotent and
- * safe to call repeatedly; returns true when the photo is private (or absent).
+ * Copies the signed-in user's own legacy public avatar into private storage
+ * and points avatar_path at the copy. Non-destructive: the public original and
+ * avatar_url stay, so build 13 keeps showing the photo and a rollback loses
+ * nothing. Idempotent (deterministic copy name). Returns true when a private
+ * copy is in place (or there is nothing to copy).
  */
 export function ensurePrivateAvatar(userId: string, row: Row | null | undefined): Promise<boolean> {
   if (!row || !useSocialStore.getState().privatePhotos) return Promise.resolve(false);
   const legacyPath = publicAvatarPath(row.avatar_url);
   if (!legacyPath) return Promise.resolve(true);
-  // Only ever move a file from the user's own folder.
+  // Only ever copy a file from the user's own folder.
   if (!legacyPath.startsWith(`${userId}/`)) return Promise.resolve(false);
+  const target = privateCopyPath(userId, legacyPath);
+  if (row.avatar_path === target) return Promise.resolve(true);
   if (selfMigration) return selfMigration;
   selfMigration = (async () => {
     try {
-      // A legacy URL is always the newest photo (moving one clears it), e.g. one
-      // uploaded later from build 13 on another device, so it replaces avatar_path.
       const { data: blob, error } = await supabase.storage.from(AVATAR_BUCKET).download(legacyPath);
       if (error || !blob) return false;
       const body = await blob.arrayBuffer();
-      const path = `${userId}/${randomName()}`;
-      const up = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
+      const up = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(target, body, { contentType: 'image/jpeg', upsert: true });
       if (up.error) return false;
-      await recordAttachment(userId, PROFILE_PHOTO_BUCKET, path, body.byteLength, null);
-      const { error: updateError } = await supabase.from('profiles').update({ avatar_path: path, avatar_url: null }).eq('id', userId);
-      if (updateError) {
-        await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove([path]).catch(() => undefined);
-        return false;
-      }
-      if (row.avatar_path && row.avatar_path !== path) await deleteOwnPhoto(userId, { path: row.avatar_path });
-      // Only after the private copy is in place: remove the public file.
-      await deleteOwnPhoto(userId, { url: row.avatar_url });
+      await recordAttachment(userId, PROFILE_PHOTO_BUCKET, target, body.byteLength, null);
+      // A legacy link is always the newest photo (e.g. uploaded later from build
+      // 13), so it replaces whatever private photo was there before.
+      const { error: updateError } = await supabase.from('profiles').update({ avatar_path: target }).eq('id', userId);
+      if (updateError) return false;
+      if (row.avatar_path && row.avatar_path !== target) await deleteOwnPhoto(userId, { path: row.avatar_path });
       return true;
     } catch {
       return false;

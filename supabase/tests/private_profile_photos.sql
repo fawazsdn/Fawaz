@@ -63,6 +63,20 @@ begin
   perform public.set_account_private(true);
   select count(*) into cnt from public.profiles where id = b and avatar_url is null;
   if cnt <> 1 then raise exception 'FAIL legacy public URL kept on a private account'; end if;
+  -- The link is archived (the public file is kept for the approved cleanup / a rollback), and clients can't read the archive.
+  ok := false;
+  begin select count(*) into cnt from private.avatar_legacy_urls; exception when others then ok := true; end;
+  if not ok then raise exception 'FAIL clients can read the legacy photo archive'; end if;
+  ok := false;
+  begin perform public.legacy_avatar_inventory(); exception when others then ok := true; end;
+  if not ok then raise exception 'FAIL residents can call the operator photo inventory'; end if;
+  ok := false;
+  begin perform public.mark_legacy_avatar_removed(b, 'x'); exception when others then ok := true; end;
+  if not ok then raise exception 'FAIL residents can mark photo files removed'; end if;
+  perform set_config('role', 'postgres', true);
+  select count(*) into cnt from private.avatar_legacy_urls where user_id = b and reason = 'went_private' and url = legacy || b || '/old.jpg' and file_removed_at is null;
+  if cnt <> 1 then raise exception 'FAIL went-private link not archived'; end if;
+  perform set_config('role', 'authenticated', true);
   select count(*) into cnt from storage.objects where bucket_id = 'profile-photos' and name = photo_b;
   if cnt <> 1 then raise exception 'FAIL owner cannot see own photo'; end if;
   perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
@@ -72,13 +86,28 @@ begin
   if j->>'avatar_path' is not null or j->>'avatar_url' is not null then raise exception 'FAIL card leaks private photo %', j; end if;
   passed := passed + 1;
 
-  -- 4. Asking to follow lets the private account see the requester's photo, not vice versa.
+  -- 4. A pending follow request grants no photo access, in either direction.
+  --    c (public) asks to follow private b: c can't see b's photo; b sees c's
+  --    only because c's account is public.
   perform public.follow_user(b);
   select count(*) into cnt from storage.objects where bucket_id = 'profile-photos' and name = photo_b;
   if cnt <> 0 then raise exception 'FAIL pending request reveals private photo'; end if;
+  if public.social_profile(b)->>'avatar_path' is not null then raise exception 'FAIL pending request: card shows private photo'; end if;
   perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
   select count(*) into cnt from public.list_follow_requests() r where r.user_id = c and r.avatar_path = photo_c;
-  if cnt <> 1 then raise exception 'FAIL recipient cannot see requester photo in requests'; end if;
+  if cnt <> 1 then raise exception 'FAIL recipient cannot see a public requester photo'; end if;
+  --    Now the requester is private too: the recipient must not see its photo.
+  perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+  perform public.set_account_private(true);
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+  select count(*) into cnt from public.list_follow_requests() r where r.user_id = c and r.avatar_path is null and r.avatar_url is null;
+  if cnt <> 1 then raise exception 'FAIL private requester photo shown to the recipient'; end if;
+  select count(*) into cnt from storage.objects where bucket_id = 'profile-photos' and name = photo_c;
+  if cnt <> 0 then raise exception 'FAIL private requester photo readable by the recipient'; end if;
+  if public.social_profile(c)->>'avatar_path' is not null then raise exception 'FAIL private requester card shows photo'; end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+  perform public.set_account_private(false);
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
   -- 5. Accepted follower sees it; removed follower loses it again.
   perform public.respond_follow_request(c, true);
   perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
@@ -150,7 +179,19 @@ begin
   if cnt <> 1 then raise exception 'FAIL another account changed b''s privacy or photo'; end if;
   passed := passed + 1;
 
-  -- 11. Account deletion removes the account's attachments rows and social links.
+  -- 11. Replacing or removing a public photo archives the old link; nothing is deleted.
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  update public.profiles set avatar_url = legacy || a || '/1.jpg' where id = a;
+  update public.profiles set avatar_url = legacy || a || '/2.jpg' where id = a;
+  update public.profiles set avatar_url = null, avatar_path = null where id = a;
+  perform set_config('role', 'postgres', true);
+  select count(*) into cnt from private.avatar_legacy_urls where user_id = a and
+    ((reason = 'replaced' and url like '%/1.jpg') or (reason = 'removed' and url like '%/2.jpg'));
+  if cnt <> 2 then raise exception 'FAIL replaced/removed links not archived (%)', cnt; end if;
+  passed := passed + 1;
+
+  -- 12. Account deletion removes the account's attachments rows and social links.
   perform public.purge_account_data(b);
   select count(*) into cnt from public.media_attachments where owner_id = b;
   if cnt <> 0 then raise exception 'FAIL attachment rows survive deletion'; end if;

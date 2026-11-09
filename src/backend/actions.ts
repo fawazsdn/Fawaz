@@ -264,7 +264,9 @@ export async function toggleSavePost(postId: string) {
 export async function deletePost(postId: string) {
   return run(async () => {
     me();
-    check(await supabase.from('posts').update({ deleted_at: new Date().toISOString() }).eq('id', postId));
+    // The server function is the only path RLS accepts for a soft delete.
+    if (useSocialStore.getState().available) check(await supabase.rpc('delete_post', { target_post: postId }));
+    else check(await supabase.from('posts').update({ deleted_at: new Date().toISOString() }).eq('id', postId));
   });
 }
 
@@ -322,7 +324,8 @@ export async function editComment(commentId: string, postId: string, text: strin
 export async function deleteComment(commentId: string, postId: string) {
   return run(async () => {
     me();
-    check(await supabase.from('post_comments').update({ deleted_at: new Date().toISOString() }).eq('id', commentId));
+    if (useSocialStore.getState().available) check(await supabase.rpc('delete_post_comment', { target_comment: commentId }));
+    else check(await supabase.from('post_comments').update({ deleted_at: new Date().toISOString() }).eq('id', commentId));
     await loadComments(postId);
   });
 }
@@ -876,7 +879,10 @@ export async function removeContent(targetType: ReportTargetType, targetId: stri
   return run(async () => {
     me();
     const now = new Date().toISOString();
-    if (targetType === 'post') check(await supabase.from('posts').update({ deleted_at: now }).eq('id', targetId));
+    const social = useSocialStore.getState().available;
+    if (targetType === 'post' && social) check(await supabase.rpc('delete_post', { target_post: targetId }));
+    else if (targetType === 'comment' && social) check(await supabase.rpc('delete_post_comment', { target_comment: targetId }));
+    else if (targetType === 'post') check(await supabase.from('posts').update({ deleted_at: now }).eq('id', targetId));
     else if (targetType === 'comment') check(await supabase.from('post_comments').update({ deleted_at: now }).eq('id', targetId));
     else if (targetType === 'listing') check(await supabase.from('marketplace_listings').update({ deleted_at: now }).eq('id', targetId));
   });
@@ -892,9 +898,12 @@ export async function recordShare(channel: 'whatsapp' | 'native_share' | 'copy' 
 // ----------------------------------------------------------------- account --
 
 /**
- * Permanent account deletion via the delete-account Edge Function (verifies
- * the caller's JWT, removes their storage objects, purges their rows and
- * deletes the auth user). Never just a local reset.
+ * Permanent account deletion via the delete-account-v2 Edge Function
+ * (verifies the caller's JWT, revokes Apple authorization for Apple
+ * accounts, removes their storage objects including private profile and
+ * post photos, purges their rows and deletes the auth user). Never just a
+ * local reset. Every account uses v2 in this build; the legacy
+ * `delete-account` endpoint stays untouched for build 13 and older.
  */
 export async function deleteAccount() {
   try {
@@ -908,7 +917,7 @@ export async function deleteAccount() {
     }
     const { data, error } = await (appleAuthorizationCode
       ? supabase.functions.invoke(APPLE_ACCOUNT_DELETION_FUNCTION, { method: 'POST', body: { appleAuthorizationCode } })
-      : supabase.functions.invoke('delete-account', { method: 'POST' }));
+      : supabase.functions.invoke(APPLE_ACCOUNT_DELETION_FUNCTION, { method: 'POST' }));
     if (error) throw error;
     if (!(data as { deleted?: boolean } | null)?.deleted) throw new ActionError('unknown', 'Account deletion did not complete');
     await supabase.auth.signOut().catch(() => {});

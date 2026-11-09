@@ -1,9 +1,36 @@
--- Rollback for 20261109120000_social_follows_photo_posts.sql.
--- Restores the pre-migration definitions (captured from production 2026-11-09).
--- Destructive for new data: drops follows and the is_private setting, and
--- removes posts audiences 'public'/'followers' by converting them to
--- 'neighborhood' (the strictest existing audience). Requires owner approval.
+-- Rollback for 20261109120000_social_follows_photo_posts.sql. Run after the
+-- 20261109130000 rollback. Requires owner approval.
+--
+-- Data safety: before anything is dropped, the social data is copied into the
+-- private schema (no client access), so re-applying the migration later can
+-- bring it back with supabase/rollbacks/restore_20261109_social_data.sql:
+--   private.rollback_20261109_follows          every follow and pending request
+--   private.rollback_20261109_privacy          who had a private account
+--   private.rollback_20261109_post_audiences   posts that used public/followers
+--   private.rollback_20261109_notifications    follow notifications
+-- While rolled back, posts that used 'public' or 'followers' become
+-- 'neighborhood' (the strictest existing audience), so nothing becomes more
+-- visible. Their photos stay in community-media/posts/<uid>/ and are
+-- readable only by their authors and staff until the migration is re-applied.
 begin;
+-- Appends on a repeated rollback; the restore script ignores duplicates.
+create table if not exists private.rollback_20261109_follows as
+  select f.*, now() as saved_at from public.follows f limit 0;
+insert into private.rollback_20261109_follows select f.*, now() as saved_at from public.follows f;
+-- Appends on a repeated rollback; the restore script ignores duplicates.
+create table if not exists private.rollback_20261109_privacy as
+  select id as user_id, is_private, now() as saved_at from public.profiles where is_private limit 0;
+insert into private.rollback_20261109_privacy select id as user_id, is_private, now() as saved_at from public.profiles where is_private;
+-- Appends on a repeated rollback; the restore script ignores duplicates.
+create table if not exists private.rollback_20261109_post_audiences as
+  select id as post_id, audience, now() as saved_at from public.posts where audience in ('public', 'followers') limit 0;
+insert into private.rollback_20261109_post_audiences select id as post_id, audience, now() as saved_at from public.posts where audience in ('public', 'followers');
+-- Appends on a repeated rollback; the restore script ignores duplicates.
+create table if not exists private.rollback_20261109_notifications as
+  select n.*, now() as saved_at from public.notifications n where n.type in ('follow', 'follow_request', 'follow_accepted') limit 0;
+insert into private.rollback_20261109_notifications select n.*, now() as saved_at from public.notifications n where n.type in ('follow', 'follow_request', 'follow_accepted');
+revoke all on private.rollback_20261109_follows, private.rollback_20261109_privacy,
+  private.rollback_20261109_post_audiences, private.rollback_20261109_notifications from public, anon, authenticated;
 drop trigger if exists posts_guard_write on public.posts;
 drop trigger if exists profiles_privacy_change on public.profiles;
 drop policy if exists posts_select_visible on public.posts;
@@ -213,6 +240,7 @@ drop function if exists public.set_account_private(boolean);
 drop function if exists public.list_follows(uuid, text, text, integer, integer);
 drop function if exists public.list_follow_requests();
 drop function if exists public.delete_post_comment(uuid);
+drop function if exists public.delete_post(uuid);
 drop function if exists private.on_profile_privacy_change();
 drop function if exists private.guard_post_write();
 drop function if exists private.can_read_post_photo(text);
