@@ -61,10 +61,34 @@ Deno.serve(async (request) => {
     return new Response(JSON.stringify({ error: attachmentError.message }), { status: 500, headers: jsonHeaders });
   }
 
-  for (const bucket of ['avatars', 'community-media']) {
-    const paths = (attachments ?? []).filter((item) => item.bucket_id === bucket).map((item) => item.object_path);
-    if (paths.length > 0) {
-      const { error: storageError } = await admin.storage.from(bucket).remove(paths);
+  // Every file the account uploaded: what media_attachments recorded, plus a
+  // sweep of the account's own folders in case a record was never written.
+  const toRemove = new Map<string, Set<string>>();
+  const add = (bucket: string, path: string) => {
+    if (!toRemove.has(bucket)) toRemove.set(bucket, new Set());
+    toRemove.get(bucket)!.add(path);
+  };
+  for (const item of attachments ?? []) {
+    if (['avatars', 'community-media', 'profile-photos'].includes(item.bucket_id)) add(item.bucket_id, item.object_path);
+  }
+  const ownFolders: [string, string][] = [
+    ['avatars', userData.user.id],
+    ['profile-photos', userData.user.id],
+    ['community-media', `posts/${userData.user.id}`],
+  ];
+  for (const [bucket, folder] of ownFolders) {
+    for (let offset = 0; ; offset += 100) {
+      const { data: listed, error: listError } = await admin.storage.from(bucket).list(folder, { limit: 100, offset });
+      // A bucket that doesn't exist yet (before the private-photo migration) has nothing to sweep.
+      if (listError || !listed || listed.length === 0) break;
+      for (const entry of listed) if (entry.id) add(bucket, `${folder}/${entry.name}`);
+      if (listed.length < 100) break;
+    }
+  }
+  for (const [bucket, set] of toRemove) {
+    const paths = [...set];
+    for (let i = 0; i < paths.length; i += 100) {
+      const { error: storageError } = await admin.storage.from(bucket).remove(paths.slice(i, i + 100));
       if (storageError) {
         return new Response(JSON.stringify({ error: storageError.message }), { status: 500, headers: jsonHeaders });
       }

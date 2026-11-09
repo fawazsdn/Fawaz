@@ -33,11 +33,13 @@ describe('account deletion rollout', () => {
     });
   });
 
-  it('preserves the legacy endpoint for accounts without Apple', async () => {
+  it('sends accounts without Apple to the same reviewed v2 endpoint (it also removes private photos)', async () => {
     authorize.mockResolvedValueOnce(undefined);
     invoke.mockResolvedValueOnce({ data: { deleted: true }, error: null });
     await expect(deleteAccount()).resolves.toBe(true);
-    expect(invoke).toHaveBeenCalledWith('delete-account', { method: 'POST' });
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledWith('delete-account-v2', { method: 'POST' });
+    expect(invoke).not.toHaveBeenCalledWith('delete-account', expect.anything());
   });
 
   it('leaves the account signed in and sends no request when Apple is cancelled', async () => {

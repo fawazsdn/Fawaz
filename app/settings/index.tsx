@@ -28,6 +28,7 @@ import {
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
 import { signOutSupabase } from '@/features/auth/supabaseAuth';
+import { PrivateAccountSetting } from '@/features/social/PrivateAccountSetting';
 import { useStore, useCurrentUserId } from '@/store/useStore';
 import type { ThemeMode, VerificationStatus } from '@/models';
 import { useAction } from '@/hooks/useAction';
@@ -173,6 +174,7 @@ export default function SettingsScreen() {
           value={settings.activityVisible}
           onChange={(v) => setSettings({ activityVisible: v })}
         />
+        <PrivateAccountSetting />
         <Row icon={Shield} label={t.neighbors.privacy.title} onPress={() => router.push('/settings/neighbors')} Chevron={Chevron} />
         <Row icon={UserX} label={t.settings.blockedUsers} onPress={() => router.push('/settings/blocked-users')} Chevron={Chevron} />
 

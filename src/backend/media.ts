@@ -12,6 +12,8 @@ import { supabase } from '@/lib/supabase';
  */
 export const COMMUNITY_BUCKET = 'community-media';
 export const AVATAR_BUCKET = 'avatars';
+/** Private profile photos (20261109130000): read through signed URLs the storage policy authorizes. */
+export const PROFILE_PHOTO_BUCKET = 'profile-photos';
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 6;
 const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
@@ -25,7 +27,7 @@ function randomName() {
  * which is what the delete-account Edge Function uses to remove a resident's
  * files when they delete their account.
  */
-async function recordAttachment(ownerId: string, bucket: string, path: string, size: number, neighborhoodId: string | null) {
+export async function recordAttachment(ownerId: string, bucket: string, path: string, size: number, neighborhoodId: string | null) {
   await supabase.from('media_attachments').insert({
     owner_id: ownerId,
     neighborhood_id: neighborhoodId,
@@ -78,7 +80,12 @@ function isUrl(value: string) {
  * Unknown/failed paths are simply absent from the result — callers show no
  * image rather than a placeholder.
  */
-export async function resolveMediaUrls(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
+export async function resolveMediaUrls(
+  paths: (string | null | undefined)[],
+  bucket: string = COMMUNITY_BUCKET,
+  /** Signed links work for anyone holding them until they expire, so keep sensitive ones short. */
+  ttlSeconds: number = SIGNED_URL_TTL_SECONDS,
+): Promise<Record<string, string>> {
   const now = Date.now();
   const out: Record<string, string> = {};
   const missing: string[] = [];
@@ -87,17 +94,17 @@ export async function resolveMediaUrls(paths: (string | null | undefined)[]): Pr
       out[p] = p;
       continue;
     }
-    const cached = signedUrlCache.get(p);
+    const cached = signedUrlCache.get(`${bucket}:${p}`);
     if (cached && cached.expiresAt > now + 60_000) out[p] = cached.url;
     else missing.push(p);
   }
   if (missing.length > 0) {
-    const { data, error } = await supabase.storage.from(COMMUNITY_BUCKET).createSignedUrls(missing, SIGNED_URL_TTL_SECONDS);
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrls(missing, ttlSeconds);
     if (!error && data) {
       for (const item of data) {
         if (item.path && item.signedUrl) {
           out[item.path] = item.signedUrl;
-          signedUrlCache.set(item.path, { url: item.signedUrl, expiresAt: now + SIGNED_URL_TTL_SECONDS * 1000 });
+          signedUrlCache.set(`${bucket}:${item.path}`, { url: item.signedUrl, expiresAt: now + ttlSeconds * 1000 });
         }
       }
     }

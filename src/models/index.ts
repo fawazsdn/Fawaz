@@ -38,6 +38,8 @@ export interface User {
   firstName: string;
   lastName: string;
   avatarUrl?: string;
+  /** Path in the private profile-photos bucket (avatarUrl is then a short-lived signed URL). */
+  avatarPath?: string;
   bio?: string;
   namePrivacy: NamePrivacy;
   neighborhoodId: string;
@@ -73,6 +75,8 @@ export interface Reaction {
   type: 'like' | 'helpful';
 }
 
+export type PostAudience = 'neighborhood' | 'city' | 'public' | 'followers';
+
 export interface Post {
   id: string;
   type: PostType;
@@ -81,12 +85,15 @@ export interface Post {
   textAr: string;
   textEn?: string;
   images: string[];
+  /** Storage paths behind `images` (same order), used when the author reorders/removes photos. */
+  imagePaths?: string[];
   createdAt: string;
   reactions: Reaction[];
   commentCount: number;
   savedBy: string[];
   linkedEntityId?: string; // event/issue/poll/marketplace id when relevant
-  audience: 'neighborhood' | 'city';
+  /** 'neighborhood' = verified neighbors; 'public'/'followers' need the social backend. */
+  audience: PostAudience;
   pinned?: boolean;
   /** Opt-in, approximate geotag shown on the map. */
   approxLat?: number;
@@ -387,7 +394,14 @@ export type NotificationType =
   | 'marketplace_inquiry'
   | 'group_activity'
   | 'referral'
-  | 'moderation';
+  | 'moderation'
+  | 'neighbor_request'
+  | 'neighbor_accepted'
+  | 'event_invite'
+  | 'club_invite'
+  | 'follow'
+  | 'follow_request'
+  | 'follow_accepted';
 
 export interface AppNotification {
   id: string;

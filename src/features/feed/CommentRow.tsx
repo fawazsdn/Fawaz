@@ -8,7 +8,9 @@ import { useI18n } from '@/i18n/useI18n';
 import { useCurrentUserId } from '@/store/useStore';
 import { useUser } from '@/hooks/useNeighborhood';
 import { useAction } from '@/hooks/useAction';
-import { deleteComment, editComment, toggleCommentLike } from '@/backend/actions';
+import { deleteComment, editComment, loadComments, toggleCommentLike } from '@/backend/actions';
+import { deletePostComment } from '@/backend/social';
+import { useSocialAvailable } from '@/backend/socialState';
 import { ReportSheet } from '@/components/ReportSheet';
 import type { Comment } from '@/models';
 import { displayName, formatRelativeTime } from '@/utils/format';
@@ -19,9 +21,11 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 interface CommentRowProps {
   comment: Comment;
   onReply: (comment: Comment) => void;
+  /** The post's author may remove other people's comments on it. */
+  postAuthorId?: string;
 }
 
-export function CommentRow({ comment, onReply }: CommentRowProps) {
+export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -32,6 +36,8 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [moderateOpen, setModerateOpen] = useState(false);
+  const socialOn = useSocialAvailable();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.textAr);
 
@@ -44,7 +50,12 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
         { key: 'edit', label: t.common.edit, onPress: () => setEditing(true) },
         { key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) },
       ]
-    : [{ key: 'report', label: t.common.report, onPress: () => setReportOpen(true) }];
+    : [
+        ...(socialOn && postAuthorId === me
+          ? [{ key: 'moderate', label: t.social.removeComment, destructive: true, onPress: () => setModerateOpen(true) }]
+          : []),
+        { key: 'report', label: t.common.report, onPress: () => setReportOpen(true) },
+      ];
 
   return (
     <View style={[theme.row(), styles.wrap]}>
@@ -116,6 +127,20 @@ export function CommentRow({ comment, onReply }: CommentRowProps) {
         onConfirm={() => {
           setDeleteOpen(false);
           run(() => deleteComment(comment.id, comment.postId));
+        }}
+      />
+      <ConfirmationModal
+        visible={moderateOpen}
+        title={t.social.removeCommentConfirm}
+        confirmLabel={t.social.removeComment}
+        destructive
+        onCancel={() => setModerateOpen(false)}
+        onConfirm={() => {
+          setModerateOpen(false);
+          run(async () => {
+            await deletePostComment(comment.id);
+            await loadComments(comment.postId);
+          });
         }}
       />
     </View>

@@ -36,8 +36,8 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FAF6EF",
-          "image": "./assets/haratna-n2.png",
+          "backgroundColor": "#0D4939",
+          "image": "./assets/haratna-n2-splash.png",
           "imageWidth": 140
         }
       ]
