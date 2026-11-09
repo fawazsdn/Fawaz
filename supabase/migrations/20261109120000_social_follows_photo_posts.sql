@@ -298,7 +298,7 @@ returns text language sql stable security definer set search_path to '' as $$
 $$;
 
 /**
- * The profile header anyone with the id may see (like a public profile card):
+ * The profile header any verified resident with the id may see (like a public profile card):
  * name (respecting name privacy), photo, verified badge and counts. Bio,
  * interests and neighborhood follow the existing profile_visible rule. Returns
  * null when the person has blocked the caller or the account is gone.
@@ -316,6 +316,8 @@ begin
   select * into p from public.profiles where id = target and deleted_at is null;
   if p.id is null then return null; end if;
   if caller <> target and exists (select 1 from public.user_blocks where blocker_id = target and blocked_id = caller) then return null; end if;
+  -- Only verified residents (and staff) see other people's cards.
+  if caller <> target and not private.is_verified_resident(caller) and not private.is_admin_or_moderator() then return null; end if;
   full_view := private.profile_visible(target);
   state := private.follow_state(caller, target);
   content := caller = target or private.is_admin_or_moderator() or not p.is_private or state = 'following';
@@ -449,6 +451,7 @@ declare caller uuid := (select auth.uid()); q text := nullif(btrim(coalesce(sear
 begin
   if caller is null or kind not in ('followers', 'following') then return; end if;
   if caller <> target and not private.is_admin_or_moderator() then
+    if not private.is_verified_resident(caller) then return; end if;
     if private.is_blocked_between(caller, target) then return; end if;
     if coalesce((select p.is_private from public.profiles p where p.id = target and p.deleted_at is null), true)
        and not private.is_accepted_follower(caller, target) then return; end if;

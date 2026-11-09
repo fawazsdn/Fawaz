@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Dimensions, FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import { ZoomableImage } from './ZoomableImage';
 
 interface ImageViewerModalProps {
   visible: boolean;
@@ -11,7 +13,7 @@ interface ImageViewerModalProps {
   onClose: () => void;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }: ImageViewerModalProps) {
   const insets = useSafeAreaInsets();
@@ -21,7 +23,8 @@ export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }:
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.backdrop}>
+      {/* Modals render outside the app's root gesture view, so they need their own. */}
+      <GestureHandlerRootView style={styles.backdrop}>
         <FlatList
           data={images}
           horizontal
@@ -33,7 +36,7 @@ export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }:
           showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={{ width: SCREEN_WIDTH, alignItems: 'center', justifyContent: 'center' }}>
-              <Image source={{ uri: item }} style={{ width: SCREEN_WIDTH, height: '100%' }} contentFit="contain" />
+              <ZoomableImage uri={item} width={SCREEN_WIDTH} height={SCREEN_HEIGHT} />
             </View>
           )}
         />
@@ -53,7 +56,7 @@ export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }:
             ))}
           </View>
         ) : null}
-      </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

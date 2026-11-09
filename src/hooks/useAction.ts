@@ -20,6 +20,8 @@ export function useActionErrorMessage() {
         const neighborErrors = t.neighbors.errors as Record<string, string>;
         if (neighborErrors[reason]) return neighborErrors[reason];
         if (reason === 'invalid:custom_category') return t.eventCreate.customCategoryRequired;
+        if (reason === 'invalid:images' || reason === 'invalid:image_size') return t.social.imageRejected;
+        if (reason === 'blocked') return t.errors.forbidden;
         if (reason.startsWith('invalid:')) return t.clubs.fixFields;
       }
       switch (code) {

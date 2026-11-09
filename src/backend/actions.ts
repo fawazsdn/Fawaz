@@ -24,6 +24,7 @@ import type {
   ListingType,
   LostFoundStatus,
   NamePrivacy,
+  PostAudience,
   PostType,
   ReportReason,
   Recurrence,
@@ -31,6 +32,8 @@ import type {
 } from '@/models';
 import { resolveMediaUrls, uploadAvatar, uploadCommunityImage, uploadCommunityImages } from './media';
 import { isInterest, mapClub, mapNeighborSettings, mapProfile, requestSync } from './sync';
+import { discardUploads, uploadPostPhotos } from './social';
+import { useSocialStore } from './socialState';
 
 /**
  * Every mutation in the app. Each one writes to Supabase (RLS decides what's
@@ -190,31 +193,40 @@ export async function createPost(input: {
   type: PostType;
   textAr: string;
   localImages: string[];
-  audience: 'neighborhood' | 'city';
+  audience: PostAudience;
   geotag?: { lat: number; lng: number; label?: string };
+  /** A place or neighborhood tag shown with the post, without coordinates. */
+  locationLabel?: string;
 }) {
   return run(async () => {
     const uid = me();
     const nb = verifiedNeighborhood();
-    const imagePaths = await uploadCommunityImages(input.localImages, nb, uid);
-    const row = check(
-      await supabase
-        .from('posts')
-        .insert({
-          type: input.type,
-          author_id: uid,
-          neighborhood_id: nb,
-          text_ar: input.textAr,
-          image_paths: imagePaths,
-          audience: input.audience,
-          approx_lat: input.geotag ? approximateCoordinate(input.geotag.lat) : null,
-          approx_lng: input.geotag ? approximateCoordinate(input.geotag.lng) : null,
-          location_label: input.geotag?.label ?? null,
-        })
-        .select('id')
-        .single(),
-    ) as { id: string };
-    return row.id;
+    // With the social backend, photos live in the private post-photo folder
+    // (readable only through a post you may see); otherwise as before.
+    const social = useSocialStore.getState().available === true;
+    if (!social && (input.audience === 'public' || input.audience === 'followers')) throw new ActionError('invalid', 'invalid:audience');
+    const imagePaths = social ? await uploadPostPhotos(input.localImages, nb) : await uploadCommunityImages(input.localImages, nb, uid);
+    const label = input.geotag?.label ?? input.locationLabel?.trim() ?? null;
+    const res = await supabase
+      .from('posts')
+      .insert({
+        type: input.type,
+        author_id: uid,
+        neighborhood_id: nb,
+        text_ar: input.textAr,
+        image_paths: imagePaths,
+        audience: input.audience,
+        approx_lat: input.geotag ? approximateCoordinate(input.geotag.lat) : null,
+        approx_lng: input.geotag ? approximateCoordinate(input.geotag.lng) : null,
+        location_label: label || null,
+      })
+      .select('id')
+      .single();
+    if (res.error) {
+      if (social) await discardUploads(imagePaths);
+      throw res.error;
+    }
+    return (res.data as { id: string }).id;
   });
 }
 

@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useStore } from '@/store/useStore';
 import { useAction } from '@/hooks/useAction';
 import { addComment, loadComments } from '@/backend/actions';
+import { fetchPost } from '@/backend/social';
 import { SkeletonCardRow } from '@/components/Skeleton';
 import { AppHeader } from '@/components/AppHeader';
 import { EmptyState } from '@/components/EmptyState';
@@ -33,6 +34,17 @@ export default function PostDetailScreen() {
   const syncStatus = useStore((s) => s.sync.status);
   const { run, pending } = useAction();
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [fetchState, setFetchState] = useState<'idle' | 'loading' | 'missing'>('idle');
+
+  // Posts outside the synced feed (a notification, a followed account, a link)
+  // are fetched on demand; RLS returns nothing if you may not see them.
+  useEffect(() => {
+    if (!id || post || fetchState !== 'idle') return;
+    setFetchState('loading');
+    fetchPost(id)
+      .then((p) => setFetchState(p ? 'idle' : 'missing'))
+      .catch(() => setFetchState('missing'));
+  }, [id, post, fetchState]);
 
   useEffect(() => {
     if (!id) return;
@@ -47,12 +59,12 @@ export default function PostDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader title={t.post.commentsTitle} fallbackRoute="/" />
-        {syncStatus === 'loading' ? (
+        {(syncStatus === 'loading' || fetchState !== 'missing') ? (
           <View style={{ padding: theme.spacing.md }}>
             <SkeletonCardRow count={2} />
           </View>
         ) : (
-          <EmptyState title={t.errors.genericTitle} body={t.errors.genericBody} />
+          <EmptyState title={t.errors.notFound} />
         )}
       </View>
     );
@@ -86,7 +98,7 @@ export default function PostDetailScreen() {
         ) : comments.length === 0 ? (
           <EmptyState title={t.post.noComments} compact />
         ) : (
-          comments.map((c) => <CommentRow key={c.id} comment={c} onReply={setReplyingTo} />)
+          comments.map((c) => <CommentRow key={c.id} comment={c} onReply={setReplyingTo} postAuthorId={post.authorId} />)
         )}
       </ScrollView>
       <Composer

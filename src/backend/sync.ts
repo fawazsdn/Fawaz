@@ -35,6 +35,7 @@ import type {
   VerificationStatus,
 } from '@/models';
 import { resolveMediaUrls } from './media';
+import { useSocialStore } from './socialState';
 
 type Row = Record<string, any>;
 
@@ -233,6 +234,9 @@ export async function syncAll(): Promise<void> {
     }
 
     // 4. Neighborhood content — only readable by verified members (RLS).
+    // 3b. People I follow (also tells us whether the social backend is deployed).
+    const followees = await loadFollowees(me);
+
     if (verified && neighborhoodId) {
       const nb = neighborhoodId;
       const since = new Date(Date.now() - 60 * 86400000).toISOString();
@@ -321,6 +325,20 @@ export async function syncAll(): Promise<void> {
       const myVotes = new Map((must(myVotesRes, 'votes') as Row[]).map((r) => [r.poll_id, r.option_id]));
 
       const postRows = must(postsRes, 'posts') as Row[];
+      // Posts from people I follow in other neighborhoods (RLS applies their audience).
+      if (followees.length > 0) {
+        const { data: followedRows } = await supabase
+          .from('posts')
+          .select('*, post_reactions(user_id, type), post_comments(count)')
+          .in('author_id', followees.slice(0, 200))
+          .neq('neighborhood_id', nb)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .limit(CONTENT_LIMIT);
+        const seen = new Set(postRows.map((r) => r.id));
+        for (const r of (followedRows ?? []) as Row[]) if (!seen.has(r.id)) postRows.push(r);
+        postRows.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+      }
       const pollRows = must(pollsRes, 'polls') as Row[];
       const eventRows = must(eventsRes, 'events') as Row[];
       const listingRows = must(listingsRes, 'listings') as Row[];
@@ -576,6 +594,7 @@ export function mapPost(p: Row, saved: Set<string>, me: string, imgs: (ps?: stri
     textAr: p.text_ar ?? '',
     textEn: p.text_en ?? undefined,
     images: imgs(p.image_paths),
+    imagePaths: p.image_paths ?? [],
     createdAt: p.created_at,
     reactions: ((p.post_reactions ?? []) as Row[]).map((r) => ({ userId: r.user_id, type: r.type })),
     commentCount,
@@ -604,6 +623,21 @@ export function mapPoll(p: Row, counts: Map<string, number>, myOptionId: string 
     myOptionId,
     allowChange: p.allow_change !== false,
   };
+}
+
+/**
+ * Accepted follows of the signed-in resident. A missing table means the
+ * social migration isn't deployed yet: record that and carry on unchanged.
+ */
+async function loadFollowees(me: string): Promise<string[]> {
+  const { data, error } = await supabase.from('follows').select('followee_id').eq('follower_id', me).eq('status', 'accepted');
+  if (error) {
+    const missing = error.code === 'PGRST205' || error.code === '42P01' || /could not find the table|does not exist/i.test(error.message ?? '');
+    if (missing) useSocialStore.getState().setAvailable(false);
+    return [];
+  }
+  useSocialStore.getState().setAvailable(true);
+  return ((data ?? []) as Row[]).map((r) => r.followee_id as string);
 }
 
 async function loadNeighbors(entities: EntityState, me: string) {

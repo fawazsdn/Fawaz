@@ -150,6 +150,9 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true);
   select count(*) into cnt from public.posts where id = p_pub;
   if cnt <> 0 then raise exception 'FAIL unverified user reads public post'; end if;
+  if public.social_profile(b) is not null then raise exception 'FAIL unverified user gets profile card'; end if;
+  select count(*) into cnt from public.list_follows(b, 'followers');
+  if cnt <> 0 then raise exception 'FAIL unverified user lists followers'; end if;
   passed := passed + 1;
 
   -- 7. Photos: own-folder only, readable only through a visible post.

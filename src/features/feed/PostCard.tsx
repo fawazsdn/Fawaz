@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bookmark, Megaphone, MessageCircle, MoreHorizontal, Share2, ThumbsUp, TriangleAlert } from 'lucide-react-native';
+import { Bookmark, Globe, Lock, Megaphone, MessageCircle, MoreHorizontal, Share2, ThumbsUp, TriangleAlert, Users } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
@@ -18,7 +18,7 @@ import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { IconButton } from '@/components/IconButton';
-import { ImageGallery } from '@/components/ImageGallery';
+import { PhotoCarousel } from '@/features/social/PhotoCarousel';
 import { ActionSheet, type ActionSheetItem } from '@/components/ActionSheet';
 import { ReportSheet } from '@/components/ReportSheet';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
@@ -52,8 +52,36 @@ export function PostCard({ post, onPress }: PostCardProps) {
 
   const goToDetail = () => (onPress ? onPress() : router.push(`/post/${post.id}`));
 
+  const like = () => {
+    if (liked) return;
+    haptics.light();
+    run(() => toggleReaction(post.id, reactionType));
+  };
+
+  // Only public posts carry their text into other apps; everything else
+  // shares a link that opens only for people allowed to see the post.
+  const share = () =>
+    shareContent(
+      post.audience === 'public'
+        ? { message: post.textAr, url: links.post(post.id) }
+        : { message: t.social.sharePrivateNote, url: links.post(post.id) },
+    );
+
+  const AudienceIcon = post.audience === 'public' ? Globe : post.audience === 'followers' ? Lock : Users;
+  const audienceLabel =
+    post.audience === 'public'
+      ? t.social.audiencePublic
+      : post.audience === 'followers'
+        ? t.social.audienceFollowers
+        : t.social.audienceNeighbors;
+
   const menuItems: ActionSheetItem[] = isOwn
-    ? [{ key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) }]
+    ? [
+        ...(post.type !== 'poll'
+          ? [{ key: 'edit', label: t.social.editPost, onPress: () => router.push(`/post/edit/${post.id}`) }]
+          : []),
+        { key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) },
+      ]
     : [
         { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => run(() => toggleSavePost(post.id)) },
         { key: 'report', label: t.common.report, onPress: () => setReportOpen(true) },
@@ -79,9 +107,14 @@ export function PostCard({ post, onPress }: PostCardProps) {
                 {authorName}
               </Text>
             </View>
-            <Text style={theme.text('caption', theme.colors.textMuted)} numberOfLines={1}>
-              {locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn} · {formatRelativeTime(post.createdAt, locale)}
-            </Text>
+            <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
+              <AudienceIcon size={11} color={theme.colors.textMuted} accessibilityLabel={audienceLabel} />
+              <Text style={[theme.text('caption', theme.colors.textMuted), { flexShrink: 1 }]} numberOfLines={1}>
+                {[post.locationLabel ?? (locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn), formatRelativeTime(post.createdAt, locale)]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </View>
           </View>
           <IconButton
             accessibilityLabel="more"
@@ -114,12 +147,12 @@ export function PostCard({ post, onPress }: PostCardProps) {
           <PollBlock poll={poll} />
         ) : (
           <>
-            {post.textAr ? <Text style={[theme.text('body'), styles.body]}>{post.textAr}</Text> : null}
             {post.images.length > 0 ? (
-              <View style={{ marginTop: 8 }}>
-                <ImageGallery images={post.images} />
+              <View style={{ marginBottom: 8 }}>
+                <PhotoCarousel images={post.images} onDoubleTapLike={like} aspectRatio={post.images.length > 1 ? 4 / 5 : 1} />
               </View>
             ) : null}
+            {post.textAr ? <Text style={[theme.text('body'), styles.body]}>{post.textAr}</Text> : null}
           </>
         )}
 
@@ -166,7 +199,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
           <Pressable
             onPress={(e) => {
               e.stopPropagation?.();
-              shareContent({ message: post.textAr, url: links.post(post.id) });
+              void share();
             }}
             style={[theme.row(), styles.footerBtn, isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }]}
             accessibilityRole="button"

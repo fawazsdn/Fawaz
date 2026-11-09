@@ -25,7 +25,7 @@ function randomName() {
  * which is what the delete-account Edge Function uses to remove a resident's
  * files when they delete their account.
  */
-async function recordAttachment(ownerId: string, bucket: string, path: string, size: number, neighborhoodId: string | null) {
+export async function recordAttachment(ownerId: string, bucket: string, path: string, size: number, neighborhoodId: string | null) {
   await supabase.from('media_attachments').insert({
     owner_id: ownerId,
     neighborhood_id: neighborhoodId,
