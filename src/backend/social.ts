@@ -6,8 +6,9 @@ import type { Post, PostAudience } from '@/models';
 import { ActionError } from './actions';
 import { COMMUNITY_BUCKET, recordAttachment, resolveMediaUrls, uploadAvatar } from './media';
 import { mapPost, requestSync } from './sync';
-import { deleteOwnPhoto, ensurePrivateAvatar, notePrivatePhotoSupport, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
+import { deleteOwnPhoto, ensurePrivateAvatar, notePrivatePhotoSupport, rotateProfilePhoto, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
 import { useSocialAvailable, useSocialStore } from './socialState';
+import { PRIVATE_UPLOAD_CACHE_CONTROL, clearPrivateMediaCaches } from './mediaPrivacy';
 
 /**
  * Follows, private accounts, social profile cards and multi-photo posts.
@@ -148,6 +149,8 @@ export async function followUser(userId: string): Promise<FollowState> {
 export async function unfollowUser(userId: string) {
   me();
   await rpc('unfollow_user', { target: userId });
+  // I no longer have access: drop their photos and links from this device.
+  await clearPrivateMediaCaches();
   void requestSync();
 }
 
@@ -158,8 +161,10 @@ export async function respondFollowRequest(userId: string, accept: boolean) {
 }
 
 export async function removeFollower(userId: string) {
-  me();
+  const uid = me();
   await rpc('remove_follower', { follower: userId });
+  // Cut off photo links they may already hold (and CDN copies of them).
+  await rotateProfilePhoto(uid);
 }
 
 export async function setAccountPrivate(isPrivate: boolean) {
@@ -172,6 +177,7 @@ export async function setAccountPrivate(isPrivate: boolean) {
     await ensurePrivateAvatar(uid, data as Row | null);
   }
   await rpc('set_account_private', { make_private: isPrivate });
+  if (isPrivate) await rotateProfilePhoto(uid);
   void requestSync();
 }
 
@@ -308,7 +314,9 @@ export async function uploadPostPhotos(localUris: string[], neighborhoodId: stri
     const body = await res.arrayBuffer();
     if (body.byteLength < 1 || body.byteLength > MAX_UPLOAD_BYTES) throw new ActionError('invalid', 'invalid:image_size');
     const path = `posts/${uid}/${randomName()}`;
-    const { error } = await supabase.storage.from(COMMUNITY_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
+    const { error } = await supabase.storage
+      .from(COMMUNITY_BUCKET)
+      .upload(path, body, { contentType: 'image/jpeg', upsert: false, cacheControl: PRIVATE_UPLOAD_CACHE_CONTROL });
     if (error) throw error;
     await recordAttachment(uid, COMMUNITY_BUCKET, path, body.byteLength, neighborhoodId);
     paths.push(path);

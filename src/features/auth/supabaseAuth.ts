@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Crypto from 'expo-crypto';
 
 import { supabase } from '@/lib/supabase';
+import { clearPrivateMediaCaches } from '@/backend/mediaPrivacy';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -252,7 +253,12 @@ export async function requestAppleDeletionCode(): Promise<string | undefined> {
 }
 
 export async function signOutSupabase(): Promise<void> {
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } finally {
+    // Private photos and signed links must not survive a sign-out on a shared device.
+    await clearPrivateMediaCaches();
+  }
 }
 
 export async function getSupabaseUserId(): Promise<string | null> {

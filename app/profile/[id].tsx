@@ -45,6 +45,7 @@ import { useNeighborProfile } from '@/features/neighbors/useNeighborProfile';
 import { FollowButton } from '@/features/social/FollowButton';
 import { ProfilePhotoViewer } from '@/features/social/ProfilePhotoViewer';
 import { useSocialProfile } from '@/features/social/useSocialProfile';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 const TIER_ORDER = ['new_neighbor', 'neighbor', 'contributor', 'community_builder', 'community_champion'] as const;
 type Tab = 'posts' | 'activities' | 'events' | 'recommendations';
@@ -434,7 +435,7 @@ export default function ProfileScreen() {
                     accessibilityLabel={p.textAr || t.social.tabPosts}
                     testID="grid-tile"
                   >
-                    <Image source={{ uri: p.images[0] }} style={{ width: tile, height: tile, backgroundColor: theme.colors.backgroundAlt }} contentFit="cover" transition={120} />
+                    <Image source={{ uri: p.images[0] }} cachePolicy={imageCachePolicy(p.images[0])} style={{ width: tile, height: tile, backgroundColor: theme.colors.backgroundAlt }} contentFit="cover" transition={120} />
                     {p.images.length > 1 ? (
                       <View style={styles.multiBadge}>
                         <Images size={14} color="#fff" />

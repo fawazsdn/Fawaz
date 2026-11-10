@@ -34,7 +34,8 @@ import { resolveMediaUrls, uploadAvatar, uploadCommunityImage, uploadCommunityIm
 import { isInterest, mapClub, mapNeighborSettings, mapProfile, requestSync } from './sync';
 import { discardUploads, uploadPostPhotos } from './social';
 import { useSocialStore } from './socialState';
-import { deleteOwnPhoto, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
+import { deleteOwnPhoto, rotateProfilePhoto, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
+import { clearPrivateMediaCaches } from './mediaPrivacy';
 
 /**
  * Every mutation in the app. Each one writes to Supabase (RLS decides what's
@@ -842,7 +843,13 @@ export async function toggleBlockUser(userId: string) {
     const uid = me();
     const blocked = useStore.getState().blockedUserIds.includes(userId);
     if (blocked) check(await supabase.from('user_blocks').delete().eq('blocker_id', uid).eq('blocked_id', userId));
-    else check(await supabase.from('user_blocks').insert({ blocker_id: uid, blocked_id: userId }));
+    else {
+      check(await supabase.from('user_blocks').insert({ blocker_id: uid, blocked_id: userId }));
+      // Links to my photo they already hold stop working once the old file is gone.
+      if (useSocialStore.getState().privatePhotos) await rotateProfilePhoto(uid);
+      // And nothing of theirs stays cached on my device.
+      await clearPrivateMediaCaches();
+    }
   });
 }
 
@@ -921,6 +928,7 @@ export async function deleteAccount() {
     if (error) throw error;
     if (!(data as { deleted?: boolean } | null)?.deleted) throw new ActionError('unknown', 'Account deletion did not complete');
     await supabase.auth.signOut().catch(() => {});
+    await clearPrivateMediaCaches();
     useStore.getState().signOut();
     return true;
   } catch (err) {

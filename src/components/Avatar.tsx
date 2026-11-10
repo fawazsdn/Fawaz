@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 interface AvatarProps {
   uri?: string;
@@ -39,7 +40,7 @@ export function Avatar({ uri, name, size = 40, ring = false }: AvatarProps) {
       ]}
     >
       {uri ? (
-        <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} contentFit="cover" transition={150} />
+        <Image source={{ uri }} cachePolicy={imageCachePolicy(uri)} style={{ width: size, height: size, borderRadius: size / 2 }} contentFit="cover" transition={150} />
       ) : (
         <View style={[styles.fallback, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }]}>
           <Text style={{ color: '#fff', fontSize: size * 0.42, fontWeight: '700' }}>{initial}</Text>

@@ -1,4 +1,5 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Check, CheckCheck } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -6,6 +7,7 @@ import { useI18n } from '@/i18n/useI18n';
 import type { Message } from '@/models';
 import { formatClock } from '@/utils/format';
 import { Avatar } from '@/components/Avatar';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 interface MessageBubbleProps {
   message: Message;
@@ -55,7 +57,7 @@ export function MessageBubble({ message, isOwn, read, showTail, sender, showSend
             },
           ]}
         >
-          {message.image ? <Image source={{ uri: message.image }} style={styles.image} /> : null}
+          {message.image ? <Image source={{ uri: message.image }} cachePolicy={imageCachePolicy(message.image)} style={styles.image} /> : null}
           {message.text ? (
             <Text style={theme.text('body', isOwn ? theme.colors.onPrimary : theme.colors.textPrimary)}>{message.text}</Text>
           ) : null}

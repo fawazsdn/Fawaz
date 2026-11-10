@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { AVATAR_BUCKET, PROFILE_PHOTO_BUCKET, recordAttachment, resolveMediaUrls } from './media';
 import { useSocialStore } from './socialState';
+import { PRIVATE_UPLOAD_CACHE_CONTROL, PROFILE_PHOTO_LINK_SECONDS } from './mediaPrivacy';
 
 /**
  * Profile photos live in the private `profile-photos` bucket once
@@ -14,7 +15,7 @@ import { useSocialStore } from './socialState';
 
 type Row = Record<string, any>; // untyped PostgREST rows
 
-export const PROFILE_PHOTO_TTL_SECONDS = 60 * 60;
+export const PROFILE_PHOTO_TTL_SECONDS = PROFILE_PHOTO_LINK_SECONDS;
 const PUBLIC_AVATAR_MARKER = '/storage/v1/object/public/avatars/';
 
 /** True once the backend exposes avatar_path (the private-photo migration is applied). */
@@ -49,7 +50,9 @@ export async function uploadProfilePhoto(localUri: string, userId: string): Prom
   const path = `${userId}/${randomName()}`;
   const res = await fetch(localUri);
   const body = await res.arrayBuffer();
-  const { error } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
+  const { error } = await supabase.storage
+    .from(PROFILE_PHOTO_BUCKET)
+    .upload(path, body, { contentType: 'image/jpeg', upsert: false, cacheControl: PRIVATE_UPLOAD_CACHE_CONTROL });
   if (error) throw error;
   await recordAttachment(userId, PROFILE_PHOTO_BUCKET, path, body.byteLength, null);
   return path;
@@ -96,7 +99,9 @@ export function ensurePrivateAvatar(userId: string, row: Row | null | undefined)
       const { data: blob, error } = await supabase.storage.from(AVATAR_BUCKET).download(legacyPath);
       if (error || !blob) return false;
       const body = await blob.arrayBuffer();
-      const up = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(target, body, { contentType: 'image/jpeg', upsert: true });
+      const up = await supabase.storage
+        .from(PROFILE_PHOTO_BUCKET)
+        .upload(target, body, { contentType: 'image/jpeg', upsert: true, cacheControl: PRIVATE_UPLOAD_CACHE_CONTROL });
       if (up.error) return false;
       await recordAttachment(userId, PROFILE_PHOTO_BUCKET, target, body.byteLength, null);
       // A legacy link is always the newest photo (e.g. uploaded later from build
@@ -112,4 +117,35 @@ export function ensurePrivateAvatar(userId: string, row: Row | null | undefined)
     }
   })();
   return selfMigration;
+}
+
+/**
+ * Moves the user's private profile photo to a new file and deletes the old
+ * one. Deleting the object is the only way to cut off links that were already
+ * issued (and their CDN-cached copies, within about a minute). Called after
+ * the user blocks someone, removes a follower or makes the account private.
+ * Best effort: a failure leaves the photo where it was.
+ */
+export async function rotateProfilePhoto(userId: string): Promise<boolean> {
+  try {
+    const { data: row } = await supabase.from('profiles').select('avatar_path').eq('id', userId).maybeSingle();
+    const current = (row as Row | null)?.avatar_path as string | undefined;
+    if (!current || !current.startsWith(`${userId}/`)) return false;
+    const next = `${userId}/${randomName()}`;
+    const { error: copyError } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).copy(current, next);
+    if (copyError) return false;
+    const { error: updateError } = await supabase.from('profiles').update({ avatar_path: next }).eq('id', userId);
+    if (updateError) {
+      await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove([next]).catch(() => undefined);
+      return false;
+    }
+    // Owners can insert and delete their attachment records (not update them).
+    const { data: att } = await supabase.from('media_attachments').select('size_bytes').eq('object_path', current).maybeSingle();
+    await recordAttachment(userId, PROFILE_PHOTO_BUCKET, next, Number((att as Row | null)?.size_bytes) || 1, null);
+    await supabase.from('media_attachments').delete().eq('object_path', current);
+    await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove([current]).catch(() => undefined);
+    return true;
+  } catch {
+    return false;
+  }
 }

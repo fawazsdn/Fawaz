@@ -15,6 +15,7 @@ import { movePhoto } from '@/features/social/photoOrder';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 /** Edit caption, audience and location; photos can be reordered or removed (adding is a new post). */
 export default function EditPostScreen() {
@@ -82,7 +83,7 @@ export default function EditPostScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 14 }}>
             {photos.map((p, i) => (
               <View key={p.path} style={styles.tile}>
-                <Image source={{ uri: p.uri }} style={styles.tile} contentFit="cover" />
+                <Image source={{ uri: p.uri }} cachePolicy={imageCachePolicy(p.uri)} style={styles.tile} contentFit="cover" />
                 <Pressable
                   style={[styles.remove, { backgroundColor: theme.colors.overlay }]}
                   onPress={() => setPhotos((prev) => prev.filter((x) => x.path !== p.path))}

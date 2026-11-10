@@ -53,7 +53,7 @@
 ### Migration 2 — private profile photos
 - **New private bucket `profile-photos`**: 5 MB limit, JPEG/PNG/WebP/HEIC only.
 - **New column `profiles.avatar_path`**, confined to the account's own folder (no path traversal).
-- **Who may open a profile photo.** The app gets 1-hour signed links.
+- **Who may open a profile photo.** The app gets 5-minute signed links (post photos: 15 minutes), keeps them off the device disk, and rotates the photo file after a block, a removed follower or going private so earlier links stop working (see `docs/HARATNA-PHOTO-PRIVACY.md`).
   - The owner and staff: always.
   - Across a block: never. Unverified or signed-out users: never.
   - Public account: verified residents.

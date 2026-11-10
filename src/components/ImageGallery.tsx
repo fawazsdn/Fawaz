@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 
 import { useTheme } from '@/theme/useTheme';
 import { ImageViewerModal } from './ImageViewerModal';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 interface ImageGalleryProps {
   images: string[];
@@ -26,6 +27,7 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
         <Pressable onPress={() => open(0)} accessibilityRole="imagebutton">
           <Image
             source={{ uri: images[0] }}
+            cachePolicy={imageCachePolicy(images[0])}
             style={{ width: '100%', height: maxHeight, borderRadius: r }}
             contentFit="cover"
             transition={150}
@@ -49,6 +51,7 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
             <Pressable key={i} onPress={() => open(i)} style={{ flex: 1 }} accessibilityRole="imagebutton">
               <Image
                 source={{ uri }}
+                cachePolicy={imageCachePolicy(uri)}
                 style={{ width: '100%', height: maxHeight * 0.7, borderRadius: r }}
                 contentFit="cover"
                 transition={150}
@@ -73,6 +76,7 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
           <Pressable onPress={() => open(0)} style={{ flex: 1.4 }} accessibilityRole="imagebutton">
             <Image
               source={{ uri: images[0] }}
+              cachePolicy={imageCachePolicy(images[0])}
               style={{ width: '100%', height: '100%', borderRadius: r }}
               contentFit="cover"
               transition={150}
@@ -81,7 +85,7 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
           <View style={{ flex: 1, gap: 4 }}>
             {images.slice(1, 3).map((uri, i) => (
               <Pressable key={i} onPress={() => open(i + 1)} style={{ flex: 1 }} accessibilityRole="imagebutton">
-                <Image source={{ uri }} style={{ width: '100%', height: '100%', borderRadius: r }} contentFit="cover" transition={150} />
+                <Image source={{ uri }} cachePolicy={imageCachePolicy(uri)} style={{ width: '100%', height: '100%', borderRadius: r }} contentFit="cover" transition={150} />
               </Pressable>
             ))}
           </View>
@@ -102,7 +106,7 @@ export function ImageGallery({ images, radius, maxHeight = 320 }: ImageGalleryPr
       <View style={[styles.grid, { gap: 4, height: maxHeight * 0.75 }]}>
         {images.slice(0, 4).map((uri, i) => (
           <Pressable key={i} onPress={() => open(i)} style={styles.gridItem} accessibilityRole="imagebutton">
-            <Image source={{ uri }} style={{ width: '100%', height: '100%', borderRadius: r }} contentFit="cover" transition={150} />
+            <Image source={{ uri }} cachePolicy={imageCachePolicy(uri)} style={{ width: '100%', height: '100%', borderRadius: r }} contentFit="cover" transition={150} />
             {i === 3 && extra > 0 ? (
               <View style={[StyleSheet.absoluteFill, styles.moreOverlay, { borderRadius: r }]}>
                 <Text style={styles.moreText}>+{extra}</Text>

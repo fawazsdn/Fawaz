@@ -87,7 +87,7 @@ it('serves private photos through short-lived signed URLs, never the stored path
   expect(rows[1].avatar_url).toBeNull();
   const sign = calls.find((c) => c.op === 'sign');
   expect(sign?.bucket).toBe('profile-photos');
-  expect(sign?.args[1]).toBe(3600);
+  expect(sign?.args[1]).toBe(300);
 });
 
 it('copies the user\'s own public photo into private storage without touching the original', async () => {

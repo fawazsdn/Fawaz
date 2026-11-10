@@ -38,6 +38,9 @@ export async function recordAttachment(ownerId: string, bucket: string, path: st
   });
 }
 
+/** Social post photos (posts/<uid>/...) get short-lived links; see mediaPrivacy.ts. */
+const POST_PHOTO_TTL_SECONDS = 15 * 60;
+
 async function readFileAsArrayBuffer(localUri: string): Promise<ArrayBuffer> {
   const res = await fetch(localUri);
   if (!res.ok && res.status !== 0) throw new Error(`Could not read image (${res.status})`);
@@ -95,16 +98,23 @@ export async function resolveMediaUrls(
       continue;
     }
     const cached = signedUrlCache.get(`${bucket}:${p}`);
-    if (cached && cached.expiresAt > now + 60_000) out[p] = cached.url;
+    // Re-sign well before expiry so an image never starts loading on an almost-dead link.
+    if (cached && cached.expiresAt > now + Math.min(60_000, ttlSeconds * 200)) out[p] = cached.url;
     else missing.push(p);
   }
-  if (missing.length > 0) {
-    const { data, error } = await supabase.storage.from(bucket).createSignedUrls(missing, ttlSeconds);
+  // Post photos are always signed with the short lifetime, whatever the caller asked for.
+  const groups = new Map<number, string[]>();
+  for (const p of missing) {
+    const ttl = bucket === COMMUNITY_BUCKET && p.startsWith('posts/') ? Math.min(ttlSeconds, POST_PHOTO_TTL_SECONDS) : ttlSeconds;
+    groups.set(ttl, [...(groups.get(ttl) ?? []), p]);
+  }
+  for (const [ttl, group] of groups) {
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrls(group, ttl);
     if (!error && data) {
       for (const item of data) {
         if (item.path && item.signedUrl) {
           out[item.path] = item.signedUrl;
-          signedUrlCache.set(`${bucket}:${item.path}`, { url: item.signedUrl, expiresAt: now + ttlSeconds * 1000 });
+          signedUrlCache.set(`${bucket}:${item.path}`, { url: item.signedUrl, expiresAt: now + ttl * 1000 });
         }
       }
     }

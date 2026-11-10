@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useTheme } from '@/theme/useTheme';
 import { localizeDigits } from '@/utils/format';
 import { ImageViewerModal } from '@/components/ImageViewerModal';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 interface PhotoCarouselProps {
   images: string[];
@@ -66,6 +67,7 @@ export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius
               renderItem={({ item, index: i }) => (
                 <Image
                   source={{ uri: item }}
+                  cachePolicy={imageCachePolicy(item)}
                   style={{ width, height }}
                   contentFit="cover"
                   transition={150}

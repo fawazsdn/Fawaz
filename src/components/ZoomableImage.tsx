@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { imageCachePolicy } from '@/backend/mediaPrivacy';
 
 interface ZoomableImageProps {
   uri: string;
@@ -78,6 +79,7 @@ export function ZoomableImage({ uri, width, height, accessibilityLabel }: Zoomab
         <Animated.View style={[{ width, height }, style]}>
           <Image
             source={{ uri }}
+            cachePolicy={imageCachePolicy(uri)}
             style={StyleSheet.absoluteFill}
             contentFit="contain"
             onLoadEnd={() => setLoading(false)}
