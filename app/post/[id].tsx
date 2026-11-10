@@ -71,10 +71,12 @@ export default function PostDetailScreen() {
   }
 
   const onSend = async (text: string) => {
-    if (pending) return;
+    if (pending) return false;
     const parent = replyingTo?.id;
-    setReplyingTo(null);
-    await run(() => addComment(post.id, text, parent));
+    const res = await run(() => addComment(post.id, text, parent));
+    // Keep the draft (and reply target) when the send failed, so it can be retried.
+    if (res.ok) setReplyingTo(null);
+    return res.ok;
   };
 
   return (

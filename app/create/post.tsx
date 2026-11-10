@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -132,7 +132,19 @@ export default function CreatePostScreen() {
             ? t.social.audienceNeighbors
             : t.post.audienceNeighborhood;
 
+  // One publish at a time on this device; the server also de-duplicates by draft id.
+  const publishing = useRef(false);
   const publish = async () => {
+    if (publishing.current) return;
+    publishing.current = true;
+    try {
+      await doPublish();
+    } finally {
+      publishing.current = false;
+    }
+  };
+
+  const doPublish = async () => {
     setReviewOpen(false);
     let geotag: { lat: number; lng: number } | undefined;
     if (shareLocation) {

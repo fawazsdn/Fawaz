@@ -9,6 +9,16 @@ import { mapPost, requestSync } from './sync';
 import { deleteOwnPhoto, ensurePrivateAvatar, notePrivatePhotoSupport, rotateProfilePhoto, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
 import { useSocialAvailable, useSocialStore } from './socialState';
 import { PRIVATE_UPLOAD_CACHE_CONTROL, clearPrivateMediaCaches } from './mediaPrivacy';
+import {
+  beginOp,
+  commentScope,
+  finishOp,
+  forgetOpUploads,
+  POST_COMPOSER_SCOPE,
+  recordOpUpload,
+  restartOp,
+  type PendingOp,
+} from './pendingOps';
 
 /**
  * Follows, private accounts, social profile cards and multi-photo posts.
@@ -324,12 +334,6 @@ export async function uploadPostPhotos(localUris: string[], neighborhoodId: stri
   return paths;
 }
 
-/** Removes uploads whose post was never created (e.g. the insert was refused). */
-export async function discardUploads(paths: string[]) {
-  if (paths.length === 0) return;
-  await supabase.storage.from(COMMUNITY_BUCKET).remove(paths).catch(() => undefined);
-  await supabase.from('media_attachments').delete().in('object_path', paths);
-}
 
 // ------------------------------------------------------------ profile photo --
 
@@ -361,4 +365,130 @@ export async function removeAvatar(old?: { path?: string | null; url?: string | 
   if (error) fail(error);
   if (old) await deleteOwnPhoto(uid, old);
   await requestSync();
+}
+
+// ------------------------------------------------------------- resilience --
+
+type PublishInput = {
+  type: string;
+  textAr: string;
+  localImages: string[];
+  audience: PostAudience;
+  lat?: number;
+  lng?: number;
+  label?: string | null;
+  neighborhoodId: string;
+  scope?: string;
+};
+
+function isMissing(error: { code?: string; message?: string } | null) {
+  return !!error && (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? ''));
+}
+
+/** Uploads the draft's photos once; already-uploaded ones (from an interrupted attempt) are reused. */
+async function uploadDraftPhotos(uid: string, scope: string, op: PendingOp, localUris: string[], neighborhoodId: string) {
+  if (localUris.length > MAX_POST_PHOTOS) throw new ActionError('invalid', 'invalid:images');
+  const paths: string[] = [];
+  for (const uri of localUris) {
+    const done = op.uploads[uri];
+    if (done) {
+      paths.push(done);
+      continue;
+    }
+    const res = await fetch(uri);
+    const body = await res.arrayBuffer();
+    if (body.byteLength < 1 || body.byteLength > MAX_UPLOAD_BYTES) throw new ActionError('invalid', 'invalid:image_size');
+    const path = `posts/${uid}/${randomName()}`;
+    const { error } = await supabase.storage
+      .from(COMMUNITY_BUCKET)
+      .upload(path, body, { contentType: 'image/jpeg', upsert: false, cacheControl: PRIVATE_UPLOAD_CACHE_CONTROL });
+    if (error) throw error;
+    // The server only accepts photos it has a record of, so this must succeed.
+    const rec = await supabase.from('media_attachments').insert({
+      owner_id: uid,
+      neighborhood_id: neighborhoodId,
+      bucket_id: COMMUNITY_BUCKET,
+      object_path: path,
+      mime_type: 'image/jpeg',
+      size_bytes: body.byteLength,
+    });
+    if (rec.error) throw rec.error;
+    await recordOpUpload(uid, scope, op, uri, path);
+    paths.push(path);
+  }
+  return paths;
+}
+
+/**
+ * Publishes a post exactly once per draft (see pendingOps.ts and
+ * publish_post). A retry after a lost response gets the post that was
+ * already created. Uploaded photos are never deleted here after a failure -
+ * the server cleans up abandoned uploads and refuses to delete photos a post
+ * uses. Returns null when the backend function isn't deployed (caller falls
+ * back to the legacy insert).
+ */
+export async function publishPostOnce(input: PublishInput): Promise<string | null> {
+  const uid = me();
+  const scope = input.scope ?? POST_COMPOSER_SCOPE;
+  let op = await beginOp(uid, scope);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const photos = await uploadDraftPhotos(uid, scope, op, input.localImages, input.neighborhoodId);
+    const { data, error } = await supabase.rpc('publish_post', {
+      op_id: op.opId,
+      post_type: input.type,
+      body: input.textAr,
+      post_audience: input.audience,
+      photos,
+      lat: input.lat ?? null,
+      lng: input.lng ?? null,
+      label: input.label ?? null,
+    });
+    if (isMissing(error)) return null;
+    if (error) {
+      // A photo was cleaned up meanwhile (or never recorded): upload again once.
+      if (/photo_unavailable/.test(error.message ?? '') && attempt === 0) {
+        await forgetOpUploads(uid, scope, op);
+        continue;
+      }
+      fail(error);
+    }
+    const result = data as { post_id: string | null; outcome: 'created' | 'existing' | 'conflict' } | null;
+    if (!result?.outcome) throw new ActionError('unknown', 'publish_failed');
+    if (result.outcome === 'conflict') {
+      // This draft id was used by an earlier attempt that did go through with
+      // different content (its response was lost). That post stays; publish
+      // the current content under a new id.
+      op = await restartOp(uid, scope);
+      continue;
+    }
+    await finishOp(uid, scope);
+    return result.post_id as string;
+  }
+  throw new ActionError('unknown', 'publish_failed');
+}
+
+/** Adds a comment exactly once per draft; same retry rules as publishPostOnce. Null = not deployed. */
+export async function addCommentOnce(postId: string, text: string, parentId?: string): Promise<string | null> {
+  const uid = me();
+  const scope = commentScope(postId, parentId);
+  let op = await beginOp(uid, scope);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { data, error } = await supabase.rpc('add_post_comment', {
+      op_id: op.opId,
+      target_post: postId,
+      body: text,
+      parent: parentId ?? null,
+    });
+    if (isMissing(error)) return null;
+    if (error) fail(error);
+    const result = data as { comment_id: string | null; outcome: 'created' | 'existing' | 'conflict' } | null;
+    if (!result?.outcome) throw new ActionError('unknown', 'comment_failed');
+    if (result.outcome === 'conflict') {
+      op = await restartOp(uid, scope);
+      continue;
+    }
+    await finishOp(uid, scope);
+    return result.comment_id as string;
+  }
+  throw new ActionError('unknown', 'comment_failed');
 }

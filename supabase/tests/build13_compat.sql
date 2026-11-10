@@ -91,6 +91,8 @@ begin
   --    (and their photos), never followers-only posts it isn't allowed to see.
   perform set_config('request.jwt.claims', json_build_object('sub', n, 'role', 'authenticated')::text, true);
   insert into storage.objects(bucket_id, name, owner_id) values ('community-media', 'posts/' || n || '/1.jpg', n::text);
+  insert into public.media_attachments(owner_id, neighborhood_id, bucket_id, object_path, mime_type, size_bytes)
+  values (n, nb, 'community-media', 'posts/' || n || '/1.jpg', 'image/jpeg', 1000);
   insert into public.posts(type, author_id, neighborhood_id, text_ar, image_paths, audience)
   values ('general', n, nb, 'public', array['posts/' || n || '/1.jpg'], 'public') returning id into p_pub;
   insert into public.posts(type, author_id, neighborhood_id, text_ar, audience) values ('general', n, nb, 'followers', 'followers') returning id into p_fol;

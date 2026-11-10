@@ -197,16 +197,20 @@ describe('createPost photo storage', () => {
     global.fetch = jest.fn(() => Promise.resolve({ ok: true, status: 200, arrayBuffer: () => Promise.resolve(new ArrayBuffer(2048)) })) as never;
   });
 
-  it('uploads to the private post-photo folder when the social backend is live', async () => {
+  it('uploads to the private post-photo folder and publishes exactly once through publish_post', async () => {
     const calls: { method: string; args: unknown[] }[] = [];
-    from.mockImplementation(() => recordingBuilder({ data: { id: 'post-1' }, error: null }, calls));
+    from.mockImplementation(() => recordingBuilder({ data: null, error: null }, calls));
+    mockRpc({ publish_post: () => ({ data: { post_id: 'post-1', outcome: 'created' } }) });
     await expect(
       createPost({ type: 'general', textAr: 'hello', localImages: ['file:///a.jpg', 'file:///b.jpg'], audience: 'followers' }),
     ).resolves.toBe('post-1');
     expect(storageCalls).toHaveLength(2);
     for (const p of storageCalls) expect(p).toMatch(new RegExp(`^posts/${TEST_ME}/`));
-    const insert = calls.find((c) => c.method === 'insert' && (c.args[0] as { audience?: string }).audience);
-    expect(insert?.args[0]).toMatchObject({ audience: 'followers', image_paths: storageCalls });
+    const publish = rpc.mock.calls.find((c) => c[0] === 'publish_post')![1];
+    expect(publish).toMatchObject({ post_audience: 'followers', photos: storageCalls });
+    expect(publish.op_id).toMatch(/^[0-9a-f-]{36}$/);
+    // every upload is recorded (staged) before publishing
+    expect(calls.filter((c) => c.method === 'insert')).toHaveLength(2);
   });
 
   it('keeps the existing neighborhood folder and refuses new audiences before the migration', async () => {
@@ -219,10 +223,11 @@ describe('createPost photo storage', () => {
     expect(storageCalls[0]).not.toMatch(/^posts\//);
   });
 
-  it('deletes uploaded photos when the post is refused', async () => {
-    from.mockImplementation(() => recordingBuilder({ data: null, error: { code: '22023', message: 'invalid:images' } }, []));
+  it('never deletes uploaded photos after a failure (the post may have been committed)', async () => {
+    from.mockImplementation(() => recordingBuilder({ data: null, error: null }, []));
+    mockRpc({ publish_post: () => ({ error: { code: '22023', message: 'invalid:images' } }) });
     await expect(createPost({ type: 'general', textAr: 'x', localImages: ['file:///a.jpg'], audience: 'public' })).rejects.toBeTruthy();
-    expect(storageCalls.some((c) => c.startsWith('removed:posts/'))).toBe(true);
+    expect(storageCalls.some((c) => c.startsWith('removed:'))).toBe(false);
   });
 });
 
@@ -345,7 +350,8 @@ describe('Photo post composer', () => {
         { uri: 'file:///3.gif', width: 100, height: 100, mimeType: 'image/gif', fileSize: 1000 },
       ],
     });
-    from.mockImplementation(() => recordingBuilder({ data: { id: 'p-9' }, error: null }, []));
+    from.mockImplementation(() => recordingBuilder({ data: null, error: null }, []));
+    mockRpc({ publish_post: () => ({ data: { post_id: 'p-9', outcome: 'created' } }) });
     const uploads: string[] = [];
     (supabase.storage as { from: unknown }).from = () => ({
       upload: jest.fn((path: string) => {

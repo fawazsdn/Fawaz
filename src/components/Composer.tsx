@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Send } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +8,8 @@ import { haptics } from '@/utils/haptics';
 
 interface ComposerProps {
   placeholder: string;
-  onSend: (text: string) => void;
+  /** Resolve false to keep the draft (the send failed and may be retried). */
+  onSend: (text: string) => void | boolean | Promise<void | boolean>;
   replyingTo?: string;
   onCancelReply?: () => void;
   cancelLabel?: string;
@@ -18,13 +19,25 @@ export function Composer({ placeholder, onSend, replyingTo, onCancelReply, cance
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  // A ref, not just state: taps in the same frame must see the guard immediately.
+  const inFlight = useRef(false);
 
-  const submit = () => {
+  // The draft stays until the send is confirmed, so a failed send can be retried
+  // (with the same operation id - see pendingOps.ts). Repeated taps are ignored.
+  const submit = async () => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || inFlight.current) return;
+    inFlight.current = true;
     haptics.light();
-    onSend(trimmed);
-    setText('');
+    setSending(true);
+    try {
+      const ok = await onSend(trimmed);
+      if (ok !== false) setText('');
+    } finally {
+      inFlight.current = false;
+      setSending(false);
+    }
   };
 
   return (
@@ -55,10 +68,12 @@ export function Composer({ placeholder, onSend, replyingTo, onCancelReply, cance
         />
         <Pressable
           onPress={submit}
-          disabled={!text.trim()}
+          disabled={!text.trim() || sending}
           style={[styles.sendBtn, { backgroundColor: text.trim() ? theme.colors.primary : theme.colors.border }]}
           accessibilityRole="button"
           accessibilityLabel="send"
+          accessibilityState={{ disabled: !text.trim() || sending, busy: sending }}
+          testID="composer-send"
         >
           <Send size={16} color="#fff" />
         </Pressable>

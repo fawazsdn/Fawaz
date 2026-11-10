@@ -46,3 +46,17 @@ The cloud session runs Linux: no Xcode, no Simulator, no access to the Mac.
 3. Supabase Security's managed-role recovery guidance (pending).
 4. The owner's production migration approval (gate closed). A fresh, independently restorable backup exists: snapshot 2026-11-09 17:03:21 UTC, verified by a full local restore. It is held encrypted in the cloud session and still needs a durable home the owner chooses.
 5. Then a signed build above 13 to Team (Expo), with build 13 kept as the fallback.
+
+## Update — social resilience (branch `claude/haratna-social-resilience`)
+See `docs/HARATNA-SOCIAL-RESILIENCE-HANDOFF.claude.md`.
+
+| Item | Result |
+|---|---|
+| Duplicate submissions (posts, comments): persistent client UUIDs, server reconciliation with ownership + payload check | Implemented; SQL 9/9, Jest resilience suite pass |
+| Committed photos vs abandoned-photo cleanup (server-side lock protocol, restrictive delete policies) | Implemented; SQL + concurrency drill RACE_ALL_PASS (3 runs) |
+| Bug fixed: photos deleted after a committed-but-lost insert | Fixed (no client-side deletion after failure) |
+| Bug fixed: comment composer sent repeatedly on fast taps; draft cleared before confirmation | Fixed (ref guard; draft kept until confirmed) |
+| Migration cycle with 3 migrations incl. rollbacks | PASS at every step |
+| TypeScript / ESLint / Jest | PASS / PASS / 48 suites, 419 tests |
+| Native iOS Simulator regression | BLOCKED (no macOS; Mac not connected) |
+| New migration needing approval | `20261110090000_social_resilience.sql` (+ rollback) |

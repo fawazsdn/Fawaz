@@ -160,6 +160,9 @@ begin
   photo := 'posts/' || b || '/p1.jpg';
   legacy_photo := nb || '/' || b || '/old.jpg';
   insert into storage.objects(bucket_id, name, owner_id) values ('community-media', photo, b::text);
+  -- The app records every upload (staged until a post uses it).
+  insert into public.media_attachments(owner_id, neighborhood_id, bucket_id, object_path, mime_type, size_bytes)
+  values (b, nb, 'community-media', photo, 'image/jpeg', 1000);
   ok := false;
   begin insert into storage.objects(bucket_id, name, owner_id) values ('community-media', 'posts/' || a || '/x.jpg', b::text);
   exception when others then ok := true; end;

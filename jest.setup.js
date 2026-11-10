@@ -142,3 +142,9 @@ jest.mock('react-native-maps', () => {
 });
 
 jest.mock('expo-image-manipulator', () => ({ ImageManipulator: { manipulate: jest.fn() }, SaveFormat: { JPEG: 'jpeg' } }));
+
+// expo-crypto's native randomUUID isn't available under Jest: use Node's.
+jest.mock('expo-crypto', () => {
+  const actual = jest.requireActual('expo-crypto');
+  return { ...actual, randomUUID: () => require('crypto').randomUUID() };
+});
