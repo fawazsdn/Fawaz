@@ -147,5 +147,40 @@ begin
   if not ok then raise exception 'FAIL client_op_id editable'; end if;
   passed := passed + 1;
 
+  -- 9. Cleanup retries: a failed delete stays unpublishable and is retried; a crashed run's claim is recovered.
+  perform set_config('role', 'postgres', true);
+  stale := 'posts/' || a || '/retry.jpg';
+  insert into storage.objects(bucket_id, name, owner_id) values ('community-media', stale, a::text);
+  insert into public.media_attachments(owner_id, neighborhood_id, bucket_id, object_path, mime_type, size_bytes, created_at)
+  values (a, nb, 'community-media', stale, 'image/jpeg', 10, now() - interval '2 days');
+  select count(*) into cnt from public.claim_abandoned_post_photos(interval '24 hours', 100) c where c.object_path = stale;
+  if cnt <> 1 then raise exception 'FAIL first claim'; end if;
+  perform public.finish_post_photo_cleanup('{}', array[stale]);          -- Storage delete failed
+  select count(*) into cnt from public.media_attachments where object_path = stale and status = 'deleting' and claimed_at is null;
+  if cnt <> 1 then raise exception 'FAIL failed delete not kept for retry'; end if;
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  begin perform public.publish_post(gen_random_uuid(), 'general', 'x', 'public', array[stale]); err := null; exception when others then err := sqlerrm; end;
+  if err is distinct from 'photo_unavailable' then raise exception 'FAIL a failed-cleanup photo became publishable: %', err; end if;
+  perform set_config('role', 'postgres', true);
+  select count(*) into cnt from public.claim_abandoned_post_photos(interval '24 hours', 100) c where c.object_path = stale;
+  if cnt <> 1 then raise exception 'FAIL failed delete not retried'; end if;
+  -- the job "crashes" after claiming; within the stale window nobody re-claims, after it the next run does
+  select count(*) into cnt from public.claim_abandoned_post_photos(interval '24 hours', 100) c where c.object_path = stale;
+  if cnt <> 0 then raise exception 'FAIL fresh claim taken twice'; end if;
+  update public.media_attachments set claimed_at = now() - interval '2 hours' where object_path = stale;
+  select count(*) into cnt from public.claim_abandoned_post_photos(interval '24 hours', 100) c where c.object_path = stale;
+  if cnt <> 1 then raise exception 'FAIL crashed claim not recovered'; end if;
+  delete from storage.objects where name = stale;
+  perform public.finish_post_photo_cleanup(array[stale], '{}');
+  select count(*) into cnt from public.media_attachments where object_path = stale;
+  if cnt <> 0 then raise exception 'FAIL record kept after delete'; end if;
+  if (public.count_abandoned_post_photos(interval '24 hours')->>'deleting')::int <> 0 then raise exception 'FAIL preview count'; end if;
+  perform set_config('role', 'authenticated', true);
+  ok := false;
+  begin perform public.count_abandoned_post_photos(interval '1 hour'); exception when others then ok := true; end;
+  if not ok then raise exception 'FAIL residents can preview cleanup'; end if;
+  passed := passed + 1;
+
   raise exception 'ALL_PASS % checks', passed;
 end $t$;

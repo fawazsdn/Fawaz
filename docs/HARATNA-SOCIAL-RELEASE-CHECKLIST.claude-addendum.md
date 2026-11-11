@@ -60,3 +60,16 @@ See `docs/HARATNA-SOCIAL-RESILIENCE-HANDOFF.claude.md`.
 | TypeScript / ESLint / Jest | PASS / PASS / 48 suites, 419 tests |
 | Native iOS Simulator regression | BLOCKED (no macOS; Mac not connected) |
 | New migration needing approval | `20261110090000_social_resilience.sql` (+ rollback) |
+
+## Update — RC integration (branch `claude/haratna-rc-integration`, 2026-11-11)
+See `docs/HARATNA-RC-INTEGRATION.md` (status, rehearsal, Mac runbook).
+
+| Item | Result |
+|---|---|
+| Integration with Codex's 4 patches + iOS 27 lifecycle fix | **BLOCKED**: Mac not connected; runbook provided |
+| No silent non-idempotent fallback (fail closed, probe before upload) | Done; Jest |
+| Cleanup job (claim → delete → finish, retries, crash recovery), Edge Function not deployed | Done; SQL 10/10, Deno 5/5 |
+| Backup tool and `.pyc` out of the release branch | Done (kept on `claude/haratna-backup-tooling`) |
+| 3-migration apply / rollback / re-apply rehearsal | PASS (33 suite runs + race drill twice) |
+| TypeScript / ESLint / Jest | PASS / PASS / 48 suites, 421 tests |
+| Native iOS 27 Simulator matrix | **BLOCKED** (macOS) |

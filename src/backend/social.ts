@@ -385,6 +385,30 @@ function isMissing(error: { code?: string; message?: string } | null) {
   return !!error && (error.code === 'PGRST202' || /could not find the function/i.test(error.message ?? ''));
 }
 
+/**
+ * The release candidate never falls back to a non-idempotent insert: posting
+ * and commenting require publish_post / add_post_comment. Probed once per
+ * session with a call the real function always rejects (null operation id),
+ * so nothing is created and no photo is uploaded when the server is outdated.
+ */
+export async function requireExactlyOnce(): Promise<void> {
+  const state = useSocialStore.getState();
+  if (state.exactlyOnce === true) return;
+  if (state.exactlyOnce === null) {
+    const { error } = await supabase.rpc('publish_post', {
+      op_id: null,
+      post_type: 'general',
+      body: '',
+      post_audience: 'neighborhood',
+      photos: [],
+    });
+    const present = !isMissing(error) && /invalid:op_id|not_signed_in/.test(error?.message ?? '');
+    if (!isMissing(error) && !present && error) fail(error); // e.g. offline: don't cache, report it
+    useSocialStore.getState().setExactlyOnce(present);
+  }
+  if (useSocialStore.getState().exactlyOnce !== true) throw new ActionError('unknown', 'server_update_required');
+}
+
 /** Uploads the draft's photos once; already-uploaded ones (from an interrupted attempt) are reused. */
 async function uploadDraftPhotos(uid: string, scope: string, op: PendingOp, localUris: string[], neighborhoodId: string) {
   if (localUris.length > MAX_POST_PHOTOS) throw new ActionError('invalid', 'invalid:images');
@@ -424,11 +448,11 @@ async function uploadDraftPhotos(uid: string, scope: string, op: PendingOp, loca
  * publish_post). A retry after a lost response gets the post that was
  * already created. Uploaded photos are never deleted here after a failure -
  * the server cleans up abandoned uploads and refuses to delete photos a post
- * uses. Returns null when the backend function isn't deployed (caller falls
- * back to the legacy insert).
+ * uses. Fails closed (server_update_required) when the function is missing.
  */
-export async function publishPostOnce(input: PublishInput): Promise<string | null> {
+export async function publishPostOnce(input: PublishInput): Promise<string> {
   const uid = me();
+  await requireExactlyOnce();
   const scope = input.scope ?? POST_COMPOSER_SCOPE;
   let op = await beginOp(uid, scope);
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -443,7 +467,10 @@ export async function publishPostOnce(input: PublishInput): Promise<string | nul
       lng: input.lng ?? null,
       label: input.label ?? null,
     });
-    if (isMissing(error)) return null;
+    if (isMissing(error)) {
+      useSocialStore.getState().setExactlyOnce(false);
+      throw new ActionError('unknown', 'server_update_required');
+    }
     if (error) {
       // A photo was cleaned up meanwhile (or never recorded): upload again once.
       if (/photo_unavailable/.test(error.message ?? '') && attempt === 0) {
@@ -467,9 +494,10 @@ export async function publishPostOnce(input: PublishInput): Promise<string | nul
   throw new ActionError('unknown', 'publish_failed');
 }
 
-/** Adds a comment exactly once per draft; same retry rules as publishPostOnce. Null = not deployed. */
-export async function addCommentOnce(postId: string, text: string, parentId?: string): Promise<string | null> {
+/** Adds a comment exactly once per draft; same retry and fail-closed rules as publishPostOnce. */
+export async function addCommentOnce(postId: string, text: string, parentId?: string): Promise<string> {
   const uid = me();
+  await requireExactlyOnce();
   const scope = commentScope(postId, parentId);
   let op = await beginOp(uid, scope);
   for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -479,7 +507,10 @@ export async function addCommentOnce(postId: string, text: string, parentId?: st
       body: text,
       parent: parentId ?? null,
     });
-    if (isMissing(error)) return null;
+    if (isMissing(error)) {
+      useSocialStore.getState().setExactlyOnce(false);
+      throw new ActionError('unknown', 'server_update_required');
+    }
     if (error) fail(error);
     const result = data as { comment_id: string | null; outcome: 'created' | 'existing' | 'conflict' } | null;
     if (!result?.outcome) throw new ActionError('unknown', 'comment_failed');

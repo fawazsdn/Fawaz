@@ -55,6 +55,7 @@ const en: typeof ar = {
     lastUpdated: 'Last updated',
   },
   errors: {
+    serverUpdateRequired: 'Posting is paused while Haratna is being updated. Please try again later.',
     contentBlocked: 'This text contains words that break the Community Guidelines. Please edit it and try again.',
     notFound: "We couldn't find this. It may have been removed, or you may not have access.",
     couldNotLoadNeighborhood: "Couldn't load your neighborhood.",

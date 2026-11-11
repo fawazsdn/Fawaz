@@ -47,7 +47,7 @@ beforeEach(async () => {
   failUploadAt = -1;
   await AsyncStorage.clear();
   signInVerifiedForTests();
-  useSocialStore.setState({ available: true, privatePhotos: true });
+  useSocialStore.setState({ available: true, privatePhotos: true, exactlyOnce: true });
   installStorage();
   rpc.mockReset();
   from.mockClear();
@@ -137,10 +137,33 @@ describe('post publication is exactly-once', () => {
     expect(publishCalls()[1].op_id).not.toBe(publishCalls()[0].op_id);
   });
 
-  it('falls back to the legacy insert when the backend has no publish_post', async () => {
+  it('fails closed - no upload, no plain insert - when the server lacks publish_post', async () => {
+    useSocialStore.setState({ exactlyOnce: null });
     rpc.mockImplementation(() => Promise.resolve({ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }));
-    await post([]).catch(() => undefined);
-    expect(from).toHaveBeenCalledWith('posts');
+    await expect(post()).rejects.toMatchObject({ reason: 'server_update_required' });
+    expect(uploads).toHaveLength(0);
+    expect(from).not.toHaveBeenCalledWith('posts');
+    await expect(addComment('post-1', 'x')).rejects.toMatchObject({ reason: 'server_update_required' });
+    expect(from).not.toHaveBeenCalledWith('post_comments');
+  });
+
+  it('probes once with a call the real function always rejects, then caches the result', async () => {
+    useSocialStore.setState({ exactlyOnce: null });
+    rpc
+      .mockImplementationOnce(() => Promise.resolve({ data: null, error: { code: '22023', message: 'invalid:op_id' } }))
+      .mockImplementation(() => Promise.resolve({ data: { post_id: 'p', outcome: 'created' }, error: null }));
+    await post([]);
+    await post([]);
+    const probes = publishCalls().filter((c) => c.op_id === null);
+    expect(probes).toHaveLength(1);
+    expect(useSocialStore.getState().exactlyOnce).toBe(true);
+  });
+
+  it('an offline probe is not cached as "outdated server"', async () => {
+    useSocialStore.setState({ exactlyOnce: null });
+    rpc.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')));
+    await expect(post([])).rejects.toMatchObject({ code: 'offline' });
+    expect(useSocialStore.getState().exactlyOnce).toBeNull();
   });
 });
 

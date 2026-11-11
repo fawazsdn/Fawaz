@@ -18,8 +18,10 @@
 --    to belong to the author, still exist in Storage and not be claimed by
 --    cleanup, and marks it 'attached'. Cleanup claims only 'staged' records
 --    older than a cut-off, skipping anything locked or referenced, and marks
---    them 'deleting' before any file is removed. Clients can never delete a
---    photo a live post references (restrictive storage policy).
+--    them 'deleting' before any file is removed; a claimed upload is never
+--    publishable again, and failed deletions are retried by the next run.
+--    Clients can never delete a photo a live post references (restrictive
+--    storage policy). Job: supabase/functions/cleanup-post-photos.
 -- =============================================================================
 
 -- ------------------------------------------------------------ idempotency --
@@ -32,7 +34,10 @@ create unique index if not exists post_comments_author_client_op_idx on public.p
 alter table public.media_attachments add column if not exists status text not null default 'attached';
 alter table public.media_attachments add constraint media_attachments_status_check
   check (status in ('staged', 'attached', 'deleting'));
+-- When cleanup claimed the upload (null = due for another attempt).
+alter table public.media_attachments add column if not exists claimed_at timestamptz;
 create index if not exists media_attachments_staged_idx on public.media_attachments (created_at) where status = 'staged';
+create index if not exists media_attachments_deleting_idx on public.media_attachments (claimed_at) where status = 'deleting';
 
 -- New post-photo uploads always start as 'staged' and unattached, whatever the client sends.
 create or replace function private.stage_post_photo()
@@ -210,41 +215,56 @@ end; $$;
 
 -- --------------------------------------------------------------- cleanup --
 /**
- * Operator/cron (service role): claims abandoned uploads - still 'staged',
- * older than the cut-off, not referenced, not locked by a publication in
- * progress - and marks them 'deleting'. Delete the returned files from
- * Storage, then call finish_post_photo_cleanup with the paths deleted.
+ * Cleanup job (service role). Claims abandoned uploads and marks them
+ * 'deleting' BEFORE any file is removed; a claimed upload can never be
+ * published again. Eligible:
+ *   - 'staged' uploads older than older_than that no live post references and
+ *     that no publication in progress has locked (SKIP LOCKED), and
+ *   - 'deleting' uploads whose previous attempt failed (claimed_at null) or
+ *     whose job died mid-run (claimed longer than stale_after ago).
+ * Then delete the returned files from Storage and call finish_post_photo_cleanup.
  */
-create or replace function public.claim_abandoned_post_photos(older_than interval default interval '24 hours', max_rows integer default 200)
+create or replace function public.claim_abandoned_post_photos(
+  older_than interval default interval '24 hours', max_rows integer default 200, stale_after interval default interval '1 hour')
 returns table(object_path text) language plpgsql security definer set search_path to '' as $$
 begin
   return query
   with c as (
     select a.id from public.media_attachments a
-    where a.bucket_id = 'community-media' and a.object_path like 'posts/%' and a.status = 'staged'
-      and a.created_at < now() - older_than
+    where a.bucket_id = 'community-media' and a.object_path like 'posts/%'
       and not private.post_photo_in_use(a.object_path)
+      and ((a.status = 'staged' and a.created_at < now() - older_than)
+           or (a.status = 'deleting' and (a.claimed_at is null or a.claimed_at < now() - stale_after)))
     order by a.created_at
     limit greatest(1, least(coalesce(max_rows, 200), 1000))
     for update skip locked
   )
-  update public.media_attachments m set status = 'deleting'
+  update public.media_attachments m set status = 'deleting', claimed_at = now()
   from c where m.id = c.id
   returning m.object_path;
 end; $$;
 
 /**
- * After the files were removed from Storage: drops the records of the paths
- * actually deleted and returns only the explicitly failed ones to 'staged'.
- * Claims of other cleanup runs are never touched.
+ * After the Storage delete: drops the records of the files actually deleted.
+ * Failed ones stay 'deleting' (never publishable) and become due again at
+ * once (claimed_at = null), so the next run retries them. Other runs' claims
+ * are never touched.
  */
 create or replace function public.finish_post_photo_cleanup(deleted_paths text[], failed_paths text[] default '{}')
 returns void language sql security definer set search_path to '' as $$
   delete from public.media_attachments
   where bucket_id = 'community-media' and status = 'deleting' and object_path = any(coalesce(deleted_paths, '{}'));
-  update public.media_attachments set status = 'staged'
-  where bucket_id = 'community-media' and status = 'deleting' and object_path = any(coalesce(failed_paths, '{}'))
-    and exists (select 1 from storage.objects o where o.bucket_id = 'community-media' and o.name = object_path);
+  update public.media_attachments set claimed_at = null
+  where bucket_id = 'community-media' and status = 'deleting' and object_path = any(coalesce(failed_paths, '{}'));
+$$;
+
+/** Read-only preview for the job's dry run. */
+create or replace function public.count_abandoned_post_photos(older_than interval default interval '24 hours')
+returns jsonb language sql stable security definer set search_path to '' as $$
+  select jsonb_build_object(
+    'staged_abandoned', count(*) filter (where a.status = 'staged' and a.created_at < now() - older_than and not private.post_photo_in_use(a.object_path)),
+    'deleting', count(*) filter (where a.status = 'deleting'))
+  from public.media_attachments a where a.bucket_id = 'community-media' and a.object_path like 'posts/%';
 $$;
 
 -- ------------------------------------------------------------------ grants --
@@ -256,6 +276,8 @@ revoke all on function public.publish_post(uuid, text, text, text, text[], doubl
 revoke all on function public.add_post_comment(uuid, uuid, text, uuid) from public, anon;
 grant execute on function public.publish_post(uuid, text, text, text, text[], double precision, double precision, text),
   public.add_post_comment(uuid, uuid, text, uuid) to authenticated;
-revoke all on function public.claim_abandoned_post_photos(interval, integer) from public, anon, authenticated;
+revoke all on function public.claim_abandoned_post_photos(interval, integer, interval) from public, anon, authenticated;
 revoke all on function public.finish_post_photo_cleanup(text[], text[]) from public, anon, authenticated;
-grant execute on function public.claim_abandoned_post_photos(interval, integer), public.finish_post_photo_cleanup(text[], text[]) to service_role;
+revoke all on function public.count_abandoned_post_photos(interval) from public, anon, authenticated;
+grant execute on function public.claim_abandoned_post_photos(interval, integer, interval), public.finish_post_photo_cleanup(text[], text[]),
+  public.count_abandoned_post_photos(interval) to service_role;

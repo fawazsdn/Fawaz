@@ -124,7 +124,7 @@ beforeEach(() => {
   mockReplace.mockClear();
   signInVerifiedForTests();
   useStore.getState().setLocale('en');
-  useSocialStore.setState({ available: true });
+  useSocialStore.setState({ available: true, exactlyOnce: true });
 });
 
 describe('copy', () => {
@@ -213,14 +213,14 @@ describe('createPost photo storage', () => {
     expect(calls.filter((c) => c.method === 'insert')).toHaveLength(2);
   });
 
-  it('keeps the existing neighborhood folder and refuses new audiences before the migration', async () => {
-    useSocialStore.setState({ available: false });
-    from.mockImplementation(() => recordingBuilder({ data: { id: 'post-2' }, error: null }, []));
-    await expect(createPost({ type: 'general', textAr: 'x', localImages: [], audience: 'public' })).rejects.toMatchObject({
-      reason: 'invalid:audience',
+  it('before the resilience migration the release candidate refuses to post and uploads nothing', async () => {
+    useSocialStore.setState({ available: false, exactlyOnce: null });
+    mockRpc({ publish_post: () => ({ error: { code: 'PGRST202', message: 'Could not find the function public.publish_post' } }) });
+    from.mockImplementation(() => recordingBuilder({ data: null, error: null }, []));
+    await expect(createPost({ type: 'general', textAr: 'x', localImages: ['file:///a.jpg'], audience: 'neighborhood' })).rejects.toMatchObject({
+      reason: 'server_update_required',
     });
-    await createPost({ type: 'general', textAr: 'x', localImages: ['file:///a.jpg'], audience: 'neighborhood' });
-    expect(storageCalls[0]).not.toMatch(/^posts\//);
+    expect(storageCalls).toHaveLength(0);
   });
 
   it('never deletes uploaded photos after a failure (the post may have been committed)', async () => {

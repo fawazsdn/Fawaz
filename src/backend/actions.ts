@@ -32,7 +32,7 @@ import type {
 } from '@/models';
 import { resolveMediaUrls, uploadAvatar, uploadCommunityImage, uploadCommunityImages } from './media';
 import { isInterest, mapClub, mapNeighborSettings, mapProfile, requestSync } from './sync';
-import { addCommentOnce, publishPostOnce, uploadPostPhotos } from './social';
+import { addCommentOnce, publishPostOnce } from './social';
 import { useSocialStore } from './socialState';
 import { deleteOwnPhoto, rotateProfilePhoto, uploadProfilePhoto, withSignedAvatars } from './profilePhotos';
 import { clearPrivateMediaCaches } from './mediaPrivacy';
@@ -211,47 +211,20 @@ export async function createPost(input: {
   return run(async () => {
     const uid = me();
     const nb = verifiedNeighborhood();
-    // With the social backend, photos live in the private post-photo folder
-    // (readable only through a post you may see); otherwise as before.
-    const social = useSocialStore.getState().available === true;
-    if (!social && (input.audience === 'public' || input.audience === 'followers')) throw new ActionError('invalid', 'invalid:audience');
+    // Photos live in the private post-photo folder, readable only through a
+    // post you may see. Publication is exactly-once (publish_post); there is
+    // deliberately no fallback to a plain insert, which could duplicate posts.
     const label = input.geotag?.label ?? input.locationLabel?.trim() ?? null;
-    if (social) {
-      // Exactly-once publication: a retry after a lost response returns the
-      // post that was already created; uploaded photos are never deleted here.
-      const id = await publishPostOnce({
-        type: input.type,
-        textAr: input.textAr,
-        localImages: input.localImages,
-        audience: input.audience,
-        lat: input.geotag ? approximateCoordinate(input.geotag.lat) : undefined,
-        lng: input.geotag ? approximateCoordinate(input.geotag.lng) : undefined,
-        label: label || null,
-        neighborhoodId: nb,
-      });
-      if (id) return id;
-    }
-    // Backend without publish_post (before the resilience migration): as before.
-    const imagePaths = social ? await uploadPostPhotos(input.localImages, nb) : await uploadCommunityImages(input.localImages, nb, uid);
-    const res = await supabase
-      .from('posts')
-      .insert({
-        type: input.type,
-        author_id: uid,
-        neighborhood_id: nb,
-        text_ar: input.textAr,
-        image_paths: imagePaths,
-        audience: input.audience,
-        approx_lat: input.geotag ? approximateCoordinate(input.geotag.lat) : null,
-        approx_lng: input.geotag ? approximateCoordinate(input.geotag.lng) : null,
-        location_label: label || null,
-      })
-      .select('id')
-      .single();
-    // Never delete uploaded photos after a failed insert: the insert may have
-    // committed with its response lost. Abandoned uploads are cleaned up later.
-    if (res.error) throw res.error;
-    return (res.data as { id: string }).id;
+    return publishPostOnce({
+      type: input.type,
+      textAr: input.textAr,
+      localImages: input.localImages,
+      audience: input.audience,
+      lat: input.geotag ? approximateCoordinate(input.geotag.lat) : undefined,
+      lng: input.geotag ? approximateCoordinate(input.geotag.lng) : undefined,
+      label: label || null,
+      neighborhoodId: nb,
+    });
   });
 }
 
@@ -321,10 +294,9 @@ export async function loadComments(postId: string): Promise<Comment[]> {
 export async function addComment(postId: string, text: string, parentId?: string) {
   return run(
     async () => {
-      const uid = me();
-      // Exactly-once when the backend supports it; otherwise the legacy insert.
-      const created = useSocialStore.getState().available ? await addCommentOnce(postId, text, parentId) : null;
-      if (!created) check(await supabase.from('post_comments').insert({ post_id: postId, author_id: uid, body: text, parent_id: parentId ?? null }));
+      me();
+      // Exactly-once (add_post_comment); no fallback to a plain insert.
+      await addCommentOnce(postId, text, parentId);
       await loadComments(postId);
     },
     { resync: true },

@@ -12,6 +12,9 @@ interface SocialState {
   /** True once profiles expose avatar_path (private profile photos are deployed). */
   privatePhotos: boolean;
   setPrivatePhotos: (v: boolean) => void;
+  /** null until probed; true once publish_post/add_post_comment exist (resilience migration). */
+  exactlyOnce: boolean | null;
+  setExactlyOnce: (v: boolean) => void;
 }
 
 export const useSocialStore = create<SocialState>((set) => ({
@@ -19,6 +22,8 @@ export const useSocialStore = create<SocialState>((set) => ({
   setAvailable: (available) => set({ available }),
   privatePhotos: false,
   setPrivatePhotos: (privatePhotos) => set({ privatePhotos }),
+  exactlyOnce: null,
+  setExactlyOnce: (exactlyOnce) => set({ exactlyOnce }),
 }));
 
 export const useSocialAvailable = () => useSocialStore((s) => s.available === true);

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { useSocialStore } from '../socialState';
 import { ActionError, approximateCoordinate, createEvent, createPost, deleteAccount } from '@/backend/actions';
 import { resetStoreForTests, signInVerifiedForTests, TEST_ME, TEST_NEIGHBORHOOD_ID } from '@/testing/fixtures';
 import { requestAppleDeletionCode } from '@/features/auth/supabaseAuth';
@@ -115,13 +116,10 @@ describe('actions', () => {
 
   it('wraps server errors as typed ActionErrors', async () => {
     signInVerifiedForTests();
-    (supabase.from as jest.Mock).mockImplementationOnce(() => ({
-      insert: () => ({
-        select: () => ({
-          single: () => Promise.resolve({ data: null, error: { code: '42501', message: 'new row violates row-level security policy' } }),
-        }),
-      }),
-    }));
+    useSocialStore.setState({ available: true, exactlyOnce: true });
+    (supabase.rpc as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({ data: null, error: { code: '42501', message: 'new row violates row-level security policy' } }),
+    );
     const err = await createPost({ type: 'general', textAr: 'x', localImages: [], audience: 'neighborhood' }).catch((e) => e);
     expect(err).toBeInstanceOf(ActionError);
     expect(err.code).toBe('forbidden');

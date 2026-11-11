@@ -9,7 +9,8 @@ drop policy if exists media_delete_unreferenced on public.media_attachments;
 drop trigger if exists media_attachments_stage_post_photo on public.media_attachments;
 drop function if exists public.publish_post(uuid, text, text, text, text[], double precision, double precision, text);
 drop function if exists public.add_post_comment(uuid, uuid, text, uuid);
-drop function if exists public.claim_abandoned_post_photos(interval, integer);
+drop function if exists public.claim_abandoned_post_photos(interval, integer, interval);
+drop function if exists public.count_abandoned_post_photos(interval);
 drop function if exists public.finish_post_photo_cleanup(text[], text[]);
 
 -- Restore the posts guard of 20261109120000 (without photo attachment).
@@ -54,6 +55,8 @@ drop function if exists private.attach_post_photos(uuid, uuid, text[]);
 drop function if exists private.post_photo_in_use(text);
 drop function if exists private.stage_post_photo();
 drop index if exists public.media_attachments_staged_idx;
+drop index if exists public.media_attachments_deleting_idx;
+alter table public.media_attachments drop column if exists claimed_at;
 alter table public.media_attachments drop constraint if exists media_attachments_status_check;
 alter table public.media_attachments drop column if exists status;
 drop index if exists public.posts_author_client_op_idx;

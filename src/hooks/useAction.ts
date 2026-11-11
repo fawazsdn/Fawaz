@@ -22,6 +22,7 @@ export function useActionErrorMessage() {
         if (reason === 'invalid:custom_category') return t.eventCreate.customCategoryRequired;
         if (reason === 'invalid:images' || reason === 'invalid:image_size') return t.social.imageRejected;
         if (reason === 'blocked') return t.errors.forbidden;
+        if (reason === 'server_update_required') return t.errors.serverUpdateRequired;
         if (reason.startsWith('invalid:')) return t.clubs.fixFields;
       }
       switch (code) {
