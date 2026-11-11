@@ -63,6 +63,18 @@ begin
   insert into public.posts(type, author_id, neighborhood_id, text_ar, audience) values ('general', b, nb, 'followers post', 'followers') returning id into p_fol;
   insert into public.posts(type, author_id, neighborhood_id, text_ar, audience) values ('general', b, nb, 'neighbors post', 'neighborhood') returning id into p_nb;
 
+  if has_schema_privilege(current_user, 'private', 'USAGE') then
+    raise exception 'FAIL post test requires the restricted private schema';
+  end if;
+  begin
+    update public.posts set pinned = true where id = p_nb;
+    err := null;
+  exception when insufficient_privilege then err := sqlerrm;
+  end;
+  if err is distinct from 'invalid:post_fields' then
+    raise exception 'FAIL authenticated author changed a protected post field';
+  end if;
+
   perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
   select count(*) into cnt from public.posts where author_id = b;
   if cnt <> 0 then raise exception 'FAIL private account content visible to stranger (% rows)', cnt; end if;

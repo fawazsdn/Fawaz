@@ -22,6 +22,7 @@ const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn(), canGoBack: () => false }),
   useLocalSearchParams: () => mockParams,
+  useFocusEffect: jest.requireActual<typeof import('react')>('react').useEffect,
   useNavigation: () => ({ canGoBack: () => false }),
 }));
 jest.mock('@/backend/sync', () => ({ ...jest.requireActual('@/backend/sync'), requestSync: jest.fn(() => Promise.resolve()) }));
@@ -325,6 +326,29 @@ describe('Profile', () => {
 });
 
 describe('Followers list', () => {
+  it('discards a followers response that arrives after switching to following', async () => {
+    mockParams = { id: TEST_ME, tab: 'followers' };
+    let finishFollowers!: (value: { data: unknown[]; error: null }) => void;
+    const pendingFollowers = new Promise<{ data: unknown[]; error: null }>((resolve) => {
+      finishFollowers = resolve;
+    });
+    rpc.mockImplementation((name, args) =>
+      name === 'list_follows' && args.kind === 'followers'
+        ? pendingFollowers
+        : Promise.resolve({ data: [], error: null }),
+    );
+    await renderScreen(<FollowsScreen />);
+    await waitFor(() => expect(rpc).toHaveBeenCalledWith('list_follows', expect.objectContaining({ kind: 'followers' })));
+    await act(async () => fireEvent.press(screen.getByText(en.social.following)));
+    await waitFor(() => expect(screen.getByText(en.social.noFollowing)).toBeTruthy());
+
+    await act(async () => {
+      finishFollowers({ data: [{ user_id: TEST_NEIGHBOR, first_name: 'Old result', follow_state: 'none' }], error: null });
+      await pendingFollowers;
+    });
+    expect(screen.queryByTestId('follow-row')).toBeNull();
+  });
+
   it('lets the owner remove a follower after confirming', async () => {
     mockParams = { id: TEST_ME, tab: 'followers' };
     mockRpc({
@@ -334,8 +358,10 @@ describe('Followers list', () => {
     });
     await renderScreen(<FollowsScreen />);
     await waitFor(() => expect(screen.getAllByTestId('follow-row')).toHaveLength(1));
-    await act(async () => fireEvent.press(await screen.findByText('Remove')));
-    await act(async () => fireEvent.press(screen.getAllByText('Remove').pop()!));
+    const removeButton = await screen.findByRole('button', { name: en.social.remove });
+    await fireEvent.press(removeButton);
+    await screen.findByText(en.social.removeFollowerConfirm.replace('{name}', 'Bader H.'));
+    await fireEvent.press(screen.getAllByRole('button', { name: en.social.remove }).at(-1)!);
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('remove_follower', { follower: TEST_NEIGHBOR }));
   });
 });

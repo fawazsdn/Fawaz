@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { BadgeCheck, Lock } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
@@ -33,23 +33,32 @@ export default function FollowsScreen() {
   const [removing, setRemoving] = useState<FollowEntry | null>(null);
   const isOwn = id === me;
 
-  const load = useCallback(async () => {
-    if (!id) return;
-    try {
-      setRows(await listFollows(id, kind, query));
-    } catch {
-      setRows([]);
-    }
-  }, [id, kind, query]);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setRows(id && me ? null : []);
+      if (!id || !me) return;
 
-  useEffect(() => {
-    const h = setTimeout(load, query ? 250 : 0);
-    return () => clearTimeout(h);
-  }, [load, query]);
+      const timer = setTimeout(() => {
+        void listFollows(id, kind, query)
+          .then((entries) => {
+            if (active) setRows(entries);
+          })
+          .catch(() => {
+            if (active) setRows([]);
+          });
+      }, query ? 250 : 0);
+
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
+    }, [id, kind, me, query]),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader title={kind === 'followers' ? t.social.followers : t.social.following} fallbackRoute={`/profile/${id}`} />
+      <AppHeader title={kind === 'followers' ? t.social.followers : t.social.following} fallbackRoute={id ? `/profile/${id}` : '/settings'} />
       <View style={{ paddingHorizontal: theme.spacing.md, gap: 10, paddingBottom: 8 }}>
         <View style={[theme.row(), { gap: 8 }]}>
           <Chip label={t.social.followers} selected={kind === 'followers'} onPress={() => setKind('followers')} />
