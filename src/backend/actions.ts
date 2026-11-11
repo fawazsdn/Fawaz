@@ -280,12 +280,15 @@ export async function loadComments(postId: string): Promise<Comment[]> {
       likedBy: ((c.comment_reactions as { user_id: string }[] | null) ?? []).map((r) => r.user_id),
       edited: !!c.edited_at,
     }));
-    const others = useStore.getState().comments.filter((c) => c.postId !== postId);
-    useStore.getState().applyEntities({ comments: [...others, ...comments] });
+    const store = useStore.getState();
+    if (getCurrentUserId() !== uid) return [];
+    const others = store.comments.filter((c) => c.postId !== postId);
+    const visible = comments.filter((c) => !store.blockedUserIds.includes(c.authorId));
+    store.applyEntities({ comments: [...others, ...visible] });
     // Make sure commenters' profiles are available.
-    const missing = [...new Set(comments.map((c) => c.authorId))].filter((id) => !useStore.getState().getUser(id));
+    const missing = [...new Set(visible.map((c) => c.authorId))].filter((id) => !useStore.getState().getUser(id));
     if (missing.length > 0 && uid) await requestSync();
-    return comments;
+    return visible;
   } catch (err) {
     throw toActionError(err);
   }

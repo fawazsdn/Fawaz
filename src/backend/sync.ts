@@ -491,7 +491,13 @@ export async function syncAll(): Promise<void> {
       }),
     );
 
-    useStore.getState().applyEntities(entities);
+    const current = useStore.getState();
+    if (current.session.supabaseUserId !== me) return;
+    // Comments are loaded per post. A feed refresh must not replace them with
+    // the empty default, but must remove comments from newly blocked authors.
+    const blocked = new Set(entities.blockedUserIds);
+    entities.comments = current.comments.filter((comment) => !blocked.has(comment.authorId));
+    current.applyEntities(entities);
     useStore.getState().setSync({ status: 'ready', lastSyncedAt: new Date().toISOString(), error: null });
   } catch (err) {
     const online = await isOnline();

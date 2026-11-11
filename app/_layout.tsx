@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import { LocaleProvider, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -16,6 +16,7 @@ import {
 
 import { useStore } from '@/store/useStore';
 import { useTheme } from '@/theme/useTheme';
+import { useI18n } from '@/i18n/useI18n';
 import { useSupabaseSessionSync } from '@/features/auth/useSupabaseSessionSync';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -38,19 +39,22 @@ function useStoreHydrated() {
 // a broken layout. Native (iOS/Android) is completely unaffected.
 function RootStack() {
   const theme = useTheme();
+  const { dir } = useI18n();
   useSupabaseSessionSync();
   const stack = (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      {/* Create is a full-screen card that slides up — not a native page-sheet
-          modal with a nested stack (that combination rendered a blank white
-          sheet on iOS, and screens pushed from inside a native modal can
-          appear behind it). */}
-      <Stack.Screen name="create/index" options={{ animation: 'slide_from_bottom', gestureDirection: 'vertical' }} />
-    </Stack>
+    <LocaleProvider direction={dir}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        {/* Create is a full-screen card that slides up — not a native page-sheet
+            modal with a nested stack (that combination rendered a blank white
+            sheet on iOS, and screens pushed from inside a native modal can
+            appear behind it). */}
+        <Stack.Screen name="create/index" options={{ animation: 'slide_from_bottom', gestureDirection: 'vertical' }} />
+      </Stack>
+    </LocaleProvider>
   );
 
   if (Platform.OS === 'web') {
