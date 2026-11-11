@@ -15,6 +15,7 @@ as_a="set role authenticated; select set_config('request.jwt.claims', '{\"sub\":
 cleanup() {
   run <<SQL >/dev/null
 set session_replication_role = replica;
+set storage.allow_delete_query = 'true';
 delete from public.posts where author_id = '$A';
 delete from public.media_attachments where owner_id = '$A';
 delete from storage.objects where name like 'posts/$A/%';

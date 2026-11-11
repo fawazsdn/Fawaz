@@ -13,16 +13,24 @@ drop function if exists public.claim_abandoned_post_photos(interval, integer, in
 drop function if exists public.count_abandoned_post_photos(interval);
 drop function if exists public.finish_post_photo_cleanup(text[], text[]);
 
+drop trigger if exists posts_guard_write_photos on public.posts;
+drop function if exists private.attach_post_photos_on_insert();
+
 -- Restore the posts guard of 20261109120000 (without photo attachment).
 create or replace function private.guard_post_write()
 returns trigger language plpgsql security invoker set search_path to '' as $$
 declare
   path text;
   parts text[];
-  staff boolean := private.is_admin_or_moderator();
   client boolean := current_user in ('authenticated', 'anon');
 begin
-  if tg_op = 'UPDATE' and client and not staff then
+  -- The client can read its own profile through RLS. Keep the trigger an
+  -- invoker so trusted definer RPCs can maintain post links.
+  if tg_op = 'UPDATE' and client and not exists (
+    select 1 from public.profiles p
+    where p.id = (select auth.uid()) and p.deleted_at is null
+      and p.app_role in ('moderator', 'admin')
+  ) then
     if (new.author_id, new.neighborhood_id, new.type, new.created_at, new.linked_entity_type, new.linked_entity_id, new.pinned)
        is distinct from (old.author_id, old.neighborhood_id, old.type, old.created_at, old.linked_entity_type, old.linked_entity_id, old.pinned) then
       raise exception 'invalid:post_fields' using errcode = '42501';

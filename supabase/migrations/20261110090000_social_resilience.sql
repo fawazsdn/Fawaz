@@ -91,16 +91,21 @@ begin
   end loop;
 end; $$;
 
--- Extend the posts guard: inserts attach (and so validate) their posts/ photos.
+-- Posts guard: also freezes client_op_id on client updates.
 create or replace function private.guard_post_write()
 returns trigger language plpgsql security invoker set search_path to '' as $$
 declare
   path text;
   parts text[];
-  staff boolean := private.is_admin_or_moderator();
   client boolean := current_user in ('authenticated', 'anon');
 begin
-  if tg_op = 'UPDATE' and client and not staff then
+  -- Clients have no usage on schema private, so staff is checked through the
+  -- caller's own profile (readable under RLS), as in 20261109120000.
+  if tg_op = 'UPDATE' and client and not exists (
+    select 1 from public.profiles p
+    where p.id = (select auth.uid()) and p.deleted_at is null
+      and p.app_role in ('moderator', 'admin')
+  ) then
     if (new.author_id, new.neighborhood_id, new.type, new.created_at, new.linked_entity_type, new.linked_entity_id, new.pinned, new.client_op_id)
        is distinct from (old.author_id, old.neighborhood_id, old.type, old.created_at, old.linked_entity_type, old.linked_entity_id, old.pinned, old.client_op_id) then
       raise exception 'invalid:post_fields' using errcode = '42501';
@@ -124,12 +129,20 @@ begin
       end if;
     end loop;
   end if;
-
-  if tg_op = 'INSERT' then
-    perform private.attach_post_photos(new.author_id, new.id, new.image_paths);
-  end if;
   return new;
 end; $$;
+
+-- Inserts attach (and so validate) their posts/ photos. A separate definer
+-- trigger: a trigger function is fired by reference, so clients need no usage
+-- on schema private. Fires right after posts_guard_write (name order).
+create or replace function private.attach_post_photos_on_insert()
+returns trigger language plpgsql security definer set search_path to '' as $$
+begin
+  perform private.attach_post_photos(new.author_id, new.id, new.image_paths);
+  return new;
+end; $$;
+create trigger posts_guard_write_photos before insert on public.posts
+  for each row execute function private.attach_post_photos_on_insert();
 
 -- Clients may delete their own post photos only while no live post uses them.
 create policy community_media_delete_unreferenced on storage.objects as restrictive for delete to authenticated
@@ -272,6 +285,7 @@ revoke all on function private.stage_post_photo() from public, anon;
 revoke all on function private.post_photo_in_use(text) from public, anon;
 revoke all on function private.attach_post_photos(uuid, uuid, text[]) from public, anon;
 grant execute on function private.stage_post_photo(), private.post_photo_in_use(text), private.attach_post_photos(uuid, uuid, text[]) to authenticated;
+revoke all on function private.attach_post_photos_on_insert() from public, anon, authenticated;
 revoke all on function public.publish_post(uuid, text, text, text, text[], double precision, double precision, text) from public, anon;
 revoke all on function public.add_post_comment(uuid, uuid, text, uuid) from public, anon;
 grant execute on function public.publish_post(uuid, text, text, text, text[], double precision, double precision, text),

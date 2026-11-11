@@ -16,6 +16,10 @@ begin
   values (a, nb, 'verified', true, now()), (b, nb, 'verified', true, now());
   insert into public.neighborhood_memberships(user_id, neighborhood_id, verification_status, active) values (u, nb, 'pending', true);
   p1 := 'posts/' || a || '/1.jpg'; p2 := 'posts/' || a || '/2.jpg'; p3 := 'posts/' || a || '/3.jpg';
+  -- The direct deletes below stand in for Storage API deletes, which run under
+  -- the caller's RLS. Newer Storage blocks raw SQL deletes unless this is set,
+  -- as the Storage API itself does; RLS is what these checks exercise.
+  perform set_config('storage.allow_delete_query', 'true', true);
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
 
