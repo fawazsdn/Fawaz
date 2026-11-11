@@ -13,6 +13,7 @@
       "expo-router",
       "expo-font",
       "expo-localization",
+      ["expo-build-properties", { "ios": { "enableSceneSupport": true } }],
       "expo-apple-authentication",
       [
         "expo-location",
