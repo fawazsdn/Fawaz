@@ -1,27 +1,43 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { fetchSocialProfile, type SocialProfile } from '@/backend/social';
 import { useSocialStore } from '@/backend/socialState';
+import { useCurrentUserId } from '@/store/useStore';
 
-/** Loads the social profile card. status 'unavailable' = backend not deployed; 'hidden' = not visible to you. */
+/** Loads the social profile card for the active viewer and refreshes it on focus. */
 export function useSocialProfile(userId: string | undefined) {
-  const [profile, setProfile] = useState<SocialProfile | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'hidden' | 'unavailable' | 'error'>('loading');
+  const viewer = useCurrentUserId();
+  const key = JSON.stringify([viewer, userId]);
+  const request = useRef(0);
+  const [result, setResult] = useState<{
+    key: string;
+    profile: SocialProfile | null;
+    status: 'ready' | 'hidden' | 'unavailable' | 'error';
+  }>();
+
+  const setProfile = useCallback((profile: SocialProfile | null) => {
+    setResult({ key, profile, status: profile ? 'ready' : 'hidden' });
+  }, [key]);
 
   const reload = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || !viewer) return;
+    const id = ++request.current;
     try {
-      const p = await fetchSocialProfile(userId);
-      setProfile(p);
-      setStatus(p ? 'ready' : 'hidden');
+      const profile = await fetchSocialProfile(userId);
+      if (id === request.current) setProfile(profile);
     } catch {
-      setStatus(useSocialStore.getState().available === false ? 'unavailable' : 'error');
+      if (id !== request.current) return;
+      const status = useSocialStore.getState().available === false ? 'unavailable' : 'error';
+      setResult({ key, profile: null, status });
     }
-  }, [userId]);
+  }, [key, setProfile, userId, viewer]);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     void reload();
-  }, [reload]);
+    return () => { request.current++; };
+  }, [reload]));
 
-  return { profile, status, reload, setProfile };
+  const current = result?.key === key ? result : undefined;
+  return { profile: current?.profile ?? null, status: current?.status ?? 'loading', reload, setProfile };
 }

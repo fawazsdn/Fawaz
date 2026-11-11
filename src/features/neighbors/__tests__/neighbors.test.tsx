@@ -19,6 +19,8 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => false }),
   useLocalSearchParams: () => mockParams,
+  useFocusEffect: (effect: React.EffectCallback) =>
+    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]),
   useNavigation: () => ({ canGoBack: () => false }),
 }));
 jest.mock('@/backend/sync', () => ({ ...jest.requireActual('@/backend/sync'), requestSync: jest.fn(() => Promise.resolve()) }));

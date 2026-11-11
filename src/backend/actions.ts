@@ -300,7 +300,8 @@ export async function addComment(postId: string, text: string, parentId?: string
       me();
       // Exactly-once (add_post_comment); no fallback to a plain insert.
       await addCommentOnce(postId, text, parentId);
-      await loadComments(postId);
+      // The comment is already confirmed. A read failure must not invite a duplicate submission.
+      await loadComments(postId).catch(() => undefined);
     },
     { resync: true },
   );

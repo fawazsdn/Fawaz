@@ -33,7 +33,8 @@ export function Composer({ placeholder, onSend, replyingTo, onCancelReply, cance
     setSending(true);
     try {
       const ok = await onSend(trimmed);
-      if (ok !== false) setText('');
+      // Don't wipe text typed while the send was in flight.
+      if (ok !== false) setText((current) => (current.trim() === trimmed ? '' : current));
     } finally {
       inFlight.current = false;
       setSending(false);
