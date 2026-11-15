@@ -1,6 +1,9 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupportedStorage } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
+
+import { resolveBackend, type BackendExtra } from './backendConfig';
 
 // expo-router's static web export pre-renders every route once in Node
 // (no `window`/localStorage there) — AsyncStorage's web implementation
@@ -18,12 +21,17 @@ const noopStorage: SupportedStorage = {
 // These are Supabase's *publishable* URL/key for the Haratna project — safe to
 // ship in the client bundle by design (equivalent to a Firebase web config).
 // All real data access is enforced server-side by RLS, never by keeping this
-// pair secret. EXPO_PUBLIC_* env vars can override them for a different
-// environment (e.g. a staging Supabase project) without a code change.
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://ckqwziutmqohihrenstz.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+// pair secret. A staging build names its own backend (see backendConfig.ts and
+// app.config.js) and refuses to fall back to these.
+const PRODUCTION_PUBLISHABLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXd6aXV0bXFvaGlocmVuc3R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MTU1NDUsImV4cCI6MjEwMzA5MTU0NX0.EBr_g8UfZ0OVM3haGV_Stzfox20b1vZMdEz0861UkOg';
+const backend = resolveBackend(
+  Constants.expoConfig?.extra as BackendExtra | undefined,
+  { url: process.env.EXPO_PUBLIC_SUPABASE_URL, key: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY },
+  PRODUCTION_PUBLISHABLE_KEY,
+);
+const SUPABASE_URL = backend.url;
+const SUPABASE_PUBLISHABLE_KEY = backend.key;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

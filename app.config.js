@@ -33,5 +33,13 @@ module.exports = ({ config }) => {
       usesAppleSignIn: false,
     },
     android: config.android ? { ...config.android, package: `${config.android.package}.staging` } : config.android,
+    // Embedded in the native app config: the app reads its backend from here first and
+    // refuses to start against production (src/lib/backendConfig.ts).
+    extra: {
+      ...config.extra,
+      appVariant: 'staging',
+      supabaseUrl: url,
+      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    },
   };
 };
