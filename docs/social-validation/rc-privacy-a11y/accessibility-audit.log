@@ -1,0 +1,17 @@
+# performAccessibilityAudit (all types), normal text size
+## batch2/audit-normal-ar
+AUDIT[post-comments] count=0
+AUDIT[followers-list] count=0
+AUDIT[profile-other] count=0
+AUDIT[composer] count=0
+## batch2/audit-normal-en
+AUDIT[post-comments] count=1
+AUDIT[post-comments] 2|Potentially inaccessible text|label=-|id=-|type=0|frame=(0.0, 0.0, 0.0, 0.0)
+AUDIT[followers-list] count=0
+AUDIT[profile-other] count=0
+AUDIT[composer] count=0
+## exp-lh
+AUDIT[post-comments] count=0
+AUDIT[followers-list] count=0
+AUDIT[profile-other] count=0
+AUDIT[composer] count=0

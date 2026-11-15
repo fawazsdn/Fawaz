@@ -1,0 +1,43 @@
+# Native batch (iOS 27, iPhone 18 Pro Simulator, synthetic accounts)
+## Batch 1 (privacy, accessibility, regressions)
+privacy-block-refocus: passed
+a11y-audit-normal-ar: passed
+large-ar: passed
+lang-en: passed
+a11y-audit-normal-en: passed
+large-en: passed
+lang-ar: passed
+reg-test1_LostPostResponse: passed
+reg-test2_LostCommentResponse: passed
+reg-test3_RapidTaps: passed
+reg-test5_AccountSwitch: passed
+reg-test8_PostingPausedEnglishArabic: passed
+reg-tenphotos: passed
+BATCH_DONE
+
+## Batch 2 (refined large-text layout)
+large-ar: passed
+audit-normal-ar: passed
+lang-en: passed
+large-en: passed
+audit-normal-en: passed
+lang-ar: passed
+BATCH2_DONE
+
+## Final regression after all commits
+lostpost: passed
+tenphotos: passed
+block-refocus: passed
+rows lostpost: posts_A=1 posts_B=0 photos=0
+tenphotos stored order: [10, 11, 9, 8, 7, 6, 5, 4, 2, 3]
+rehearsal PASS=53 FAIL=0 EXPECTED-FAIL=1 RACE=2
+FINAL_DONE
+
+## Regression rows (batch 1)
+RC r2lostpost: posts_A=1 posts_B=0 photos=0 comments_A=0 comments_B=0 
+RC r2lostcomment: posts_A=0 posts_B=0 photos=0 comments_A=1 comments_B=0 
+RC r2rapid: posts_A=1 posts_B=0 photos=0 comments_A=1 comments_B=0 
+RC r2switch: posts_A=0 posts_B=0 photos=0 comments_A=1 comments_B=1 
+RC r2paused: posts_A=0 posts_B=0 photos=0 comments_A=0 comments_B=0 
+RC tenphotos5: posts_A=1 posts_B=0 photos=10 comments_A=0 comments_B=0 
+BLOCK_REFOCUS: BLOCK_REFOCUS: unavailable=true BLOCK_REFOCUS: unavailable=true 

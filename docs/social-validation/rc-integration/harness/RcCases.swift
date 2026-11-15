@@ -156,7 +156,7 @@ class RcBase: XCTestCase {
 
 final class RcCases: RcBase {
   func test1_LostPostResponse() {
-    let text = marker("msgcheck")
+    let text = marker("r3lostpost")
     let input = composePost(text)
     let confirm = tapPublish()
     mode("droprpc")
@@ -171,7 +171,7 @@ final class RcCases: RcBase {
 
   func test2_LostCommentResponse() {
     open("post/" + rcPost)
-    let text = marker("lostcomment")
+    let text = marker("r2lostcomment")
     let input = commentInput()
     type(input, text)
     mode("droprpc")
@@ -186,7 +186,7 @@ final class RcCases: RcBase {
 
   func test3_RapidTaps() {
     open("post/" + rcPost)
-    let text = marker("rapidcomment")
+    let text = marker("r2rapidcomment")
     type(commentInput(), text)
     mode("slowrpc")
     let send = item("composer-send")
@@ -195,7 +195,7 @@ final class RcCases: RcBase {
     mode("online")
     shot("rapid-comment")
 
-    let post = marker("rapidpost")
+    let post = marker("r2rapidpost")
     _ = composePost(post)
     let confirm = tapPublish()
     mode("slowrpc")
@@ -226,7 +226,7 @@ final class RcCases: RcBase {
   }
 
   func test5_AccountSwitch() {
-    let text = marker("switchcomment")
+    let text = marker("r2switch")
     open("post/" + rcPost)
     type(commentInput(), text)
     mode("droprpc")
@@ -298,10 +298,10 @@ final class RcCases: RcBase {
     open("post/" + rcPost)
     mode("nofunc")
     let input = commentInput()
-    type(input, marker("pausedcomment"))
+    type(input, marker("r2pausedcomment"))
     item("composer-send").tap()
     let comment = alert("paused-comment-current-language")
-    _ = composePost(marker("pausedpost"))
+    _ = composePost(marker("r2pausedpost"))
     tapPublish().tap()
     let post = alert("paused-post-current-language")
     print("PAUSED_TEXTS: \(comment) || \(post)")
@@ -325,7 +325,7 @@ final class RcCases: RcBase {
     test8_PostingPausedEnglishArabic()
     // Comment rendering and back gesture, English (left edge).
     open("post/" + rcPost)
-    XCTAssertTrue(shown(marker("lostcomment")).waitForExistence(timeout: 15), "English: comment not rendered")
+    XCTAssertTrue(shown(marker("r2lostcomment")).waitForExistence(timeout: 15), "English: comment not rendered")
     shot("english-comments")
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5)).press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
     sleep(2)
@@ -334,7 +334,7 @@ final class RcCases: RcBase {
     // Arabic (right edge).
     switchLanguage(to: "العربية")
     open("post/" + rcPost)
-    XCTAssertTrue(shown(marker("lostcomment")).waitForExistence(timeout: 15), "Arabic: comment not rendered")
+    XCTAssertTrue(shown(marker("r2lostcomment")).waitForExistence(timeout: 15), "Arabic: comment not rendered")
     shot("arabic-comments")
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.5)).press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)))
     sleep(2)

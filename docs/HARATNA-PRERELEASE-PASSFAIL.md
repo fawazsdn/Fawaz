@@ -130,10 +130,32 @@ Evidence: `docs/social-validation/rc-final/`. App in Arabic unless stated.
 | Private profile photo after blocking (app, cache) | **PASS with residual.** Same screen re-linked: still shows the profile and photo (no refetch). After navigating away and back: refetch returns nothing and the private sections and follow button disappear, **but the name and photo stay visible from local data** (signed link, memory-only image cache). After relaunch: "هذا الملف غير متاح" (profile unavailable). No disk cache | `shots/block-*.png` |
 | Language choice persists across relaunch | **PASS** | test17 |
 
-Privacy design question (not a regression): under the neighborhood rule, a **private** account
-with any live post, of **any audience**, in the shared neighborhood shows its profile and photo to
-every verified neighbor (`private.profile_visible_in_neighborhood`). Owner decision: should only
-neighborhood-audience activity count?
+Privacy design question: **decided and implemented**, see §6c.
+
+## 6c. Privacy and accessibility round (2026-11-15)
+
+Owner decisions implemented: (1) followers-only activity never makes a private account
+discoverable; (2) neighborhood-wide activity (audience neighborhood, city or public) still does,
+without exposing followers-only content; (3) a block invalidates protected profile information in
+the app at once; (4) previously issued signed links stay valid until they expire (documented).
+Commits: `7a7d5f0` (database), `3b0d6ce` and `6ea5f80` (app), `76d0953` (accessibility). The
+resilience fixes are untouched. Evidence: `docs/social-validation/rc-privacy-a11y/`.
+
+| Check | Status | Evidence |
+|---|---|---|
+| New migration `20261115100000_private_profile_audience` (not applied to production) | **PASS.** `private.profile_visible` and `private.profile_visible_in_neighborhood` count only posts whose audience isn't `followers`, and comments on such posts | migration and rollback files |
+| SQL suite `private_profile_audience` (6 checks) | **PASS** with the migration; **FAIL** without it (followers-only post exposed the profile row), which proves the suite catches the bug | `sql-rehearsal-4-migrations.log` |
+| Rollback / re-apply of all four migrations | **PASS.** Baseline → apply 4 → roll back 20261115100000 (the audience suite fails again, as expected) → roll back 090000 → roll back 130000+120000 → re-apply: 53 PASS, 0 unexpected FAIL, `RACE_ALL_PASS` twice; clients still have no `private` usage | `sql-rehearsal-4-migrations.log` |
+| Build 13 compatibility | **PASS.** `build13_compat` 9/9 in every applied phase | same |
+| Blocking invalidates the app's in-memory data (iOS 27) | **FAIL → FIXED.** Before: after B blocked A and A returned to B's profile, the name and photo stayed visible from local data. Now the screen shows "unavailable", the name is gone (`BLOCK_REFOCUS: unavailable=true`), and the person's stored record, interests, signed links and in-memory images are dropped. Same-screen re-link without navigation still needs a refocus; links issued before the block remain valid ≤ 5 min (documented) | `shots/block-then-refocus-*.png`, Jest |
+| Profile counts at the largest text size | **FAIL → FIXED.** Counts become a vertical list ("1 Posts / 0 Followers / 0 Following") in both languages; no overlap, no mid-word breaks | `shots/large-text-*-before/after.png` |
+| Arabic Follow / Add-neighbor cut off at normal size | **FAIL → FIXED.** Root cause: the 1.2× button line height was too short for Tajawal Bold, so iOS dropped the line and showed "…". Now 1.45×; labels may wrap; buttons fill their slot. "متابعة" and "إضافة جار" render in full | `shots/arabic-buttons-normal-size-*.png` |
+| Truncated titles and chips | **FIXED.** Headers shrink to fit whole words on one line ("Comments", "Post something"); chips wrap and shrink ("Recommendation" in full); post author and meta wrap | `shots/large-text-english-after.png` |
+| Icon targets below 44 pt (14 on the post screen) | **FIXED.** Post footer and comment like/reply/menu are 44×44 pt. `performAccessibilityAudit` (all types) at normal size, Arabic: **0 issues** on post, followers, profile and composer (was 14). English: 0 on three screens; 1 "potentially inaccessible text" on the post screen with no element attached (not attributable; possibly the dev build's warning banner) | `accessibility-audit.log` |
+| Clear and Map labels | **FIXED.** Localized (`t.search.clear`, `t.map.title`); no hard-coded accessibility labels remain in `src/` or `app/` | Jest `accessibilityLabels.test.tsx` |
+| Existing VoiceOver labels and navigation | **PASS.** Post-card and comment controls keep their localized labels; Arabic right-edge and English left-edge back gestures unchanged | audit `CONTROL` lines, earlier §6 |
+| Native regressions after the changes | **PASS.** Lost post response (1 post), lost comment (1), rapid taps (1 each), account switch (A=1, B=1), posting paused (0 rows), ten photos (10, stored in UI order `[10, 11, 9, 8, 7, 6, 5, 4, 2, 3]`), block/refocus. Re-run after the final commit: lost post, ten photos, block/refocus PASS | `native-results.log` |
+| TypeScript / ESLint / Jest | **PASS.** tsc clean; ESLint 0 errors (6 pre-existing warnings); Jest 50/50 suites, 440/440 tests | — |
 
 ## 7. What is needed to fill the NOT RUN rows
 

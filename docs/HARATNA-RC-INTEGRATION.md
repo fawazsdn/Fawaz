@@ -106,8 +106,9 @@ Expect conflicts in:
 2. ~~Supabase Security's guidance~~ Received (SU-545749). Customer-owned recovery is
    verified; the full plan is not complete. See `HARATNA-RECOVERY-GATE.md`.
 3. Hosted staging matrix: `HARATNA-HOSTED-STAGING-PLAN.md`. Needs owner approval to provision.
-4. Owner approval for migrations 20261109120000, 20261109130000 and 20261110090000.
-   Production gate closed.
+4. Owner approval for migrations 20261109120000, 20261109130000, 20261110090000 and
+   20261115100000 (followers-only activity no longer exposes private accounts). Production
+   gate closed.
 5. Owner decision on deploying and scheduling `cleanup-post-photos`. Without it, abandoned
    uploads stay private and owner-only, but they accumulate.
 6. A durable, encrypted backup: the procedure is ready (`HARATNA-ENCRYPTED-BACKUP.md`).

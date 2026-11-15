@@ -1,0 +1,74 @@
+### 1. baseline
+reset done: follow funcs=0 terms=18
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+### 2. apply 4 migrations
+applied 20261109120000_social_follows_photo_posts
+applied 20261109130000_private_profile_photos
+applied 20261110090000_social_resilience
+applied 20261115100000_private_profile_audience
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+PASS social_resilience :: ALL_PASS 10 checks
+PASS private_profile_audience :: ALL_PASS 6 checks (rolled back)
+RACE_ALL_PASS
+### 3. roll back 20261115100000 (audience suite must FAIL again: old rule restored)
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+PASS social_resilience :: ALL_PASS 10 checks
+EXPECTED-FAIL private_profile_audience :: psql:/tmp/rc/tests/private_profile_audience.sql:114: ERROR:  FAIL followers-only post exposed the private profile row
+### 4. roll back 090000
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+### 5. roll back 130000 + 120000
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+### 6. re-apply all four
+applied 20261109120000_social_follows_photo_posts
+applied 20261109130000_private_profile_photos
+applied 20261110090000_social_resilience
+applied 20261115100000_private_profile_audience
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+PASS social_resilience :: ALL_PASS 10 checks
+PASS private_profile_audience :: ALL_PASS 6 checks (rolled back)
+RACE_ALL_PASS
+### privilege sweep
+authenticated has private USAGE: false
+client-callable private.profile_visible*: 1

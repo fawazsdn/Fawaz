@@ -10,7 +10,7 @@ final class RcFinal: RcBase {
   }
 
   func test10_TenPhotosSelectReorderPublish() {
-    let text = marker("tenphotos4")
+    let text = marker("tenphotos6")
     _ = composePost(text)
     let add = item("add-photos")
     XCTAssertTrue(add.waitForExistence(timeout: 10))
@@ -156,6 +156,10 @@ final class RcFinal: RcBase {
     open("profile/" + rcIdB) // and come back: focus refetch
     sleep(5)
     shot("block2-after-refocus")
+    let unavailable = app.staticTexts.matching(NSPredicate(format: "label IN %@", ["هذا الملف غير متاح", "This profile isn't available"])).firstMatch
+    XCTAssertTrue(unavailable.waitForExistence(timeout: 10), "blocked profile still shown after refocus")
+    XCTAssertFalse(app.staticTexts["RcBravo S.\u{200E}"].exists || app.staticTexts["RcBravo S."].exists, "blocked user's name still on screen")
+    print("BLOCK_REFOCUS: unavailable=\(unavailable.exists)")
   }
 
   func setLanguage(_ target: String) {
