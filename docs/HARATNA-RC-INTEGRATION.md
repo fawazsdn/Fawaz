@@ -99,7 +99,7 @@ Expect conflicts in:
    Production gate closed.
 5. Owner decision on deploying and scheduling `cleanup-post-photos`. Without it, abandoned
    uploads stay private and owner-only, but they accumulate.
-6. A durable, encrypted home for a fresh backup. The 2026-11-09 export was lost on a
-   container reset. The 2026-11-15 export is only in temporary session storage.
-7. Owner decision on the leftover custom role `haratna_backup` (NOLOGIN, BYPASSRLS).
+6. A durable, encrypted backup: the procedure is ready (`HARATNA-ENCRYPTED-BACKUP.md`),
+   but it still has to run on the Mac.
+7. Approval to remove `haratna_backup` (`HARATNA-BACKUP-ROLE-REMOVAL.md`).
 8. Then a signed build above 13 for internal testing (Expo); build 13 stays the fallback.

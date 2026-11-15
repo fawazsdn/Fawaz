@@ -1,6 +1,6 @@
 # Haratna hosted staging plan: awaiting owner approval (2026-11-15)
 
-Status: **proposal only. Nothing has been provisioned.** Supabase Security (ticket SU-545749)
+Status: **plan approved in outline; provisioning NOT yet authorized. Nothing has been provisioned.** Supabase Security (ticket SU-545749)
 recommended a separate hosted project or a preview branch for these tests. This document
 covers the environment, cost, isolation, data and test matrix. Provisioning waits for
 the owner's approval of section 2.
@@ -135,10 +135,17 @@ Each case records PASS or FAIL with the request, the response code and a row che
 - When the tests are done: export the results document, then **delete the staging project**
   (or pause it on Free). Remove the staging network secret.
 
-## 7. Decision needed from the owner
+## 7. Owner decisions (2026-11-15)
 
-1. Option A, B or C (recommended: A).
-2. Who creates it: the owner in the dashboard, or Claude through the Supabase tools after
-   approval.
-3. Real geography reference data, or synthetic geography.
-4. A test window, for example 3 days (option C cost: about $1).
+1. **Option A**: a new project in a separate Free-plan organization. Expected cost $0.
+2. **Claude creates it**, only after the owner explicitly authorizes provisioning.
+   Not yet authorized.
+3. **Synthetic accounts and synthetic neighborhoods only.** Step 3.3 uses the synthetic
+   geography (2 cities, 4 neighborhoods). No production reference data is copied.
+4. **Test window: 3 days.** After that, export the results and delete the project.
+5. The production project stays completely untouched.
+
+Before provisioning, Claude will confirm three things:
+- the organization name;
+- that no production organization member, key or integration is attached;
+- the region, `ap-southeast-1`.

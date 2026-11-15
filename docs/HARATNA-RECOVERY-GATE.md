@@ -198,11 +198,11 @@ admin role. Rollback and recovery on hosted.
 | 3 | Restored data matches the production snapshot | done (3.2) |
 | 4 | Migrations and rollbacks rehearsed on restored production data | done (3.4) |
 | 5 | Platform-managed role parity | out of scope (SU-545749) |
-| 6 | Custom role `haratna_backup`: decide keep or drop | **owner decision** |
-| 7 | Encrypted backup in a durable, owner-controlled location, taken within 24 hours of the migration | **open** |
-| 8 | Storage object bytes copied | **open** (owner) |
-| 9 | Auth, API, Edge Function secrets and Vault configuration recorded | **open** (owner) |
-| 10 | Hosted staging matrix passes | **open** (needs approval) |
+| 6 | Custom role `haratna_backup` | audit done, nothing depends on it, removal recommended and rehearsed (`HARATNA-BACKUP-ROLE-REMOVAL.md`). **Awaiting approval to remove.** |
+| 7 | Encrypted backup in a durable, owner-controlled location, taken within 24 hours of the migration | procedure and scripts ready and tested (`HARATNA-ENCRYPTED-BACKUP.md`). **Open until it runs on the Mac.** |
+| 8 | Storage object bytes copied | covered by `storage_backup.py`. **Open until the Mac run.** |
+| 9 | Auth, API, Edge Function secrets and Vault configuration recorded | covered by `config_backup.py` (Vault has 0 secrets). **Open until the Mac run.** |
+| 10 | Hosted staging matrix passes | Option A chosen. **Open: provisioning not yet authorized.** |
 | 11 | Owner's written approval for the three migrations | **open** |
 
 Recovery plan status: **partially complete (items 1–5).** Do not treat it as complete
