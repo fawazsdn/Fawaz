@@ -52,6 +52,9 @@ export function Card({
   if (onPress) {
     return (
       <Pressable
+        // With interactive children the card must not be one accessibility element,
+        // or VoiceOver can't reach the buttons inside it.
+        accessible={!interactiveChildren}
         accessibilityRole={interactiveChildren ? 'link' : 'button'}
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}

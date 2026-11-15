@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Send } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/i18n/useI18n';
 import { useTheme } from '@/theme/useTheme';
 import { haptics } from '@/utils/haptics';
 
@@ -17,6 +18,7 @@ interface ComposerProps {
 
 export function Composer({ placeholder, onSend, replyingTo, onCancelReply, cancelLabel }: ComposerProps) {
   const theme = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -72,7 +74,7 @@ export function Composer({ placeholder, onSend, replyingTo, onCancelReply, cance
           disabled={!text.trim() || sending}
           style={[styles.sendBtn, { backgroundColor: text.trim() ? theme.colors.primary : theme.colors.border }]}
           accessibilityRole="button"
-          accessibilityLabel="send"
+          accessibilityLabel={t.messages.send}
           accessibilityState={{ disabled: !text.trim() || sending, busy: sending }}
           testID="composer-send"
         >

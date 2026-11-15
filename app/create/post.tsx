@@ -203,7 +203,7 @@ export default function CreatePostScreen() {
         {/* Photos */}
         {photos.length > 0 ? (
           <>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+            <ScrollView horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {photos.map((p, i) => (
                 <View key={p.key} style={styles.tile} testID="draft-photo">
                   <Pressable onPress={() => setEditing(p)} accessibilityRole="imagebutton" accessibilityLabel={t.social.editImage}>

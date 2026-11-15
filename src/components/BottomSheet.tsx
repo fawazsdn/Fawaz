@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useI18n } from '@/i18n/useI18n';
 import { useTheme } from '@/theme/useTheme';
 
 interface BottomSheetProps {
@@ -17,6 +18,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export function BottomSheet({ visible, onClose, children, maxHeightRatio = 0.88 }: BottomSheetProps) {
   const theme = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(SCREEN_HEIGHT);
   const backdropOpacity = useSharedValue(0);
@@ -58,7 +60,7 @@ export function BottomSheet({ visible, onClose, children, maxHeightRatio = 0.88 
     <Modal visible={visible} transparent animationType="none" onRequestClose={close} statusBarTranslucent>
       <View style={StyleSheet.absoluteFill}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.overlay }, backdropStyle]}>
-          <Pressable style={StyleSheet.absoluteFill} accessibilityLabel="close" onPress={close} />
+          <Pressable style={StyleSheet.absoluteFill} accessibilityLabel={t.common.close} onPress={close} />
         </Animated.View>
         <GestureDetector gesture={pan}>
           <Animated.View

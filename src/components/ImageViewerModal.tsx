@@ -4,6 +4,7 @@ import { X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { useI18n } from '@/i18n/useI18n';
 import { ZoomableImage } from './ZoomableImage';
 
 interface ImageViewerModalProps {
@@ -16,6 +17,7 @@ interface ImageViewerModalProps {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }: ImageViewerModalProps) {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(initialIndex);
 
@@ -42,7 +44,7 @@ export function ImageViewerModal({ visible, images, initialIndex = 0, onClose }:
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="close"
+          accessibilityLabel={t.common.close}
           onPress={onClose}
           style={[styles.closeBtn, { top: insets.top + 12 }]}
           hitSlop={10}

@@ -98,6 +98,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
               if (author) router.push(`/profile/${author.id}`);
             }}
             accessibilityRole="button"
+            accessibilityLabel={authorName}
           >
             <Avatar uri={author?.avatarUrl} name={authorName} size={42} />
           </Pressable>
@@ -117,7 +118,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
             </View>
           </View>
           <IconButton
-            accessibilityLabel="more"
+            accessibilityLabel={t.common.more}
             onPress={(e) => {
               e.stopPropagation?.();
               setMenuOpen(true);
@@ -165,6 +166,8 @@ export function PostCard({ post, onPress }: PostCardProps) {
             }}
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
+            accessibilityLabel={post.reactions.length ? `${t.post.like} (${post.reactions.length})` : t.post.like}
+            accessibilityState={{ selected: liked }}
           >
             <ThumbsUp
               size={17}
@@ -176,7 +179,12 @@ export function PostCard({ post, onPress }: PostCardProps) {
             </Text>
           </Pressable>
 
-          <Pressable onPress={goToDetail} style={[theme.row(), styles.footerBtn]} accessibilityRole="button">
+          <Pressable
+            onPress={goToDetail}
+            style={[theme.row(), styles.footerBtn]}
+            accessibilityRole="button"
+            accessibilityLabel={post.commentCount ? `${t.post.commentsTitle} (${post.commentCount})` : t.post.comment}
+          >
             <MessageCircle size={17} color={theme.colors.textMuted} />
             <Text style={theme.text('bodySmall', theme.colors.textMuted)}>{post.commentCount || ''}</Text>
           </Pressable>
@@ -188,6 +196,8 @@ export function PostCard({ post, onPress }: PostCardProps) {
             }}
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
+            accessibilityLabel={t.common.save}
+            accessibilityState={{ selected: saved }}
           >
             <Bookmark
               size={17}
@@ -203,6 +213,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
             }}
             style={[theme.row(), styles.footerBtn, isRTL ? { marginRight: 'auto' } : { marginLeft: 'auto' }]}
             accessibilityRole="button"
+            accessibilityLabel={t.common.share}
           >
             <Share2 size={17} color={theme.colors.textMuted} />
           </Pressable>

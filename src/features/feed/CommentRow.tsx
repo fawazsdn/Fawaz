@@ -59,7 +59,7 @@ export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) 
 
   return (
     <View style={[theme.row(), styles.wrap]}>
-      <Pressable onPress={() => author && router.push(`/profile/${author.id}`)}>
+      <Pressable onPress={() => author && router.push(`/profile/${author.id}`)} accessibilityRole="button" accessibilityLabel={authorName}>
         <Avatar uri={author?.avatarUrl} name={authorName} size={32} />
       </Pressable>
       <View style={{ flex: 1 }}>
@@ -95,12 +95,16 @@ export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) 
             {formatRelativeTime(comment.createdAt, locale)}
             {comment.edited ? ` · ${t.common.edit}` : ''}
           </Text>
-          <Pressable onPress={() => onReply(comment)}>
+          <Pressable onPress={() => onReply(comment)} hitSlop={10} accessibilityRole="button">
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{t.post.reply}</Text>
           </Pressable>
           <Pressable
             onPress={() => run(() => toggleCommentLike(comment.id, comment.postId))}
             style={[theme.row(), { alignItems: 'center', gap: 3 }]}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={comment.likedBy.length ? `${t.post.like} (${comment.likedBy.length})` : t.post.like}
+            accessibilityState={{ selected: liked }}
           >
             <Heart
               size={12}
@@ -113,7 +117,7 @@ export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) 
           </Pressable>
         </View>
       </View>
-      <Pressable onPress={() => setMenuOpen(true)} hitSlop={8}>
+      <Pressable onPress={() => setMenuOpen(true)} hitSlop={12} accessibilityRole="button" accessibilityLabel={t.common.more}>
         <MoreHorizontal size={16} color={theme.colors.textMuted} />
       </Pressable>
 

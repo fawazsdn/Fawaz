@@ -35,7 +35,7 @@ export function ConfirmationModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
       <View style={[styles.backdrop, { backgroundColor: theme.colors.overlay }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityLabel="dismiss" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityLabel={t.common.cancel} />
         <View style={[styles.card, { backgroundColor: theme.colors.surfaceElevated, borderRadius: theme.radii.lg }]}>
           <Text style={[theme.text('heading3'), styles.center]}>{title}</Text>
           {body ? <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.center, { marginTop: 6 }]}>{body}</Text> : null}
