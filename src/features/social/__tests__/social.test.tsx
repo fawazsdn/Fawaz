@@ -15,6 +15,7 @@ import { FollowButton } from '../FollowButton';
 import ProfileScreen from '../../../../app/profile/[id]';
 import CreatePostScreen from '../../../../app/create/post';
 import FollowsScreen from '../../../../app/follows/[id]';
+import { bidiSafeName } from '@/utils/format';
 
 let mockParams: Record<string, string> = {};
 const mockPush = jest.fn();
@@ -361,7 +362,7 @@ describe('Followers list', () => {
     await waitFor(() => expect(screen.getAllByTestId('follow-row')).toHaveLength(1));
     const removeButton = await screen.findByRole('button', { name: en.social.remove });
     await fireEvent.press(removeButton);
-    await screen.findByText(en.social.removeFollowerConfirm.replace('{name}', 'Bader H.'));
+    await screen.findByText(en.social.removeFollowerConfirm.replace('{name}', bidiSafeName('Bader H.')));
     await fireEvent.press(screen.getAllByRole('button', { name: en.social.remove }).at(-1)!);
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('remove_follower', { follower: TEST_NEIGHBOR }));
   });

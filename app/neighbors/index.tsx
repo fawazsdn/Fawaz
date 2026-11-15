@@ -10,7 +10,7 @@ import { useAction } from '@/hooks/useAction';
 import { cancelNeighborRequest, discoverNeighbors, respondNeighborRequest, sendNeighborRequest } from '@/backend/actions';
 import { requestSync } from '@/backend/sync';
 import type { DiscoveredNeighbor, User } from '@/models';
-import { displayName, localizeDigits } from '@/utils/format';
+import { bidiSafeName, displayName, localizeDigits } from '@/utils/format';
 import { AppHeader } from '@/components/AppHeader';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
@@ -117,7 +117,7 @@ export default function NeighborsScreen() {
   );
 
   const discoverRow = (n: DiscoveredNeighbor) => {
-    const name = `${n.firstName} ${n.lastName ? (n.lastName.length === 1 ? `${n.lastName}.` : n.lastName) : ''}`.trim();
+    const name = bidiSafeName(`${n.firstName} ${n.lastName ? (n.lastName.length === 1 ? `${n.lastName}.` : n.lastName) : ''}`.trim());
     const bits = [
       n.sharedInterests.length > 0
         ? `${t.neighbors.sharedInterests}: ${n.sharedInterests.map((i) => t.neighbors.interests[i]).join('، ')}`

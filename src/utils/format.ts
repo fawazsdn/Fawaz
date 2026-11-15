@@ -157,6 +157,22 @@ export function formatTimeUntil(iso: string, locale: Locale): string {
   return locale === 'ar' ? `${localizeDigits(n, 'ar')} ${ar}` : `${n}${en}`;
 }
 
+const LRM = '\u200E';
+const STRONG = /[A-Za-z\u00C0-\u024F\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+const RTL = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+
+/**
+ * Keeps trailing punctuation with a left-to-right name inside Arabic text:
+ * "Bader H." would otherwise render as ".Bader H". Appends an invisible
+ * LEFT-TO-RIGHT MARK only when the name starts left-to-right and ends in a
+ * neutral character; Arabic names are returned unchanged.
+ */
+export function bidiSafeName(name: string): string {
+  const firstStrong = name.match(STRONG)?.[0];
+  if (!firstStrong || RTL.test(firstStrong)) return name;
+  return /[\p{L}\p{N}]$/u.test(name) ? name : name + LRM;
+}
+
 export function displayName(user: {
   firstName: string;
   lastName: string;
@@ -164,11 +180,11 @@ export function displayName(user: {
 }): string {
   switch (user.namePrivacy) {
     case 'full':
-      return `${user.firstName} ${user.lastName}`.trim();
+      return bidiSafeName(`${user.firstName} ${user.lastName}`.trim());
     case 'first_last_initial':
-      return `${user.firstName} ${user.lastName ? user.lastName[0] + '.' : ''}`.trim();
+      return bidiSafeName(`${user.firstName} ${user.lastName ? user.lastName[0] + '.' : ''}`.trim());
     case 'first_only':
     default:
-      return user.firstName;
+      return bidiSafeName(user.firstName);
   }
 }

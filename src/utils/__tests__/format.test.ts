@@ -1,4 +1,4 @@
-import { displayName, formatDistance, formatSAR } from '@/utils/format';
+import { bidiSafeName, displayName, formatDistance, formatSAR } from '@/utils/format';
 
 describe('formatSAR', () => {
   it('formats a price in Arabic', () => {
@@ -33,5 +33,21 @@ describe('displayName', () => {
 
   it('shows only the first name when requested', () => {
     expect(displayName({ ...base, namePrivacy: 'first_only' })).toBe('فواز');
+  });
+});
+
+describe('bidiSafeName', () => {
+  const LRM = '‎';
+  it('keeps the period with a Latin name inside Arabic text', () => {
+    expect(displayName({ firstName: 'Bader', lastName: 'Hamad', namePrivacy: 'first_last_initial' })).toBe(`Bader H.${LRM}`);
+  });
+  it('leaves Arabic names unchanged', () => {
+    expect(displayName({ firstName: 'فواز', lastName: 'السعدون', namePrivacy: 'first_last_initial' })).toBe('فواز ا.');
+  });
+  it('adds nothing when a Latin name already ends in a letter', () => {
+    expect(displayName({ firstName: 'Bader', lastName: 'Hamad', namePrivacy: 'full' })).toBe('Bader Hamad');
+  });
+  it('uses the first strong character: an Arabic first name with a Latin initial is unchanged', () => {
+    expect(bidiSafeName('فواز S.')).toBe('فواز S.');
   });
 });

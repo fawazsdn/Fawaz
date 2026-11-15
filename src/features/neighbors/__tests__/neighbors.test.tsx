@@ -13,6 +13,7 @@ import { NeighborButton } from '../NeighborButton';
 import NeighborsScreen from '../../../../app/neighbors/index';
 import NeighborPrivacyScreen from '../../../../app/settings/neighbors';
 import ProfileScreen from '../../../../app/profile/[id]';
+import { bidiSafeName } from '@/utils/format';
 
 let mockParams: Record<string, string> = {};
 const mockPush = jest.fn();
@@ -151,7 +152,7 @@ describe('Neighbors page', () => {
       }),
     );
     await renderScreen(<NeighborsScreen />);
-    expect(await screen.findByText('Sara A.')).toBeTruthy();
+    expect(await screen.findByText(bidiSafeName('Sara A.'))).toBeTruthy();
     expect(screen.getByText(/Shared interests: Padel/)).toBeTruthy();
     expect(screen.getByText("You're hidden from discovery")).toBeTruthy();
     await fireEvent.press(screen.getByText('Add Neighbor'));
