@@ -31,6 +31,12 @@ photos or credentials.
    Supabase-managed role. Do not load `verify_bootstrap.sql` or `platform.sql`; they are
    local stand-ins for a plain Postgres.
 4. Run `bootstrap_config.sql`, then `seed_synthetic_geography.sql`.
+   **Check the grants came across:** run `supabase/tests/business_directory.sql` and
+   `supabase/tests/neighborhood_locking.sql` now, before any migration. They fail
+   ("directory grants too broad", "client can bypass an RPC") if `schema.sql` lacked
+   production's GRANT/REVOKE statements. A replica built that way leaves `authenticated`
+   with Supabase's broad default grants and can hide privilege bugs (seen on the Mac's
+   local replica, 2026-11-15; production's grants were verified narrow).
 5. **Auth:** email and password, auto-confirm on, no SMTP, no Apple or Google providers.
 6. **Migrations, as the hosted `postgres` role** (this is test 5.6):
    `supabase link --project-ref <staging>`, then `supabase db push`. It should apply

@@ -106,10 +106,15 @@ database. Evidence: `docs/social-validation/rc-integration/` (logs, `shots/`, `h
 | Unit tests on the Mac | **PASS**: tsc PASS; ESLint 0 errors; Jest 49/49 suites, 423/423 tests (2 timing-sensitive suites fail only under heavy machine load and pass alone, 21/21); Deno 8/8 and `deno check` PASS | `automated-checks.log` |
 | SQL suites and race drill on a production-like replica (clients have no `private` usage) | **PASS**: baseline → apply 3 → roll back 090000 → roll back 130000+120000 → re-apply; every suite ALL_PASS, `RACE_ALL_PASS` twice; privilege sweep clean | `sql-rehearsal.log` |
 
-Minor findings (not blockers):
-- After a lost response the alert says "nothing was saved — try again" even when the server committed. The retry is correct, but the wording can mislead. Suggest "We couldn't confirm this went through — try again; it won't be posted twice."
-- In Arabic, Latin names render as ".RcAlpha S" (period on the wrong side). Bidi isolation of display names is suggested.
-- `business_directory` and `neighborhood_locking` privilege assertions fail on the schema-only replica **before** any social migration (`authenticated` holds broad table grants there). Unrelated to this release. Confirm read-only against production grants.
+Follow-up fixes (2026-11-15, after the native run), each re-verified:
+
+| Finding | Status | Evidence |
+|---|---|---|
+| After a lost response the alert said "nothing was saved — try again", although the server may have committed | **FIXED**: the generic offline message now says the outcome couldn't be confirmed; posts and comments (exactly-once) say retrying is safe and won't post twice. Re-run of the lost-response case on iOS 27: new Arabic message shown, still exactly 1 post | Jest `resilience.test.tsx` (+5 tests); `shots/lost-post-alert-after-message-fix.png` |
+| In Arabic, Latin names rendered as ".RcAlpha S" (period on the wrong side) | **FIXED**: `displayName` / the neighbors list append an invisible LEFT-TO-RIGHT MARK to left-to-right names ending in punctuation; Arabic names unchanged. Re-run on iOS 27 shows "RcAlpha S." | Jest `format.test.ts` (+4 tests); `shots/arabic-comments-before-bidi-fix.png` → `shots/arabic-comments-after-bidi-fix.png` |
+| `business_directory` and `neighborhood_locking` privilege suites fail on the local synthetic replica | **NOT A PRODUCT DEFECT; replica drift.** The replica was loaded without production's GRANT/REVOKE statements, leaving `authenticated` with Supabase's broad default grants. Re-applying only the migrations' own ACL statements to a throwaway clone makes both suites pass. Production's grants (ACL entries read from the owner's local 2026-11-09 dump, no row data, no production access) are narrow: `authenticated` has `SELECT` only on the four tables; the two directory functions are revoked from `PUBLIC`. The staging README now runs both suites before migrating, so a staging copy without ACLs is caught | `supabase/staging/README.md` step 4 |
+
+After the fixes: tsc PASS, ESLint 0 errors, Jest 49/49 suites and 432/432 tests.
 
 ## 7. What is needed to fill the NOT RUN rows
 

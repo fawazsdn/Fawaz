@@ -123,3 +123,19 @@ The loopback proxy observed HTTP 201 before dropping the response to the client.
 With an interrupted two-photo batch, the first photo survived and the second upload and cleanup requests were disconnected. Retrying verified and reused the first file, uploaded the missing file, and completed one post. Fixture-scoped cleanup removed abandoned files and preserved the completed post and other user's bytes. The present trigger still accepts a reference after object removal, so automated cleanup requires a publication fence. The current owner cleanup path also removed a committed post's file after the response was dropped.
 
 The four original patches apply cleanly in order. The build plan, cleanup security model, remaining gates, and residual risks are recorded in the [resilience handoff](HARATNA-SOCIAL-RESILIENCE-HANDOFF.md). [Probe results](social-validation/final-resilience.log)
+
+## RC integration on the Mac (2026-11-15)
+
+The four patches above are integrated with Claude's resilience branch on
+`claude/haratna-rc-integration` (Codex patches 1–3 applied cleanly; patch 4 reconciled).
+The full PASS/FAIL record is in [the pre-release report](HARATNA-PRERELEASE-PASSFAIL.md)
+§6, with logs and screenshots in [rc-integration](social-validation/rc-integration/).
+
+| Gate from this checklist | Status |
+|---|---|
+| **Blocker:** integrate and retest the UUID protocol in the app; ambiguous post responses must not trigger photo deletion | **PASS.** Exactly-once `publish_post` / `add_post_comment` with persisted operation ids. No client photo deletion after a failure. iOS 27: lost response after commit, rapid taps, kill and relaunch, account switch, and an interrupted photo batch each produced exactly one row |
+| **Blocker:** atomic publication-versus-cleanup fence before enabling background cleanup | **PASS (offline and Simulator).** SQL lock protocol and `RACE_ALL_PASS` in both orderings. The cleanup job ran during a held, committed publish: abandoned upload removed, published photos intact, 0 dangling references. Hosted run and scheduling still need approval |
+| Scene lifecycle on iOS 27 | **PASS.** Fresh prebuild with `expo-build-properties`; the app declares `EXExpoAppSceneDelegate`; cold launch on a fresh device |
+| Arabic/English navigation and back gestures | **PASS.** Right-edge (Arabic) and left-edge (English) back swipes; comment rendering in both languages |
+| Your `20261109120000` posts-guard fix | **Kept.** `20261110090000` had overwritten it, and client post inserts failed where clients have no `private` usage. Restored, with photo attachment moved to a definer trigger |
+| Still open | Supabase Security's hosted guidance is received (see `HARATNA-RECOVERY-GATE.md`), but hosted staging, migration approval, the encrypted Mac backup, the line 10 walkthrough items not covered here (ten-photo reorder, VoiceOver, large text, signed-URL lifetime after blocking) and a build above 13 remain |
