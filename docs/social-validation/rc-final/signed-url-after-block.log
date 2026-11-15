@@ -1,0 +1,10 @@
+t+0s A signs B's photo while following: OK
+t+0s A fetches that link: HTTP 200
+t+0s B blocked A at 2026-11-15T09:50:35.098Z
+t+1s A signs again after the block: DENIED (Object not found)
+t+1s A downloads directly after the block: DENIED
+t+1s A's social_profile of B after the block: null
+t+1s previously issued link right after the block: HTTP 200 (residual until expiry)
+t+120s previously issued link: HTTP 200
+t+290s previously issued link: HTTP 200
+t+315s previously issued link: HTTP 400

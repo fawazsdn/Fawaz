@@ -41,6 +41,13 @@ class Handler(BaseHTTPRequestHandler):
             data = str(state['hits']).encode(); state['hits'] = 0
             self.send_response(200); self.send_header('Content-Length', str(len(data))); self.end_headers(); self.wfile.write(data)
             return
+        if path == '/_qa/blockab':
+            import subprocess
+            out = subprocess.run(['node', os.path.join(os.path.dirname(__file__), 'rc-block.cjs'), 'block'], capture_output=True, text=True,
+                                 env={**os.environ, 'NODE_PATH': os.path.expanduser('~/Downloads/haratna-rc-worktrees/haratna-rc/node_modules')})
+            log(f"BLOCKAB {out.stdout.strip()} {out.stderr.strip()[:200]}")
+            self.send_response(204); self.end_headers()
+            return
         if path == '/_qa/cleanup':
             c = HTTPConnection('127.0.0.1', 54399, timeout=60)
             c.request('POST', '/', json.dumps({'olderThanHours': 1}),

@@ -1,0 +1,78 @@
+# Accessibility audit (XCUIApplication.performAccessibilityAudit, all audit types), iOS 27, Arabic
+## Before fixes
+AUDIT[post-comments] count=21
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=|id=
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[post-comments] 8|Element has no description|label=|id=
+AUDIT[followers-list] count=0
+AUDIT[profile-other] count=0
+AUDIT[composer] count=0
+
+## After fixes
+CONTROL[post-comments] type=9 label=رجوع id=
+CONTROL[post-comments] type=42 label=RC target post rc4c4578 id=
+CONTROL[post-comments] type=9 label=خيارات أخرى id=
+CONTROL[post-comments] type=9 label=RcAlpha S.‎ id=
+CONTROL[post-comments] type=9 label=إعجاب id=
+CONTROL[post-comments] type=9 label=رد id=
+CONTROL[post-comments] type=9 label=خيارات أخرى id=
+CONTROL[post-comments] type=9 label=RcAlpha S.‎ id=
+CONTROL[post-comments] type=9 label=إعجاب id=
+CONTROL[post-comments] type=9 label=رد id=
+CONTROL[post-comments] type=9 label=خيارات أخرى id=
+CONTROL[post-comments] type=9 label=RcAlpha S.‎ id=
+CONTROL[post-comments] type=9 label=إعجاب id=
+CONTROL[post-comments] type=9 label=رد id=
+CONTROL[post-comments] type=9 label=خيارات أخرى id=
+CONTROL[post-comments] type=9 label=RcBravo S.‎ id=
+CONTROL[post-comments] type=9 label=إعجاب id=
+CONTROL[post-comments] type=9 label=رد id=
+CONTROL[post-comments] type=9 label=خيارات أخرى id=
+CONTROL[post-comments] type=9 label=RcBravo S.‎ id=
+CONTROL[post-comments] type=9 label=مشاركة id=
+CONTROL[post-comments] type=9 label=حفظ id=
+CONTROL[post-comments] type=9 label=التعليقات (4) id=
+CONTROL[post-comments] type=9 label=إعجاب id=
+AUDIT[post-comments] count=14
+AUDIT[post-comments] 4|Hit area is too small|label=مشاركة|id=|type=9|frame=(32.33333396911621, 252.3333384990692, 17.0, 17.000015258789062)
+AUDIT[post-comments] 4|Hit area is too small|label=حفظ|id=|type=9|frame=(255.3333339691162, 252.3333384990692, 17.000015258789062, 17.000015258789062)
+AUDIT[post-comments] 4|Hit area is too small|label=خيارات أخرى|id=|type=9|frame=(16.0, 345.00000762939453, 16.0, 16.0)
+AUDIT[post-comments] 4|Hit area is too small|label=إعجاب|id=|type=9|frame=(254.3333282470703, 419.00000762939453, 12.000015258789062, 12.0)
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=|type=9|frame=(280.3333282470703, 415.00000762939453, 9.666656494140625, 20.0)
+AUDIT[post-comments] 4|Hit area is too small|label=خيارات أخرى|id=|type=9|frame=(16.0, 450.99999237060547, 16.0, 16.0)
+AUDIT[post-comments] 4|Hit area is too small|label=إعجاب|id=|type=9|frame=(254.3333282470703, 524.9999923706055, 12.000015258789062, 12.0)
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=|type=9|frame=(280.3333282470703, 520.9999923706055, 9.666656494140625, 20.0)
+AUDIT[post-comments] 4|Hit area is too small|label=خيارات أخرى|id=|type=9|frame=(16.0, 556.9999923706055, 16.0, 16.0)
+AUDIT[post-comments] 4|Hit area is too small|label=إعجاب|id=|type=9|frame=(254.3333282470703, 630.9999923706055, 12.000015258789062, 12.0)
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=|type=9|frame=(280.3333282470703, 626.9999923706055, 9.666656494140625, 20.0)
+AUDIT[post-comments] 4|Hit area is too small|label=خيارات أخرى|id=|type=9|frame=(16.0, 663.0000228881836, 16.0, 16.0)
+AUDIT[post-comments] 4|Hit area is too small|label=إعجاب|id=|type=9|frame=(254.3333282470703, 737.0000228881836, 12.000015258789062, 12.0)
+AUDIT[post-comments] 4|Hit area is too small|label=رد|id=|type=9|frame=(280.3333282470703, 733.0000228881836, 9.666656494140625, 20.0)
+AUDIT[followers-list] count=0
+CONTROL[profile-other] type=9 label=خيارات أخرى id=
+CONTROL[profile-other] type=9 label=رجوع id=
+CONTROL[profile-other] type=9 label=إضافة جار id=
+CONTROL[profile-other] type=9 label=صورة الملف الشخصي id=profile-avatar
+CONTROL[profile-other] type=9 label=٠, يتابع id=following-count
+CONTROL[profile-other] type=9 label=٠, متابِعون id=followers-count
+CONTROL[profile-other] type=9 label=متابعة id=follow-button
+AUDIT[profile-other] count=0
+AUDIT[composer] count=0

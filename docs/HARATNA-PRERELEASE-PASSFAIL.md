@@ -103,7 +103,7 @@ database. Evidence: `docs/social-validation/rc-integration/` (logs, `shots/`, `h
 | "Posting paused" against a server without the migration (Arabic and English) | **PASS**: comment and post show the localized message in both languages; 0 rows, 0 uploads | `shots/paused-*-ar.png`, `shots/paused-*-en.png` |
 | Arabic/English comment rendering and back gestures | **PASS**: comments render in both directions; English left-edge and Arabic right-edge swipes return | `shots/english-*`, `shots/arabic-*` |
 | iOS 27 scene lifecycle fix preserved | **PASS**: fresh prebuild with `expo-build-properties` (`enableSceneSupport`); built app declares `EXExpoAppSceneDelegate`; cold launch on a fresh device reached the Arabic welcome screen and every flow above | `shots/`, build log |
-| Unit tests on the Mac | **PASS**: tsc PASS; ESLint 0 errors; Jest 49/49 suites, 423/423 tests (2 timing-sensitive suites fail only under heavy machine load and pass alone, 21/21); Deno 8/8 and `deno check` PASS | `automated-checks.log` |
+| Unit tests on the Mac | **PASS**: tsc PASS; ESLint 1 error in the docs-only harness script `rc-fixture.cjs`, 0 in app code (corrected below and fixed); Jest 49/49 suites, 423/423 tests (2 timing-sensitive suites fail only under heavy machine load and pass alone, 21/21); Deno 8/8 and `deno check` PASS | `automated-checks.log` |
 | SQL suites and race drill on a production-like replica (clients have no `private` usage) | **PASS**: baseline → apply 3 → roll back 090000 → roll back 130000+120000 → re-apply; every suite ALL_PASS, `RACE_ALL_PASS` twice; privilege sweep clean | `sql-rehearsal.log` |
 
 Follow-up fixes (2026-11-15, after the native run), each re-verified:
@@ -114,7 +114,26 @@ Follow-up fixes (2026-11-15, after the native run), each re-verified:
 | In Arabic, Latin names rendered as ".RcAlpha S" (period on the wrong side) | **FIXED**: `displayName` / the neighbors list append an invisible LEFT-TO-RIGHT MARK to left-to-right names ending in punctuation; Arabic names unchanged. Re-run on iOS 27 shows "RcAlpha S." | Jest `format.test.ts` (+4 tests); `shots/arabic-comments-before-bidi-fix.png` → `shots/arabic-comments-after-bidi-fix.png` |
 | `business_directory` and `neighborhood_locking` privilege suites fail on the local synthetic replica | **NOT A PRODUCT DEFECT; replica drift.** The replica was loaded without production's GRANT/REVOKE statements, leaving `authenticated` with Supabase's broad default grants. Re-applying only the migrations' own ACL statements to a throwaway clone makes both suites pass. Production's grants (ACL entries read from the owner's local 2026-11-09 dump, no row data, no production access) are narrow: `authenticated` has `SELECT` only on the four tables; the two directory functions are revoked from `PUBLIC`. The staging README now runs both suites before migrating, so a staging copy without ACLs is caught | `supabase/staging/README.md` step 4 |
 
-After the fixes: tsc PASS, ESLint 0 errors, Jest 49/49 suites and 432/432 tests.
+After the fixes: tsc PASS, Jest 49/49 suites and 432/432 tests. **Correction:** ESLint was reported as 0 errors at `d7f80b6` and `75f45da`; it actually had 1 error, in the docs-only harness script `rc-fixture.cjs` (`__dirname` undefined; not app code). Fixed in the next commit.
+
+## 6b. Final native checks (2026-11-15, iOS 27 Simulator, synthetic accounts)
+
+Evidence: `docs/social-validation/rc-final/`. App in Arabic unless stated.
+
+| Case | Status | Evidence |
+|---|---|---|
+| Select and reorder ten photos, publish | **PASS.** 11 picker taps produced exactly 10 drafts (the picker limit refused the 11th; "١٠ من ١٠ صور"). Reordered ("move later" on photo 1, "move earlier" on photo 10). The stored post's photo order, decoded from each uploaded file's aspect ratio, is `[10, 11, 9, 8, 7, 6, 5, 4, 2, 3]`, exactly the UI order | `ten-photos.log`, `shots/ten-*` |
+| Photo controls while the keyboard is open | **FAIL → FIXED.** The first tap on a photo's move/remove control only closed the keyboard (the nested photo strip lacked `keyboardShouldPersistTaps`). After the fix every tap acts and the keyboard stays | `shots/photo-move-first-tap-before-fix.png`, `…-after-fix.png` |
+| VoiceOver: profiles, posts, comments, follow controls | **PARTIAL → mostly FIXED.** `performAccessibilityAudit` (all types) plus element inspection. VoiceOver itself can't be driven by XCTest, so no spoken-output test. Before: the post card was one accessibility element, so VoiceOver couldn't reach like/comment/save/share/author; 9 icon buttons had no description; several labels were hard-coded English (`send`, `more`, `close`, `dismiss`). After: every post-card button is reachable with a localized label and state; comment avatar, like and menu labeled; 0 unlabeled elements on the post, followers, profile and composer screens. **Remaining:** 14 small hit areas on the post screen (icon buttons below 44 pt; comment-row icons now have a larger touch slop the audit can't measure); `SearchBar` "clear" and `HaratnaMap` "map" labels are still English (no strings exist yet) | `accessibility-audit.log`, `shots/audit-screens.png` |
+| Largest accessibility text size (AX5), Arabic and English | **PASS with defects.** Post, comments, profile and composer scale and stay usable in both directions. Defects: the profile stats labels overlap and clip ("منشورات متابِعون", "PostsFollowe"); in Arabic at normal size the profile's Follow / Add-neighbor buttons truncate ("متاب…", "إضافة…"); headers and chips truncate; icons don't scale | `shots/large-text-arabic.png`, `shots/large-text-english.png`, `shots/audit-screens.png` |
+| Private profile photo after blocking (API) | **PASS, residual measured.** While allowed: signing and fetching work. Right after B blocks A: new signing **denied**, direct download **denied**, `social_profile` returns nothing. The already-issued link keeps working (HTTP 200 at +1 s, +120 s, +290 s) and **expires at ~300 s (HTTP 400)**, the 5-minute TTL | `signed-url-after-block.log` |
+| Private profile photo after blocking (app, cache) | **PASS with residual.** Same screen re-linked: still shows the profile and photo (no refetch). After navigating away and back: refetch returns nothing and the private sections and follow button disappear, **but the name and photo stay visible from local data** (signed link, memory-only image cache). After relaunch: "هذا الملف غير متاح" (profile unavailable). No disk cache | `shots/block-*.png` |
+| Language choice persists across relaunch | **PASS** | test17 |
+
+Privacy design question (not a regression): under the neighborhood rule, a **private** account
+with any live post, of **any audience**, in the shared neighborhood shows its profile and photo to
+every verified neighbor (`private.profile_visible_in_neighborhood`). Owner decision: should only
+neighborhood-audience activity count?
 
 ## 7. What is needed to fill the NOT RUN rows
 

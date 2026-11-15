@@ -1,0 +1,12 @@
+PICKER_HITTABLE_IMAGES: 15
+DRAFT_TILES: 10
+MOVE_LATER_BUTTONS: 10 firstHittable=true frame=(96.0, 248.33333587646484, 26.0, 26.000015258789062)
+MOVE_EARLIER_BUTTONS: 10 lastHittable=false
+Test Case '-[RcWalkthrough.RcFinal test10_TenPhotosSelectReorderPublish]' passed (79.277 seconds).
+10 stored photos; order by photo number: [10, 11, 9, 8, 7, 6, 5, 4, 2, 3]
+
+Expected after 'move later' on tile 1 and 'move earlier' on tile 10: [10, 11, 9, 8, 7, 6, 5, 4, 2, 3]
+
+## First-tap-while-typing experiment (3 photos, keyboard up)
+Before fix: tap 1 only closed the keyboard; tap 2 moved (shots/photo-move-first-tap-before-fix.png)
+After fix (keyboardShouldPersistTaps on the photo strip): each tap moves, keyboard stays (shots/photo-move-first-tap-after-fix.png)

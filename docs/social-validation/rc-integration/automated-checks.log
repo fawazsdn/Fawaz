@@ -8,7 +8,7 @@ ad83a37 Apply Codex final-acceptance patch, reconciled with exactly-once writes
 ## tsc
 TSC PASS
 ## eslint
-  0 errors and 1 warning potentially fixable with the `--fix` option.
+  (summary line misread at the time: the full ESLint total was 1 error, in harness/rc-fixture.cjs; see PASS/FAIL report correction)
 
 ## jest (clean machine)
 Test Suites: 49 passed, 49 total

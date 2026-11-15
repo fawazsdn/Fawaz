@@ -1,3 +1,4 @@
+/* global __dirname */
 // Synthetic fixture for the RC Simulator run (loopback stack only; refuses any other URL).
 // Creates two verified, onboarded accounts in one neighborhood and a post by B.
 // Writes credentials to rc-fixture.json (mode 600) and RcFixture.swift; prints no secrets.

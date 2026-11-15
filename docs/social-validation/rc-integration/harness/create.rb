@@ -6,7 +6,7 @@ target.build_configurations.each do |config|
   config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'sa.haratna.app.socialdev.rcwalkthrough'
   config.build_settings['SWIFT_VERSION'] = '5.0'
 end
-%w[RcCases.swift RcFixture.swift].each { |f| target.source_build_phase.add_file_reference(project.main_group.new_file(f)) }
+%w[RcCases.swift RcFinal.swift RcFixture.swift].each { |f| target.source_build_phase.add_file_reference(project.main_group.new_file(f)) }
 project.save
 scheme = Xcodeproj::XCScheme.new
 scheme.configure_with_targets(target, target, launch_target: false)
