@@ -276,6 +276,25 @@ done and a TestFlight build has passed the QA journeys on a real iPhone.
 
 ---
 
+## Update 2026-11-15: social release recovery gate
+
+- Supabase Security replied on ticket **SU-545749**. Supabase-managed roles are out of scope
+  for an exact offline copy. Acceptance covers customer-owned schemas, data, functions,
+  policies and custom roles.
+- Verified on a fresh restore of production (snapshot 2026-11-15 07:31:46 UTC):
+  102 tables and 8,681 rows match; functions, policies, grants, triggers, indexes and columns
+  match. The three pending migrations and their rollbacks were rehearsed on the restored
+  data: every suite passes, and after rollback 101 of 102 tables are byte-identical
+  (the `profile-photos` bucket is kept on purpose).
+- **The full recovery plan is not complete.** Still open: a durable encrypted backup location,
+  Storage object bytes, Vault and project configuration, hosted staging tests, a decision on
+  the custom role `haratna_backup`, and approval for the migrations.
+  Details: `docs/HARATNA-RECOVERY-GATE.md`, `docs/HARATNA-HOSTED-STAGING-PLAN.md`.
+- Production is unchanged (head `20261108142118`). PR #5 is not merged. Nothing was uploaded
+  to TestFlight. Build 13 remains the stable fallback.
+
+---
+
 ## Launch checklist
 
 ### READY

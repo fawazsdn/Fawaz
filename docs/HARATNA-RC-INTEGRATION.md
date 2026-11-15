@@ -89,10 +89,17 @@ Expect conflicts in:
 
 **6. Report.** Record PASS/FAIL per case in the merged release checklist, with screenshots and logs under `docs/social-validation/`.
 
-## Release blockers
-1. The Mac integration (steps 1–2) and native results (step 5).
-2. Supabase Security's hosted migration and recovery guidance (pending).
-3. Owner approval for migrations 20261109120000, 20261109130000 and 20261110090000. Production gate closed.
-4. Owner decision on deploying and scheduling `cleanup-post-photos`. Without it, abandoned uploads remain private and owner-only, but they accumulate.
-5. A durable home for the verified encrypted backup (snapshot 2026-11-09 17:03:21 UTC), currently only in the cloud session.
-6. Then a signed build above 13 to Team (Expo); build 13 stays the fallback.
+## Release blockers (updated 2026-11-15)
+1. The Mac integration (steps 1–2) and native iOS Simulator results (step 5). Not done:
+   this cloud session has no access to the Mac.
+2. ~~Supabase Security's guidance~~ Received (SU-545749). Customer-owned recovery is
+   verified; the full plan is not complete. See `HARATNA-RECOVERY-GATE.md`.
+3. Hosted staging matrix: `HARATNA-HOSTED-STAGING-PLAN.md`. Needs owner approval to provision.
+4. Owner approval for migrations 20261109120000, 20261109130000 and 20261110090000.
+   Production gate closed.
+5. Owner decision on deploying and scheduling `cleanup-post-photos`. Without it, abandoned
+   uploads stay private and owner-only, but they accumulate.
+6. A durable, encrypted home for a fresh backup. The 2026-11-09 export was lost on a
+   container reset. The 2026-11-15 export is only in temporary session storage.
+7. Owner decision on the leftover custom role `haratna_backup` (NOLOGIN, BYPASSRLS).
+8. Then a signed build above 13 for internal testing (Expo); build 13 stays the fallback.
