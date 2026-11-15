@@ -19,6 +19,7 @@ delete from public.posts where author_id = '$A';
 delete from public.media_attachments where owner_id = '$A';
 delete from storage.objects where name like 'posts/$A/%';
 delete from public.neighborhood_memberships where user_id = '$A';
+delete from public.referrals where user_id = '$A';
 delete from public.profiles where id = '$A';
 delete from auth.users where id = '$A';
 SQL
