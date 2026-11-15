@@ -35,6 +35,17 @@
       "env": {
         "EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN": "true"
       }
+    },
+    "staging-testflight": {
+      "extends": "production",
+      "autoIncrement": false,
+      "environment": "preview",
+      "env": {
+        "APP_VARIANT": "staging",
+        "STAGING_BUILD_NUMBER": "14",
+        "EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN": "false",
+        "EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN": "false"
+      }
     }
   },
   "submit": {

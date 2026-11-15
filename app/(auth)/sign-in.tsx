@@ -74,7 +74,8 @@ export default function SignInScreen() {
   };
 
   const busy = pending !== null;
-  const showApple = Platform.OS === 'ios';
+  // Off only in the staging app (no Apple entitlement or provider there); on by default.
+  const showApple = Platform.OS === 'ios' && process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN !== 'false';
   const showGoogle = process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN === 'true';
 
   return (

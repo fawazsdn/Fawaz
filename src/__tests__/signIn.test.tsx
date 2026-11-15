@@ -137,6 +137,18 @@ describe('Sign-in screen (email + Apple/Google via real Supabase auth)', () => {
     }
   });
 
+  it('hides Apple sign-in in the staging app (EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN=false)', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'ios');
+    process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN = 'false';
+    try {
+      await renderWithProvider(<SignInScreen />);
+      expect(screen.queryByText('Continue with Apple')).toBeNull();
+    } finally {
+      delete process.env.EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN;
+      platform.restore();
+    }
+  });
+
   it('a successful Google sign-in stores the real Supabase user id', async () => {
     process.env.EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN = 'true';
     mockSignInWithGoogle.mockResolvedValue({ ok: true, userId: 'real-supabase-user-id-123', email: null, provider: 'google' });
