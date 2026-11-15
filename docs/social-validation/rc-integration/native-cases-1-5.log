@@ -1,0 +1,53 @@
+RC native regression, cases 1-5. iPhone 18 Pro Simulator, iOS 27.0 (24A434), Xcode 27.0 (27A266a).
+App: sa.haratna.app.socialdev Debug, built from rc/integration 6114d07 (dev overlay: bundle ID, name, scheme,
+Apple Sign-In off; Metro port 8082). Backend: local synthetic Supabase via loopback fault proxy 127.0.0.1:55430.
+Accounts: synthetic fixture rc4c4578 (a, b @example.invalid). App language: Arabic.
+Proxy lines: method/path/status only. "COMMITTED 200" = the server committed before the response was held/dropped.
+The 400 publish_post lines are the one-time capability probe (null op id; always rejected, writes nothing).
+
+== Case 1: post committed, response lost (test1_LostPostResponse) -- PASS
+ALERT: ما اكتمل الطلب | أنت غير متصل بالإنترنت. ما تم الحفظ — جرّب مرة ثانية لما يرجع الاتصال.
+17:52:50 MODE droprpc
+17:52:50 400 POST /rest/v1/rpc/publish_post
+17:52:50 COMMITTED 200 /rest/v1/rpc/publish_post -> response dropped
+17:52:53 MODE online
+17:52:59 200 POST /rest/v1/rpc/publish_post            (same op id -> existing post returned)
+Test Case 'test1_LostPostResponse' passed (59.078 seconds). Draft kept after the error; retry opened the post.
+DB: posts_A=1
+
+== Case 2: comment committed, response lost (test2_LostCommentResponse) -- PASS
+ALERT: ما اكتمل الطلب | أنت غير متصل بالإنترنت. ما تم الحفظ — جرّب مرة ثانية لما يرجع الاتصال.
+17:54:10 COMMITTED 200 /rest/v1/rpc/add_post_comment -> response dropped
+17:54:13 200 POST /rest/v1/rpc/add_post_comment
+Test Case 'test2_LostCommentResponse' passed (56.760 seconds).
+DB: comments_A=1, notifications_for_B=1
+
+== Case 3: rapid repeated taps (test3_RapidTaps) -- PASS
+6 taps on comment send, then Publish/confirm hammered while the response was held 4 s:
+17:55:28 COMMITTED 200 /rest/v1/rpc/add_post_comment -> answering in 4 s   (exactly one call)
+17:55:52 COMMITTED 200 /rest/v1/rpc/publish_post -> answering in 4 s       (exactly one call)
+Test Case 'test3_RapidTaps' passed (84.802 seconds).
+DB: posts_A=1, comments_A=1
+
+== Case 4: app killed during publish, relaunched, same content (test4_KillDuringPublish) -- PASS
+(First attempt at 17:56 killed the app during the probe, before any write; re-run with the
+proxy holding only committed responses.)
+17:59:03 COMMITTED 200 /rest/v1/rpc/publish_post -> answering in 4 s
+         app terminated while the response was held; relaunched
+17:59:50 200 POST /rest/v1/rpc/publish_post            (persisted op id -> existing post)
+Test Case 'test4_KillDuringPublish' passed (94.380 seconds).
+DB: posts_A=1 for the marker, one distinct client_op_id
+
+== Case 5: account switch with an unknown outcome (test5_AccountSwitch) -- PASS
+A: 18:00:59 COMMITTED 200 /rest/v1/rpc/add_post_comment -> response dropped (alert shown)
+B: 18:02:03 200 POST /rest/v1/rpc/add_post_comment   (B's own new comment, no reuse of A's op id)
+A: 18:03:08 200 POST /rest/v1/rpc/add_post_comment   (A's persisted op id -> existing, no new row)
+Test Case 'test5_AccountSwitch' passed (186.074 seconds).
+DB: comments_A=1 comments_B=1; 2 distinct op ids, 2 distinct authors
+
+Harness incidents (not counted as results):
+- First case-1 runs loaded Codex's older dev bundle from Metro 8081 on the other Simulator (no RC
+  proxy traffic; the stray post had no client_op_id). That synthetic row was soft-deleted. All counted
+  runs used the fresh device and the 8082 build, with a per-test assertion of RC proxy traffic.
+- One case-1 run dropped only the probe's 400 (nothing committed); the proxy was then restricted to
+  dropping/holding 2xx responses only.

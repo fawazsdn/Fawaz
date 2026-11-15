@@ -1,0 +1,6 @@
+PASS unsupported MIME: HTTP 400, object absent
+PASS oversize: HTTP 400, object absent
+PASS unauthenticated: HTTP 400, object absent
+PASS foreign path: HTTP 400, object absent
+PASS expired JWT: HTTP 400, object absent
+PASS interrupted request: incomplete body, object absent

@@ -1,0 +1,11 @@
+All four patches applied in sequence to 4cf273c3d84787fa52acfec0df9e4bc6b1e636be.
+TypeScript passed.
+✖ 4 problems (0 errors, 4 warnings)
+Test Suites: 46 passed, 46 total
+Tests:       398 passed, 398 total
+handoff-private_profile_photos.log:ALL_PASS 11 checks
+handoff-social_follows.log:ALL_PASS 11 checks
+347d5d6c6c99bb08b88567e2c9fdaadaeca5b3bd25bf36cd7e5046ed02e30b86  docs/haratna-pr5-social-fixes.patch
+240427fa036c0a90a63ac271232943067e0e84dd303ddd0ca56a91c5e11a74ad  docs/haratna-pr5-ios27-scene.patch
+fbf9a3fedfc09fc14fc09de2e4a3bdf78fafbc616c4ac5832d4b434af32f63ab  docs/haratna-pr5-native-blockers.patch
+f8547de7c35c6ddcea77b9ecda86553e506192922e7cde14f8554c0cda388107  docs/haratna-pr5-final-acceptance.patch

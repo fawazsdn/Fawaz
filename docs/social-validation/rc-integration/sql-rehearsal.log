@@ -1,0 +1,86 @@
+### 1. baseline
+reset done: follow funcs=0 terms=18
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+### 2. apply 3 migrations
+applied 20261109120000_social_follows_photo_posts
+applied 20261109130000_private_profile_photos
+applied 20261110090000_social_resilience
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+PASS social_resilience :: ALL_PASS 10 checks
+outcomes: existing, created; posts: 1
+PASS
+## 2. cleanup runs while a publication holds the photo (publish first)
+publish: created; cleanup claimed it: 0; final status: attached
+PASS
+## 3. publication arrives while cleanup holds the photo (cleanup first)
+cleanup claimed: 1; publish result: photo_unavailable; post written: 0
+PASS
+## 4. no live post references a file that is gone or being deleted
+dangling references: 0
+PASS
+RACE_ALL_PASS
+### 3. roll back 090000
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+### 4. roll back 130000 + 120000
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+### 5. re-apply all three
+applied 20261109120000_social_follows_photo_posts
+applied 20261109130000_private_profile_photos
+applied 20261110090000_social_resilience
+PASS neighbors :: ALL_PASS 12 checks (rolled back)
+PASS compliance :: ALL_PASS 4 checks (rolled back)
+PASS clubs :: ALL_PASS 18 checks (rolled back)
+PASS poll_vote_change :: ALL_PASS total=2 (rolled back)
+PASS admin_support :: ALL_PASS 7 checks (rolled back)
+PASS public_support :: ALL_PASS 5 checks (rolled back)
+PASS social_follows :: ALL_PASS 11 checks
+PASS private_profile_photos :: ALL_PASS 11 checks
+PASS build13_compat :: ALL_PASS 9 checks
+PASS social_resilience :: ALL_PASS 10 checks
+outcomes: existing, created; posts: 1
+PASS
+## 2. cleanup runs while a publication holds the photo (publish first)
+publish: created; cleanup claimed it: 0; final status: attached
+PASS
+## 3. publication arrives while cleanup holds the photo (cleanup first)
+cleanup claimed: 1; publish result: photo_unavailable; post written: 0
+PASS
+## 4. no live post references a file that is gone or being deleted
+dangling references: 0
+PASS
+RACE_ALL_PASS
+### privilege sweep
+add_post_comment|authenticated
+add_post_comment|service_role
+claim_abandoned_post_photos|service_role
+count_abandoned_post_photos|service_role
+finish_post_photo_cleanup|service_role
+publish_post|authenticated
+publish_post|service_role
+authenticated has private USAGE: false

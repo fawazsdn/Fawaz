@@ -1,0 +1,5 @@
+    t =    34.61s Tap "private-account-switch" Switch
+    t =    38.48s Tap "accept-request" Any
+    t =    39.93s Tap "Decline" Button
+Test Case '-[Walkthrough.Walkthrough testPrivacyRequestsAndCounts]' passed (49.575 seconds).
+** TEST SUCCEEDED **

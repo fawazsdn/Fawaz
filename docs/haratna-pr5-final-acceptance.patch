@@ -1,0 +1,183 @@
+--- a/src/features/social/useSocialProfile.ts
++++ b/src/features/social/useSocialProfile.ts
+@@ -1,27 +1,43 @@
+-import { useCallback, useEffect, useState } from 'react';
++import { useCallback, useRef, useState } from 'react';
++import { useFocusEffect } from 'expo-router';
+ 
+ import { fetchSocialProfile, type SocialProfile } from '@/backend/social';
+ import { useSocialStore } from '@/backend/socialState';
++import { useCurrentUserId } from '@/store/useStore';
+ 
+-/** Loads the social profile card. status 'unavailable' = backend not deployed; 'hidden' = not visible to you. */
++/** Loads the social profile card for the active viewer and refreshes it on focus. */
+ export function useSocialProfile(userId: string | undefined) {
+-  const [profile, setProfile] = useState<SocialProfile | null>(null);
+-  const [status, setStatus] = useState<'loading' | 'ready' | 'hidden' | 'unavailable' | 'error'>('loading');
++  const viewer = useCurrentUserId();
++  const key = JSON.stringify([viewer, userId]);
++  const request = useRef(0);
++  const [result, setResult] = useState<{
++    key: string;
++    profile: SocialProfile | null;
++    status: 'ready' | 'hidden' | 'unavailable' | 'error';
++  }>();
+ 
++  const setProfile = useCallback((profile: SocialProfile | null) => {
++    setResult({ key, profile, status: profile ? 'ready' : 'hidden' });
++  }, [key]);
++
+   const reload = useCallback(async () => {
+-    if (!userId) return;
++    if (!userId || !viewer) return;
++    const id = ++request.current;
+     try {
+-      const p = await fetchSocialProfile(userId);
+-      setProfile(p);
+-      setStatus(p ? 'ready' : 'hidden');
++      const profile = await fetchSocialProfile(userId);
++      if (id === request.current) setProfile(profile);
+     } catch {
+-      setStatus(useSocialStore.getState().available === false ? 'unavailable' : 'error');
++      if (id !== request.current) return;
++      const status = useSocialStore.getState().available === false ? 'unavailable' : 'error';
++      setResult({ key, profile: null, status });
+     }
+-  }, [userId]);
++  }, [key, setProfile, userId, viewer]);
+ 
+-  useEffect(() => {
++  useFocusEffect(useCallback(() => {
+     void reload();
+-  }, [reload]);
++    return () => { request.current++; };
++  }, [reload]));
+ 
+-  return { profile, status, reload, setProfile };
++  const current = result?.key === key ? result : undefined;
++  return { profile: current?.profile ?? null, status: current?.status ?? 'loading', reload, setProfile };
+ }
+--- a/src/components/Composer.tsx
++++ b/src/components/Composer.tsx
+@@ -1,4 +1,4 @@
+-import { useState } from 'react';
++import { useRef, useState } from 'react';
+ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+ import { Send } from 'lucide-react-native';
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+@@ -8,7 +8,7 @@
+ 
+ interface ComposerProps {
+   placeholder: string;
+-  onSend: (text: string) => void;
++  onSend: (text: string) => Promise<boolean>;
+   replyingTo?: string;
+   onCancelReply?: () => void;
+   cancelLabel?: string;
+@@ -19,12 +19,18 @@
+   const insets = useSafeAreaInsets();
+   const [text, setText] = useState('');
+ 
+-  const submit = () => {
++  const sending = useRef(false);
++
++  const submit = async () => {
+     const trimmed = text.trim();
+-    if (!trimmed) return;
++    if (!trimmed || sending.current) return;
++    sending.current = true;
+     haptics.light();
+-    onSend(trimmed);
+-    setText('');
++    try {
++      if (await onSend(trimmed)) setText((current) => current.trim() === trimmed ? '' : current);
++    } finally {
++      sending.current = false;
++    }
+   };
+ 
+   return (
+--- a/app/post/[id].tsx
++++ b/app/post/[id].tsx
+@@ -71,10 +71,10 @@
+   }
+ 
+   const onSend = async (text: string) => {
+-    if (pending) return;
+-    const parent = replyingTo?.id;
+-    setReplyingTo(null);
+-    await run(() => addComment(post.id, text, parent));
++    if (pending) return false;
++    const result = await run(() => addComment(post.id, text, replyingTo?.id));
++    if (result.ok) setReplyingTo(null);
++    return result.ok;
+   };
+ 
+   return (
+--- a/src/backend/social.ts
++++ b/src/backend/social.ts
+@@ -303,15 +303,20 @@
+   const uid = me();
+   if (localUris.length > MAX_POST_PHOTOS) throw new ActionError('invalid', 'invalid:images');
+   const paths: string[] = [];
+-  for (const uri of localUris) {
+-    const res = await fetch(uri);
+-    const body = await res.arrayBuffer();
+-    if (body.byteLength < 1 || body.byteLength > MAX_UPLOAD_BYTES) throw new ActionError('invalid', 'invalid:image_size');
+-    const path = `posts/${uid}/${randomName()}`;
+-    const { error } = await supabase.storage.from(COMMUNITY_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
+-    if (error) throw error;
+-    await recordAttachment(uid, COMMUNITY_BUCKET, path, body.byteLength, neighborhoodId);
+-    paths.push(path);
++  try {
++    for (const uri of localUris) {
++      const res = await fetch(uri);
++      const body = await res.arrayBuffer();
++      if (body.byteLength < 1 || body.byteLength > MAX_UPLOAD_BYTES) throw new ActionError('invalid', 'invalid:image_size');
++      const path = `posts/${uid}/${randomName()}`;
++      const { error } = await supabase.storage.from(COMMUNITY_BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
++      if (error) throw error;
++      paths.push(path);
++      await recordAttachment(uid, COMMUNITY_BUCKET, path, body.byteLength, neighborhoodId);
++    }
++  } catch (error) {
++    await discardUploads(paths).catch(() => undefined);
++    throw error;
+   }
+   return paths;
+ }
+--- a/src/backend/actions.ts
++++ b/src/backend/actions.ts
+@@ -310,7 +310,8 @@
+     async () => {
+       const uid = me();
+       check(await supabase.from('post_comments').insert({ post_id: postId, author_id: uid, body: text, parent_id: parentId ?? null }));
+-      await loadComments(postId);
++      // The insert is already confirmed. A read failure must not invite a duplicate submission.
++      await loadComments(postId).catch(() => undefined);
+     },
+     { resync: true },
+   );
+--- a/src/features/neighbors/__tests__/neighbors.test.tsx
++++ b/src/features/neighbors/__tests__/neighbors.test.tsx
+@@ -19,6 +19,8 @@
+ jest.mock('expo-router', () => ({
+   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => false }),
+   useLocalSearchParams: () => mockParams,
++  useFocusEffect: (effect: React.EffectCallback) =>
++    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]),
+   useNavigation: () => ({ canGoBack: () => false }),
+ }));
+ jest.mock('@/backend/sync', () => ({ ...jest.requireActual('@/backend/sync'), requestSync: jest.fn(() => Promise.resolve()) }));
+--- a/src/features/social/__tests__/social.test.tsx
++++ b/src/features/social/__tests__/social.test.tsx
+@@ -22,7 +22,8 @@
+ jest.mock('expo-router', () => ({
+   useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn(), canGoBack: () => false }),
+   useLocalSearchParams: () => mockParams,
+-  useFocusEffect: jest.requireActual<typeof import('react')>('react').useEffect,
++  useFocusEffect: (effect: React.EffectCallback) =>
++    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]),
+   useNavigation: () => ({ canGoBack: () => false }),
+ }));
+ jest.mock('@/backend/sync', () => ({ ...jest.requireActual('@/backend/sync'), requestSync: jest.fn(() => Promise.resolve()) }));

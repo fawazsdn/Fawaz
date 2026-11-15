@@ -1,0 +1,62 @@
+ALERT[photo-batch-interrupted]: ما اكتمل الطلب | أنت غير متصل بالإنترنت. ما تم الحفظ — جرّب مرة ثانية لما يرجع الاتصال.
+Test Case '-[RcWalkthrough.RcCases test6_InterruptedMultiPhoto]' passed (1268.188 seconds).
+18:39:29 MODE online
+18:58:24 200 POST /rest/v1/rpc/neighborhood_stats
+18:58:28 200 POST /rest/v1/rpc/neighborhood_stats
+18:59:29 200 POST /rest/v1/rpc/neighborhood_stats
+19:00:24 MODE uploadone
+19:00:24 400 POST /rest/v1/rpc/publish_post
+19:00:25 DROP(upload-blocked) POST /storage/v1/object/community-media/posts/adf70d7c-15b8-4bd7-9775-f703eb4f90ef/mwcb2d9b-4vdx3to5.jpg
+19:00:28 MODE online
+19:00:34 200 POST /rest/v1/rpc/publish_post
+19:00:34 200 POST /rest/v1/rpc/neighborhood_stats
+19:00:36 MODE online
+19:00:24 400 POST /rest/v1/rpc/publish_post
+19:00:25 200 POST /storage/v1/object/community-media/posts/adf70d7c-15b8-4bd7-9775-f703eb4f90ef/mwcb2d2c-zysghvp9.jpg
+19:00:25 201 POST /rest/v1/media_attachments
+19:00:25 DROP(upload-blocked) POST /storage/v1/object/community-media/posts/adf70d7c-15b8-4bd7-9775-f703eb4f90ef/mwcb2d9b-4vdx3to5.jpg
+19:00:34 200 POST /storage/v1/object/community-media/posts/adf70d7c-15b8-4bd7-9775-f703eb4f90ef/mwcb2k1j-hnu7u240.jpg
+19:00:34 201 POST /rest/v1/media_attachments
+19:00:34 200 POST /rest/v1/rpc/publish_post
+posts_A=1 posts_B=0 photos=2
+comments_A=0 comments_B=0
+notifications_for_B=0
+A_uploads: attached=2
+A_storage_objects=2
+dangling_refs=0
+Test Case '-[RcWalkthrough.RcCases test7_CleanupWhilePublishing]' passed (55.479 seconds).
+19:01:01 MODE online
+19:01:12 200 POST /rest/v1/rpc/neighborhood_stats
+19:01:13 200 POST /rest/v1/rpc/neighborhood_stats
+19:01:47 MODE slowrpc
+19:01:48 400 POST /rest/v1/rpc/publish_post
+19:01:48 COMMITTED 200 /rest/v1/rpc/publish_post -> answering in 4 s
+19:01:49 MODE cleanup
+19:01:52 200 POST /rest/v1/rpc/publish_post
+19:01:52 200 POST /rest/v1/rpc/neighborhood_stats
+19:01:55 MODE online
+19:01:55 MODE online
+ALERT[paused-comment-current-language]: ما اكتمل الطلب | النشر متوقف مؤقتاً أثناء تحديث حارتنا. حاول مرة أخرى لاحقاً.
+ALERT[paused-post-current-language]: ما اكتمل الطلب | النشر متوقف مؤقتاً أثناء تحديث حارتنا. حاول مرة أخرى لاحقاً.
+PAUSED_TEXTS: ما اكتمل الطلب | النشر متوقف مؤقتاً أثناء تحديث حارتنا. حاول مرة أخرى لاحقاً. || ما اكتمل الطلب | النشر متوقف مؤقتاً أثناء تحديث حارتنا. حاول مرة أخرى لاحقاً.
+Test Case '-[RcWalkthrough.RcCases test8_PostingPausedEnglishArabic]' passed (77.192 seconds).
+19:03:48 MODE online
+19:03:59 200 POST /rest/v1/rpc/neighborhood_stats
+19:04:00 200 POST /rest/v1/rpc/neighborhood_stats
+19:04:20 MODE nofunc
+19:04:38 NOFUNC 404 /rest/v1/rpc/publish_post
+19:05:04 MODE online
+19:05:04 MODE online
+ALERT[paused-comment-current-language]: That didn't go through | Posting is paused while Haratna is being updated. Please try again later.
+ALERT[paused-post-current-language]: That didn't go through | Posting is paused while Haratna is being updated. Please try again later.
+PAUSED_TEXTS: That didn't go through | Posting is paused while Haratna is being updated. Please try again later. || That didn't go through | Posting is paused while Haratna is being updated. Please try again later.
+Test Case '-[RcWalkthrough.RcCases test9_EnglishPausedAndRtlLtrNavigation]' passed (133.838 seconds).
+19:05:37 MODE online
+19:05:49 200 POST /rest/v1/rpc/neighborhood_stats
+19:05:50 200 POST /rest/v1/rpc/neighborhood_stats
+19:06:04 200 POST /rest/v1/rpc/social_profile
+19:06:29 MODE nofunc
+19:06:46 NOFUNC 404 /rest/v1/rpc/publish_post
+19:07:11 MODE online
+19:07:24 200 POST /rest/v1/rpc/social_profile
+19:07:50 MODE online

@@ -1,0 +1,7 @@
+final-acceptance.log:Test Case '-[Walkthrough.Walkthrough testExternalFollowerRefresh]' passed (28.156 seconds).
+final-acceptance.log:Test Case '-[Walkthrough.Walkthrough testNetworkLossAndRetry]' passed (40.404 seconds).
+final-acceptance.log:** TEST SUCCEEDED **
+final-post-network.log:Test Case '-[Walkthrough.Walkthrough testPostAndLikeConnectionLoss]' passed (44.786 seconds).
+final-post-network.log:** TEST SUCCEEDED **
+Native retry matching rows: comments 1 posts 1
+PASS Like retry toggled the existing Like off once

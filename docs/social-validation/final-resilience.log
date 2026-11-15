@@ -1,0 +1,7 @@
+PASS reproduced duplicates: two posts and two comments after committed responses were dropped
+PASS stable UUID retry: exactly one row per operation, with payload and author mismatch rejected
+PASS partial photo batch: existing bytes reused, missing photo uploaded, one post references both
+OBSERVED current owner cleanup removes own abandoned object: True
+PASS fixture-scoped cleanup preserved referenced files and the other owner's bytes
+REPRODUCED cleanup race: current post insert accepts a path after the file was removed
+REPRODUCED ambiguous-response cleanup: current owner delete can remove a committed post's photo

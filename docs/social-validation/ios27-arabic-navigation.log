@@ -1,0 +1,3 @@
+[XCTest source]:24: error: -[Walkthrough.Walkthrough testArabicBackAndPhotoPermissionError] : XCTAssertTrue failed - Arabic right-edge swipe must return to the profile
+    t =    34.20s Added attachment named 'Arabic native permission alert'
+Test Case '-[Walkthrough.Walkthrough testArabicBackAndPhotoPermissionError]' failed (34.477 seconds).

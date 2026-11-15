@@ -12,9 +12,20 @@
 
 No branch was reset or force-pushed. PR #5 was not changed or merged.
 
-## Integration with Codex's Mac work: NOT DONE
-- **Codex's work is unreachable from the cloud session.** That covers the four PR #5 patches, the iOS 27 scene-lifecycle fix, `docs/HARATNA-SOCIAL-RESILIENCE-HANDOFF.md`, `docs/HARATNA-SOCIAL-RELEASE-CHECKLIST.md` and `docs/social-validation/`. They are on no GitHub branch, the Mac isn't connected, and the session has no macOS or Simulator.
-- **Consequence:** conflicts with Codex's work could not be found or resolved, and native tests could not run. Everything below marked Mac must be done on the Mac.
+## Integration with Codex's Mac work: DONE on the Mac (2026-11-15)
+- Branch `rc/integration` (local worktree `haratna-rc`) = this branch + five commits: the four
+  Codex patches in order (1–3 applied cleanly, 4 reconciled) and the posts-guard fix below.
+- Patch 4 reconciliation: Composer keeps the ref guard and draft-until-confirmed, plus Codex's
+  rule of not clearing text typed during a send; a failed reload after a confirmed comment no
+  longer reports failure; the `uploadPostPhotos` → `discardUploads` hunk was dropped (no callers,
+  and client deletion after an ambiguous response is what the cleanup protocol replaces);
+  `commentSync.test.ts` drives `add_post_comment` instead of a plain insert.
+- **Regression found and fixed:** `20261110090000` redefined `private.guard_post_write()` with
+  `private.*` calls, undoing Codex's `20261109120000` fix. Clients have no `private` usage, so
+  every direct post insert (build 13) failed. Photo attachment moved to a security-definer
+  trigger `posts_guard_write_photos`; the rollback restores Codex's guard.
+- Codex's patches, handoff, checklist and `docs/social-validation/` evidence are now committed.
+- Results: `HARATNA-PRERELEASE-PASSFAIL.md` §6 and `docs/social-validation/rc-integration/`.
 
 ## Done in the cloud (on `claude/haratna-rc-integration`)
 
@@ -90,8 +101,8 @@ Expect conflicts in:
 **6. Report.** Record PASS/FAIL per case in the merged release checklist, with screenshots and logs under `docs/social-validation/`.
 
 ## Release blockers (updated 2026-11-15)
-1. The Mac integration (steps 1–2) and native iOS Simulator results (step 5). Not done:
-   this cloud session has no access to the Mac.
+1. ~~The Mac integration and native iOS Simulator results~~ Done 2026-11-15: all PASS
+   (`HARATNA-PRERELEASE-PASSFAIL.md` §6).
 2. ~~Supabase Security's guidance~~ Received (SU-545749). Customer-owned recovery is
    verified; the full plan is not complete. See `HARATNA-RECOVERY-GATE.md`.
 3. Hosted staging matrix: `HARATNA-HOSTED-STAGING-PLAN.md`. Needs owner approval to provision.
@@ -99,7 +110,8 @@ Expect conflicts in:
    Production gate closed.
 5. Owner decision on deploying and scheduling `cleanup-post-photos`. Without it, abandoned
    uploads stay private and owner-only, but they accumulate.
-6. A durable, encrypted backup: the procedure is ready (`HARATNA-ENCRYPTED-BACKUP.md`),
-   but it still has to run on the Mac.
+6. A durable, encrypted backup: the procedure is ready (`HARATNA-ENCRYPTED-BACKUP.md`).
+   Blocked on owner-only setup on the Mac (age key, Keychain tokens, `HaratnaBackup`
+   volume, offsite destination); see PASS/FAIL §7.
 7. Approval to remove `haratna_backup` (`HARATNA-BACKUP-ROLE-REMOVAL.md`).
 8. Then a signed build above 13 for internal testing (Expo); build 13 stays the fallback.

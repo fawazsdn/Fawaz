@@ -1,0 +1,29 @@
+## marker: RC lostpost
+posts_A=1 posts_B=0 photos=0
+comments_A=0 comments_B=0
+## marker: RC lostcomment
+posts_A=0 posts_B=0 photos=0
+comments_A=1 comments_B=0
+## marker: RC rapid
+posts_A=1 posts_B=0 photos=0
+comments_A=1 comments_B=0
+## marker: RC killpost2
+posts_A=1 posts_B=0 photos=0
+comments_A=0 comments_B=0
+## marker: RC switchcomment
+posts_A=0 posts_B=0 photos=0
+comments_A=1 comments_B=1
+## marker: RC photos
+posts_A=1 posts_B=0 photos=2
+comments_A=0 comments_B=0
+## marker: RC cleanuprace2
+posts_A=1 posts_B=0 photos=0
+comments_A=0 comments_B=0
+## marker: RC paused
+posts_A=0 posts_B=0 photos=0
+comments_A=0 comments_B=0
+A_uploads: attached=2
+A_storage_objects=2
+dangling_refs=0
+live posts with duplicate op ids: 0
+comments with duplicate op ids: 0

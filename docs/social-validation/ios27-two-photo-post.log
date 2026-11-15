@@ -1,0 +1,3 @@
+Test Case '-[Walkthrough.Walkthrough testSelectTwoSyntheticPhotosAndPublish]' passed (13.895 seconds).
+** TEST SUCCEEDED **
+PASS native post persisted two private photo objects and both downloaded from local Storage

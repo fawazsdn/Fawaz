@@ -1,0 +1,151 @@
+--- a/app/follows/[id].tsx
++++ b/app/follows/[id].tsx
+@@ -1,6 +1,6 @@
+-import { useCallback, useEffect, useState } from 'react';
++import { useCallback, useState } from 'react';
+ import { FlatList, Pressable, Text, View } from 'react-native';
+-import { useLocalSearchParams, useRouter } from 'expo-router';
++import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+ import { BadgeCheck, Lock } from 'lucide-react-native';
+ 
+ import { useTheme } from '@/theme/useTheme';
+@@ -33,23 +33,32 @@
+   const [removing, setRemoving] = useState<FollowEntry | null>(null);
+   const isOwn = id === me;
+ 
+-  const load = useCallback(async () => {
+-    if (!id) return;
+-    try {
+-      setRows(await listFollows(id, kind, query));
+-    } catch {
+-      setRows([]);
+-    }
+-  }, [id, kind, query]);
++  useFocusEffect(
++    useCallback(() => {
++      let active = true;
++      setRows(id && me ? null : []);
++      if (!id || !me) return;
+ 
+-  useEffect(() => {
+-    const h = setTimeout(load, query ? 250 : 0);
+-    return () => clearTimeout(h);
+-  }, [load, query]);
++      const timer = setTimeout(() => {
++        void listFollows(id, kind, query)
++          .then((entries) => {
++            if (active) setRows(entries);
++          })
++          .catch(() => {
++            if (active) setRows([]);
++          });
++      }, query ? 250 : 0);
++
++      return () => {
++        active = false;
++        clearTimeout(timer);
++      };
++    }, [id, kind, me, query]),
++  );
+ 
+   return (
+     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+-      <AppHeader title={kind === 'followers' ? t.social.followers : t.social.following} fallbackRoute={`/profile/${id}`} />
++      <AppHeader title={kind === 'followers' ? t.social.followers : t.social.following} fallbackRoute={id ? `/profile/${id}` : '/settings'} />
+       <View style={{ paddingHorizontal: theme.spacing.md, gap: 10, paddingBottom: 8 }}>
+         <View style={[theme.row(), { gap: 8 }]}>
+           <Chip label={t.social.followers} selected={kind === 'followers'} onPress={() => setKind('followers')} />
+--- a/src/features/social/__tests__/social.test.tsx
++++ b/src/features/social/__tests__/social.test.tsx
+@@ -22,6 +22,7 @@
+ jest.mock('expo-router', () => ({
+   useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn(), canGoBack: () => false }),
+   useLocalSearchParams: () => mockParams,
++  useFocusEffect: jest.requireActual<typeof import('react')>('react').useEffect,
+   useNavigation: () => ({ canGoBack: () => false }),
+ }));
+ jest.mock('@/backend/sync', () => ({ ...jest.requireActual('@/backend/sync'), requestSync: jest.fn(() => Promise.resolve()) }));
+@@ -320,6 +321,29 @@
+ });
+ 
+ describe('Followers list', () => {
++  it('discards a followers response that arrives after switching to following', async () => {
++    mockParams = { id: TEST_ME, tab: 'followers' };
++    let finishFollowers!: (value: { data: unknown[]; error: null }) => void;
++    const pendingFollowers = new Promise<{ data: unknown[]; error: null }>((resolve) => {
++      finishFollowers = resolve;
++    });
++    rpc.mockImplementation((name, args) =>
++      name === 'list_follows' && args.kind === 'followers'
++        ? pendingFollowers
++        : Promise.resolve({ data: [], error: null }),
++    );
++    await renderScreen(<FollowsScreen />);
++    await waitFor(() => expect(rpc).toHaveBeenCalledWith('list_follows', expect.objectContaining({ kind: 'followers' })));
++    await act(async () => fireEvent.press(screen.getByText(en.social.following)));
++    await waitFor(() => expect(screen.getByText(en.social.noFollowing)).toBeTruthy());
++
++    await act(async () => {
++      finishFollowers({ data: [{ user_id: TEST_NEIGHBOR, first_name: 'Old result', follow_state: 'none' }], error: null });
++      await pendingFollowers;
++    });
++    expect(screen.queryByTestId('follow-row')).toBeNull();
++  });
++
+   it('lets the owner remove a follower after confirming', async () => {
+     mockParams = { id: TEST_ME, tab: 'followers' };
+     mockRpc({
+@@ -329,8 +353,10 @@
+     });
+     await renderScreen(<FollowsScreen />);
+     await waitFor(() => expect(screen.getAllByTestId('follow-row')).toHaveLength(1));
+-    await act(async () => fireEvent.press(await screen.findByText('Remove')));
+-    await act(async () => fireEvent.press(screen.getAllByText('Remove').pop()!));
++    const removeButton = await screen.findByRole('button', { name: en.social.remove });
++    await fireEvent.press(removeButton);
++    await screen.findByText(en.social.removeFollowerConfirm.replace('{name}', 'Bader H.'));
++    await fireEvent.press(screen.getAllByRole('button', { name: en.social.remove }).at(-1)!);
+     await waitFor(() => expect(rpc).toHaveBeenCalledWith('remove_follower', { follower: TEST_NEIGHBOR }));
+   });
+ });
+--- a/supabase/migrations/20261109120000_social_follows_photo_posts.sql
++++ b/supabase/migrations/20261109120000_social_follows_photo_posts.sql
+@@ -124,10 +124,15 @@
+ declare
+   path text;
+   parts text[];
+-  staff boolean := private.is_admin_or_moderator();
+   client boolean := current_user in ('authenticated', 'anon');
+ begin
+-  if tg_op = 'UPDATE' and client and not staff then
++  -- The client can read its own profile through RLS. Keep the trigger an
++  -- invoker so trusted definer RPCs can maintain post links.
++  if tg_op = 'UPDATE' and client and not exists (
++    select 1 from public.profiles p
++    where p.id = (select auth.uid()) and p.deleted_at is null
++      and p.app_role in ('moderator', 'admin')
++  ) then
+     if (new.author_id, new.neighborhood_id, new.type, new.created_at, new.linked_entity_type, new.linked_entity_id, new.pinned)
+        is distinct from (old.author_id, old.neighborhood_id, old.type, old.created_at, old.linked_entity_type, old.linked_entity_id, old.pinned) then
+       raise exception 'invalid:post_fields' using errcode = '42501';
+--- a/supabase/tests/social_follows.sql
++++ b/supabase/tests/social_follows.sql
+@@ -63,6 +63,18 @@
+   insert into public.posts(type, author_id, neighborhood_id, text_ar, audience) values ('general', b, nb, 'followers post', 'followers') returning id into p_fol;
+   insert into public.posts(type, author_id, neighborhood_id, text_ar, audience) values ('general', b, nb, 'neighbors post', 'neighborhood') returning id into p_nb;
+ 
++  if has_schema_privilege(current_user, 'private', 'USAGE') then
++    raise exception 'FAIL post test requires the restricted private schema';
++  end if;
++  begin
++    update public.posts set pinned = true where id = p_nb;
++    err := null;
++  exception when insufficient_privilege then err := sqlerrm;
++  end;
++  if err is distinct from 'invalid:post_fields' then
++    raise exception 'FAIL authenticated author changed a protected post field';
++  end if;
++
+   perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+   select count(*) into cnt from public.posts where author_id = b;
+   if cnt <> 0 then raise exception 'FAIL private account content visible to stranger (% rows)', cnt; end if;

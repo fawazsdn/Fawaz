@@ -1,0 +1,3 @@
+Test Case '-[Walkthrough.Walkthrough testDeleteSyntheticAccountFromSettings]' passed (36.875 seconds).
+** TEST SUCCEEDED **
+PASS native deletion removed synthetic Auth and avatar; second account survived

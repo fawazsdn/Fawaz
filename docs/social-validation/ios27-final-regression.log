@@ -1,0 +1,4 @@
+** BUILD SUCCEEDED **
+Test Case '-[Walkthrough.Walkthrough testFinalCommentsAndBothBackEdges]' passed (43.691 seconds).
+** TEST SUCCEEDED **
+[XCTest source]:34: error: -[Walkthrough.Walkthrough testStorageRejectionFromNativeComposer] : failed - Synthetic photo did not reach composer

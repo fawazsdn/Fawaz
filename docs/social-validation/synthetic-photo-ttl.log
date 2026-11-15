@@ -1,0 +1,10 @@
+PASS Auth signup and password login
+PASS JWT role switching and forged author rejection
+PASS Private photo RLS, folder ownership and signed URL expiration
+PASS Public and private profiles, pending follow denial, follower lists and counts
+PASS One and ten photo posts, eleven rejected, likes, comments and notification isolation
+PASS Unfollow removes private content and new signed URL access
+PASS Five-minute JWT lifetime verified; previously issued five-minute URL still serves after block
+PASS Block denies new signing and JWT download; old bearer GET 200 immediately and 400 after expiry
+PASS Auth logout
+PASS Account deletion removes only the requesting Auth user and private file

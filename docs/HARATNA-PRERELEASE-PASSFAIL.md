@@ -1,9 +1,18 @@
-# Haratna pre-release PASS/FAIL report (2026-11-15)
+# Haratna pre-release PASS/FAIL report (2026-11-15, Mac update)
 
-**Overall: NOT READY FOR RELEASE APPROVAL.** Every check that can run offline passes. The
-hosted, Mac and native checks have **not run**: hosted staging is waiting for
-authorization, and the Mac is not connected to the cloud session. A NOT RUN row is not a
-PASS.
+**Overall: NOT READY FOR RELEASE APPROVAL.** Offline and Mac checks pass: the four Codex
+patches are integrated (branch `rc/integration`), every SQL suite and the race drill pass
+on a production-like replica, and all eight native iOS 27 Simulator resilience cases pass
+with synthetic accounts. Still **NOT RUN**: hosted staging (awaiting authorization) and the
+encrypted Mac backup (awaiting owner-only setup: age key, Keychain tokens, encrypted
+`HaratnaBackup` volume and offsite destination). A NOT RUN row is not a PASS.
+
+**Found and fixed on the Mac:** `20261110090000` redefined `private.guard_post_write()` with
+calls into schema `private`, undoing Codex's fix in `20261109120000`. On a replica where
+clients have no `private` usage (as in production), **every direct post insert failed**,
+including all of build 13's (`permission denied for schema private`). The cloud replica
+granted that usage, so it passed there. Fixed in commit "Keep Codex's posts-guard fix in the
+resilience migration"; rollback script updated; full rehearsal re-run.
 
 Status values:
 - **PASS**: ran, and passed.
@@ -59,7 +68,7 @@ deployed. No cleanup scheduled. Nothing uploaded to TestFlight. Build 13 remains
 | Signed URL works for permitted viewers; refused for unverified and blocked users | Policy PASS (R, S) | NOT RUN |
 | No public URL for private buckets | n/a | NOT RUN |
 | Profile photo: pending request refused; accepted request allowed | PASS (R, S) | NOT RUN |
-| Encrypted backup of Storage bytes, with restore check | PASS (fake API) | NOT RUN on the Mac |
+| Encrypted backup of Storage bytes, with restore check | PASS (fake API) | NOT RUN on the Mac: owner setup pending (section 7) |
 
 ## 5. Photo cleanup
 
@@ -73,27 +82,41 @@ deployed. No cleanup scheduled. Nothing uploaded to TestFlight. Build 13 remains
 | User JWT cannot invoke the cleanup function | Code reviewed only (the service-key check in `index.ts` has no test) | NOT RUN |
 | Exactly-once: same `op_id` returns `existing`; changed content returns `conflict` | PASS (R, S) | NOT RUN |
 
-## 6. Native resilience (iOS Simulator, Mac only)
+## 6. Native resilience (iOS Simulator, Mac)
 
-The Mac is not connected, so the Codex patches are not integrated and none of these ran.
+Environment: Xcode 27.0 (27A266a), fresh iPhone 18 Pro Simulator, iOS 27.0 (24A434). Debug
+build of `rc/integration` with a dev overlay only (bundle `sa.haratna.app.socialdev`, Apple
+Sign-In off). Backend: local synthetic Supabase through a loopback fault proxy that can drop
+or hold a response **after** the server committed. Synthetic accounts `rc4c4578-a/b@example.invalid`.
+Each test asserts its traffic reached the RC proxy. Rows were counted directly in the
+database. Evidence: `docs/social-validation/rc-integration/` (logs, `shots/`, `harness/`).
 
-| Case | Status |
-|---|---|
-| Post committed with lost response, then retry: exactly 1 post | NOT RUN |
-| Comment committed with lost response: 1 comment, 1 notification | NOT RUN |
-| Rapid repeated taps (Publish, comment send): 1 row each | NOT RUN |
-| Kill the app during publish, relaunch, retry: 1 post (operation id persisted) | NOT RUN |
-| Switch account during a request: no cross-account reuse | NOT RUN |
-| Multi-photo upload interrupted, retry: only the remaining photos uploaded, 1 post | NOT RUN |
-| Cleanup while publishing: published photos untouched | NOT RUN |
-| Arabic/English navigation and back gestures; "posting paused" error against an old server | NOT RUN |
-| iOS 27 scene lifecycle fix preserved | NOT RUN |
-| Unit tests on the Mac (tsc, eslint, jest) | NOT RUN on the Mac. The cloud session runs them on Linux. |
+| Case | Status | Evidence |
+|---|---|---|
+| Post committed with lost response, then retry: exactly 1 post | **PASS**: `COMMITTED 200 publish_post -> response dropped`; error shown, draft kept; retry returned the existing post. posts=1 | `native-cases-1-5.log`, `shots/lost-post-*` |
+| Comment committed with lost response: 1 comment, 1 notification | **PASS**: comments=1, notifications=1 | `native-cases-1-5.log`, `shots/lost-comment-*` |
+| Rapid repeated taps (Publish, comment send): 1 row each | **PASS**: 6 send taps and repeated Publish/confirm during a 4 s held response; one RPC call each; 1 comment, 1 post | `shots/rapid-*` |
+| Kill the app during publish, relaunch, retry: 1 post (operation id persisted) | **PASS**: killed after `COMMITTED 200`; relaunch and same content returned the existing post; 1 post, 1 op id | `shots/kill-relaunch-publish.png` |
+| Switch account during a request: no cross-account reuse | **PASS**: A's commit lost; B got its own comment; A's retry reconciled. A=1, B=1, 2 op ids | `shots/switch-*` |
+| Multi-photo upload interrupted, retry: only the remaining photos uploaded, 1 post | **PASS**: second upload cut; retry uploaded only the missing photo; 1 post with 2 photos, 2 objects, 0 orphans | `native-cases-6-9.log`, `shots/photo-*` |
+| Cleanup while publishing: published photos untouched | **PASS**: job ran during a held, committed publish: `claimed 1, deleted 1, failed 0`; planted abandoned upload removed; published photos and records intact; 0 dangling references. The in-flight post was text-only; the photo lock race is covered by `RACE_ALL_PASS` | `native-cases-6-9.log`, `shots/cleanup-during-publish.png` |
+| "Posting paused" against a server without the migration (Arabic and English) | **PASS**: comment and post show the localized message in both languages; 0 rows, 0 uploads | `shots/paused-*-ar.png`, `shots/paused-*-en.png` |
+| Arabic/English comment rendering and back gestures | **PASS**: comments render in both directions; English left-edge and Arabic right-edge swipes return | `shots/english-*`, `shots/arabic-*` |
+| iOS 27 scene lifecycle fix preserved | **PASS**: fresh prebuild with `expo-build-properties` (`enableSceneSupport`); built app declares `EXExpoAppSceneDelegate`; cold launch on a fresh device reached the Arabic welcome screen and every flow above | `shots/`, build log |
+| Unit tests on the Mac | **PASS**: tsc PASS; ESLint 0 errors; Jest 49/49 suites, 423/423 tests (2 timing-sensitive suites fail only under heavy machine load and pass alone, 21/21); Deno 8/8 and `deno check` PASS | `automated-checks.log` |
+| SQL suites and race drill on a production-like replica (clients have no `private` usage) | **PASS**: baseline → apply 3 → roll back 090000 → roll back 130000+120000 → re-apply; every suite ALL_PASS, `RACE_ALL_PASS` twice; privilege sweep clean | `sql-rehearsal.log` |
+
+Minor findings (not blockers):
+- After a lost response the alert says "nothing was saved — try again" even when the server committed. The retry is correct, but the wording can mislead. Suggest "We couldn't confirm this went through — try again; it won't be posted twice."
+- In Arabic, Latin names render as ".RcAlpha S" (period on the wrong side). Bidi isolation of display names is suggested.
+- `business_directory` and `neighborhood_locking` privilege assertions fail on the schema-only replica **before** any social migration (`authenticated` holds broad table grants there). Unrelated to this release. Confirm read-only against production grants.
 
 ## 7. What is needed to fill the NOT RUN rows
 
 1. **Owner authorization to provision Option A staging.** Then follow `supabase/staging/README.md`.
-   The reports go to `docs/social-validation/staging-main.md` and `staging-cleanup.md`.
-2. **Mac session:** run the encrypted backup and the restore check
-   (`HARATNA-ENCRYPTED-BACKUP.md`), integrate the four Codex patches, and run section 6.
+2. **Encrypted Mac backup (owner-only setup first):** create the encrypted APFS volume
+   `HaratnaBackup` (the existing `Haratna-Backup-5GB` disk image is AES-encrypted, but the
+   script requires a volume diskutil reports as `FileVault: Yes`), create the age key with
+   its passphrase, add the two Keychain items, and choose the offsite destination. Then
+   run `haratna-backup.sh` and `haratna-restore-check.sh` (`HARATNA-ENCRYPTED-BACKUP.md`).
 3. Then this report is updated and release approval is requested.

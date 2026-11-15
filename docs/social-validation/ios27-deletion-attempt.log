@@ -1,0 +1,8 @@
+[XCTest source]:24: error: -[Walkthrough.Walkthrough testDeleteSyntheticAccountFromSettings] : XCTAssertTrue failed - Deletion should return to sign-in
+Test Case '-[Walkthrough.Walkthrough testDeleteSyntheticAccountFromSettings]' failed (56.146 seconds).
+[XCTest source]:12: error: -[Walkthrough.Walkthrough testDeleteSyntheticAccountFromSettings] : XCTAssertEqual failed: ("Optional("nelete-f170dc2f-88fd-45f4-aa74-bb544ee78609@example.com")") is not equal to ("Optional("native-delete-f170dc2f-88fd-45f4-aa74-bb544ee78609@example.com")") - Synthetic email input did not match
+[XCTest source]:18: error: -[Walkthrough.Walkthrough testDeleteSyntheticAccountFromSettings] : failed - Synthetic sign-in did not establish a native session
+Test Case '-[Walkthrough.Walkthrough testDeleteSyntheticAccountFromSettings]' failed (36.562 seconds).
+Isolated Auth rejected the first native password grant: HTTP 400 invalid_credentials.
+A separate password grant using the intended synthetic fixture succeeded: HTTP 200.
+The second native run detected an input mismatch before Settings. Fixture values omitted.

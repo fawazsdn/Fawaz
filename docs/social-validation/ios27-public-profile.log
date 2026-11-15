@@ -1,0 +1,6 @@
+    t =    26.07s Tap "Follow" Button
+    t =    28.65s Tap "followers-count" Any
+    t =    30.56s Swipe down Application 'sa.haratna.app.socialdev'
+    t =    31.50s Press Application 'sa.haratna.app.socialdev'[0.00, 0.46] for 0.1 seconds, then drag to Application 'sa.haratna.app.socialdev'[0.79, 0.46] with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+Test Case '-[Walkthrough.Walkthrough testPublicProfileFollowAndFollowerList]' passed (34.151 seconds).
+** TEST SUCCEEDED **

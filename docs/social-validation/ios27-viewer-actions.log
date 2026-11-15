@@ -1,0 +1,7 @@
+    t =    31.12s         Checking existence of `"This account is private" Any`
+    t =    33.75s         Checking existence of `"Requested" Button`
+    t =    14.75s Tap "Withdraw follow request" Button
+    t =    22.12s Tap "Unfollow" Button
+Test Case '-[Walkthrough.Walkthrough testWithdrawUnfollowAndLike]' passed (26.924 seconds).
+** TEST SUCCEEDED **
+PASS independent local read verified the native Like

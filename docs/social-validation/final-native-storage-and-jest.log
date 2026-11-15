@@ -1,0 +1,6 @@
+final-english-storage.log:Test Case '-[Walkthrough.Walkthrough testStorageRejectionFromNativeComposer]' passed (44.203 seconds).
+final-english-storage.log:** TEST SUCCEEDED **
+final-arabic-storage.log:Test Case '-[Walkthrough.Walkthrough testStorageRejectionFromNativeComposer]' passed (18.759 seconds).
+final-arabic-storage.log:** TEST SUCCEEDED **
+Test Suites: 46 passed, 46 total
+Tests:       398 passed, 398 total

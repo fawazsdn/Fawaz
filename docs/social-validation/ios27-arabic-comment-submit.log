@@ -1,0 +1,3 @@
+[XCTest source]:13: error: -[Walkthrough.Walkthrough testArabicBackButtonCommentAndNotification] : XCTAssertTrue failed - New comment not rendered
+Test Case '-[Walkthrough.Walkthrough testArabicBackButtonCommentAndNotification]' failed (21.452 seconds).
+Independent local check found one exact-match comment written by the native composer.

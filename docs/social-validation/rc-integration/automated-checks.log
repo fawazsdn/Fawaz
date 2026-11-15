@@ -1,0 +1,20 @@
+## git (before rebase onto e9ce661; rebased tree re-verified)
+6114d07 Keep Codex's posts-guard fix in the resilience migration
+ad83a37 Apply Codex final-acceptance patch, reconciled with exactly-once writes
+9b59e7b Apply Codex native-blockers patch
+940950b Apply Codex iOS 27 scene-support patch
+33e7b20 Apply Codex PR #5 social fixes patch
+2492799 Fail closed without exactly-once functions; add safe photo cleanup job
+## tsc
+TSC PASS
+## eslint
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+## jest (clean machine)
+Test Suites: 49 passed, 49 total
+Tests:       423 passed, 423 total
+(Under heavy load from two Simulators and Metro, createActivity and neighbors suites timed out;
+ run alone they pass 21/21.)
+## deno
+ok | 8 passed | 0 failed (111ms)
+DENO CHECK PASS

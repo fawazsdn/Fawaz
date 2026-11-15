@@ -1,0 +1,17 @@
+ .../app/_layout.tsx                                | 28 ++++++++------
+ .../app/follows/[id].tsx                           | 39 +++++++++++--------
+ .../app/post/[id].tsx                              |  8 ++--
+ .../app.json                                       |  1 +
+ .../package-lock.json                              | 16 ++++++++
+ .../package.json                                   |  1 +
+ .../src/backend/__tests__/commentSync.test.ts}     | 44 ++++++++++++++++++++++
+ .../src/backend/actions.ts                         | 14 ++++---
+ .../src/backend/social.ts                          | 23 ++++++-----
+ .../src/backend/sync.ts                            |  8 +++-
+ .../src/components/Composer.tsx                    | 18 ++++++---
+ .../neighbors/__tests__/neighbors.test.tsx         |  2 +
+ .../src/features/social/__tests__/social.test.tsx  | 31 ++++++++++++++-
+ .../src/features/social/useSocialProfile.ts        | 42 ++++++++++++++-------
+ .../20261109120000_social_follows_photo_posts.sql  |  9 ++++-
+ .../supabase/tests/social_follows.sql              | 12 ++++++
+ 16 files changed, 227 insertions(+), 69 deletions(-)

@@ -1,0 +1,6 @@
+PASS src/features/social/__tests__/social.test.tsx (14.964 s)
+PASS src/backend/__tests__/profilePhotos.test.ts
+PASS src/backend/__tests__/actions.test.ts
+PASS src/features/auth/appleDeletion.test.ts
+Test Suites: 4 passed, 4 total
+Tests:       45 passed, 45 total
