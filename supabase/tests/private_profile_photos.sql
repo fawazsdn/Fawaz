@@ -7,7 +7,7 @@ declare
   -- a, b verified in nb; c verified in nb2; u unverified; s staff.
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); c uuid := gen_random_uuid();
   u uuid := gen_random_uuid(); s uuid := gen_random_uuid();
-  nb text := 'sa-district-10500227013'; nb2 text := 'sa-district-10500227005';
+  nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013'); nb2 text := coalesce(nullif(current_setting('haratna.test_nb2', true), ''), 'sa-district-10500227005');
   cnt int; ok boolean; err text; passed int := 0; j jsonb; photo_b text; photo_c text; p uuid; cm uuid;
   legacy text := 'https://example.supabase.co/storage/v1/object/public/avatars/';
 begin

@@ -6,7 +6,7 @@
 do $t$
 declare
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); n uuid := gen_random_uuid();
-  nb text := 'sa-district-10500227013';
+  nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013');
   cnt int; ok boolean; passed int := 0; p1 uuid; p2 uuid; p_pub uuid; p_fol uuid; cm uuid; notif uuid;
   avatar text; photo text;
 begin

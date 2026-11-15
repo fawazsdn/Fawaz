@@ -5,7 +5,7 @@
 do $t$
 declare
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); c uuid := gen_random_uuid(); o uuid := gen_random_uuid();
-  nb text := 'sa-district-10500227013'; nb2 text := 'sa-district-10500227005';
+  nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013'); nb2 text := coalesce(nullif(current_setting('haratna.test_nb2', true), ''), 'sa-district-10500227005');
   st text; err text; cnt int; req uuid; conv uuid; ev uuid; inv uuid; ok boolean; passed int := 0;
 begin
   insert into auth.users(id, aud, role, email, instance_id)

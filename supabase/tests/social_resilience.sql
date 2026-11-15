@@ -4,7 +4,7 @@
 do $t$
 declare
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); u uuid := gen_random_uuid();
-  nb text := 'sa-district-10500227013';
+  nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013');
   op uuid := gen_random_uuid(); op2 uuid := gen_random_uuid(); cop uuid := gen_random_uuid();
   r jsonb; r2 jsonb; cnt int; ok boolean; err text; passed int := 0;
   p1 text; p2 text; p3 text; stale text; post_id uuid; c_id uuid;

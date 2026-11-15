@@ -2,7 +2,7 @@
 -- the transaction, so nothing persists. Expected output: "ALL_PASS ...".
 -- Run with: psql "$DATABASE_URL" -f supabase/tests/poll_vote_change.sql
 do $t$
-declare u1 uuid := gen_random_uuid(); u2 uuid := gen_random_uuid(); nb text := 'sa-district-10500227013';
+declare u1 uuid := gen_random_uuid(); u2 uuid := gen_random_uuid(); nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013');
   p public.polls; oa uuid; ob uuid; cnt int; tot int; seen int; ok boolean;
 begin
   insert into auth.users(id, aud, role, email, instance_id) values

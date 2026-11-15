@@ -5,7 +5,7 @@ do $t$
 declare
   owner uuid := gen_random_uuid(); adm uuid := gen_random_uuid(); mem uuid := gen_random_uuid(); minor uuid := gen_random_uuid();
   unver uuid := gen_random_uuid(); outsider uuid := gen_random_uuid(); nbr uuid := gen_random_uuid();
-  nb text := 'sa-district-10500227013'; nb2 text := 'sa-district-10500227005';
+  nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013'); nb2 text := coalesce(nullif(current_setting('haratna.test_nb2', true), ''), 'sa-district-10500227005');
   app jsonb; c uuid; c2 uuid; ev uuid; ev2 uuid; conv uuid; cnt int; st text; ok boolean; err text; adult boolean; passed int := 0;
 begin
   insert into auth.users(id, aud, role, email, instance_id)

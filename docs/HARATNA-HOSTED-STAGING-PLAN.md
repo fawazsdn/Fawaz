@@ -1,6 +1,7 @@
 # Haratna hosted staging plan: awaiting owner approval (2026-11-15)
 
-Status: **plan approved in outline; provisioning NOT yet authorized. Nothing has been provisioned.** Supabase Security (ticket SU-545749)
+Status: **plan approved in outline; provisioning NOT yet authorized. Nothing has been provisioned.**
+The kit is ready and rehearsed locally: `supabase/staging/README.md`. Results go into `docs/HARATNA-PRERELEASE-PASSFAIL.md`. Supabase Security (ticket SU-545749)
 recommended a separate hosted project or a preview branch for these tests. This document
 covers the environment, cost, isolation, data and test matrix. Provisioning waits for
 the owner's approval of section 2.

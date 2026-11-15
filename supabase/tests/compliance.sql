@@ -1,7 +1,7 @@
 -- Compliance backend: content filter, support requests, manual verification.
 -- Self-cleaning (final RAISE rolls back). Expected: "ALL_PASS ...".
 do $t$
-declare a uuid := gen_random_uuid(); x uuid := gen_random_uuid(); nb text := 'sa-district-10500227013';
+declare a uuid := gen_random_uuid(); x uuid := gen_random_uuid(); nb text := coalesce(nullif(current_setting('haratna.test_nb', true), ''), 'sa-district-10500227013');
   err text; ok boolean; cnt int; passed int := 0; req uuid;
 begin
   insert into auth.users(id, aud, role, email, instance_id)
