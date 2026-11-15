@@ -23,7 +23,14 @@ Not included: realtime (transient), vault (secrets), extension-owned tables
 (spatial_ref_sys), and storage file bytes (files live in object storage; only
 their metadata rows are here).
 
-The Management API token is never read by this script: the session proxy adds it.
+Token: in the cloud session the proxy adds it. On the Mac, the wrapper script
+reads it from the macOS Keychain into SUPABASE_ACCESS_TOKEN for this process only;
+it is never printed or written to disk.
+
+Local verify server: set HARATNA_PG to a libpq URL of a LOCAL scratch Postgres with
+PostGIS (for example postgresql://postgres@127.0.0.1:55432). Anything that is not
+localhost is refused, so a backup can never be restored into a hosted project.
+Without HARATNA_PG the tool uses `su postgres` (Linux cloud session).
 """
 import datetime
 import hashlib
@@ -31,6 +38,7 @@ import json
 import os
 import subprocess
 import sys
+import urllib.parse
 import urllib.request
 
 PROJECT = os.environ.get("SUPABASE_PROJECT_REF", "ckqwziutmqohihrenstz")
@@ -43,7 +51,8 @@ def q(sql: str):
     req = urllib.request.Request(
         API,
         data=json.dumps({"query": sql, "read_only": True}).encode(),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer proxy-injected"},
+        headers={"Content-Type": "application/json",
+                 "Authorization": "Bearer " + os.environ.get("SUPABASE_ACCESS_TOKEN", "proxy-injected")},
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=300) as r:
@@ -233,8 +242,29 @@ def export(out: str):
     print(f"snapshot {snap['snapshot_at']} | {len(tables)} tables | {total} rows | latest migration {meta['latest_migration']}")
 
 
+LOCAL_PG = os.environ.get("HARATNA_PG")
+if LOCAL_PG:
+    _host = urllib.parse.urlparse(LOCAL_PG).hostname or ""
+    if _host not in ("", "localhost", "127.0.0.1", "::1"):
+        raise SystemExit("HARATNA_PG must point at a local scratch server (localhost only)")
+
+
+def psql_cmd(db, extra="-At"):
+    if LOCAL_PG:
+        return ["psql", "-q", "-X", "-v", "ON_ERROR_STOP=1"] + extra.split() + ["-d", LOCAL_PG.rstrip("/") + "/" + db]
+    return ["su", "postgres", "-c", f"psql -q -X -v ON_ERROR_STOP=1 {extra} -d {db}"]
+
+
+def recreate_db(db):
+    if LOCAL_PG:
+        for stmt in (f"drop database if exists {db}", f"create database {db}"):
+            subprocess.run(psql_cmd("postgres", "-At") + ["-c", stmt], check=True)
+    else:
+        subprocess.run(["su", "postgres", "-c", f"dropdb --if-exists {db}; createdb {db}"], check=True)
+
+
 def psql(db, sql=None, file=None, capture=False):
-    cmd = ["su", "postgres", "-c", f"psql -q -X -v ON_ERROR_STOP=1 -At -d {db}"]
+    cmd = psql_cmd(db)
     data = sql if sql is not None else open(file).read()
     r = subprocess.run(cmd, input=data, text=True, capture_output=True)
     if r.returncode != 0:
@@ -277,7 +307,7 @@ def verify(out):
                 raise SystemExit(f"file checksum mismatch: {fn}")
     data = json.load(open(os.path.join(out, "data.json")))
     db = "haratna_backup_verify"
-    subprocess.run(["su", "postgres", "-c", f"dropdb --if-exists {db}; createdb {db}"], check=True)
+    recreate_db(db)
     boot = open(os.path.join(os.path.dirname(__file__), "verify_bootstrap.sql")).read()
     psql(db, boot)
     psql(db, open(os.path.join(out, "platform.sql")).read())
@@ -290,7 +320,7 @@ def verify(out):
         columns[name] = psql(db, f"select string_agg(quote_ident(attname), ',' order by attnum) from pg_attribute "
                                  f"where attrelid='\"{s_}\".\"{t_}\"'::regclass and attnum>0 and not attisdropped and attgenerated='';").strip()
     write_restore(out, columns)
-    subprocess.run(["su", "postgres", "-c", f"psql -q -X -1 -v ON_ERROR_STOP=1 -d {db}"],
+    subprocess.run(psql_cmd(db, "-1"),
                    stdin=open(os.path.join(out, "restore.sql")), check=True, capture_output=True)
     bad = []
     for name, info in sorted(man["tables"].items()):
