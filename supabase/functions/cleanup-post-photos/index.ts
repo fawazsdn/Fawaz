@@ -1,7 +1,7 @@
 // Deno resolves versioned npm specifiers at runtime.
 // eslint-disable-next-line import/no-unresolved
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
-import { runCleanup, type CleanupClient } from './cleanup.ts';
+import { isServiceRoleRequest, runCleanup, type CleanupClient } from './cleanup.ts';
 
 /**
  * Scheduled job: removes abandoned post-photo uploads. Only the service role
@@ -15,8 +15,8 @@ Deno.serve(async (request) => {
   const url = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !serviceRoleKey) return new Response(JSON.stringify({ error: 'Server configuration is incomplete' }), { status: 500, headers: jsonHeaders });
-  // Only the service role, never a resident's session.
-  if (request.headers.get('Authorization') !== `Bearer ${serviceRoleKey}`) {
+  // Only the service role, never a resident's session (see isServiceRoleRequest).
+  if (!isServiceRoleRequest(request.headers.get('Authorization'), serviceRoleKey)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: jsonHeaders });
   }
   const body = await request.json().catch(() => ({}));

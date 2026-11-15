@@ -66,7 +66,16 @@ export async function runCleanup(client: CleanupClient, opts: CleanupOptions = {
     let failed: string[] = [];
     const removal = await client.storage.from(BUCKET).remove(paths);
     if (removal.error) failed = paths;
-    else deleted = paths;
+    else {
+      // Storage returns the objects it actually deleted; a file it skipped (no
+      // permission, or already gone) is simply missing from the list, with no error.
+      // Only confirmed deletions drop their records; the rest stay claimed and retry.
+      const removed = new Set(
+        ((removal.data ?? []) as unknown[]).map((o) => (typeof o === 'string' ? o : (o as { name?: string })?.name)),
+      );
+      deleted = paths.filter((p) => removed.has(p));
+      failed = paths.filter((p) => !removed.has(p));
+    }
 
     const fin = await client.rpc('finish_post_photo_cleanup', { deleted_paths: deleted, failed_paths: failed });
     // If finishing fails the claims simply become due again after staleAfter.
@@ -76,4 +85,27 @@ export async function runCleanup(client: CleanupClient, opts: CleanupOptions = {
     if (failed.length > 0) break; // Storage is unhappy: stop, retry next run
   }
   return result;
+}
+
+/**
+ * Only the service role may run the job, never a resident's session.
+ *
+ * The function runs with JWT verification on (Supabase's default), so the gateway has
+ * already checked the token's signature; its `role` claim can be trusted. An exact match
+ * with the injected service key is also accepted. Staging (2026-11-15) showed that the
+ * injected SUPABASE_SERVICE_ROLE_KEY is not always byte-identical to the legacy service JWT
+ * callers send, so an exact match alone refused the real service role.
+ */
+export function isServiceRoleRequest(authorization: string | null, serviceRoleKey: string): boolean {
+  if (!authorization?.startsWith('Bearer ')) return false;
+  const token = authorization.slice('Bearer '.length).trim();
+  if (token === serviceRoleKey) return true;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  try {
+    const json = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(parts[1].length / 4) * 4, '='));
+    return (JSON.parse(json) as { role?: unknown }).role === 'service_role';
+  } catch {
+    return false;
+  }
 }
