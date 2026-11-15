@@ -6,7 +6,11 @@ import { supabase } from '@/lib/supabase';
 import { useStore } from '@/store/useStore';
 import { signInVerifiedForTests, TEST_ME, TEST_NEIGHBOR } from '@/testing/fixtures';
 import { Composer } from '@/components/Composer';
+import { actionErrorMessage } from '@/hooks/useAction';
+import ar from '@/i18n/ar';
+import en from '@/i18n/en';
 import { addComment, createPost } from '../actions';
+import { addCommentOnce } from '../social';
 import { beginOp, commentScope, PENDING_OP_TTL_MS, POST_COMPOSER_SCOPE } from '../pendingOps';
 import { useSocialStore } from '../socialState';
 
@@ -198,5 +202,42 @@ describe('comment composer', () => {
     fireEvent.changeText(r.getByPlaceholderText('Write'), 'hello');
     await act(async () => fireEvent.press(r.getByTestId('composer-send')));
     expect(r.getByDisplayValue('hello')).toBeTruthy();
+  });
+});
+
+describe('a dropped connection on an exactly-once write says retrying is safe', () => {
+  const messageFor = (err: unknown, locale: 'ar' | 'en') => actionErrorMessage(locale === 'ar' ? ar : en, err);
+
+  it('a post whose response was lost reports retry_safe, never "nothing was saved"', async () => {
+    rpc.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')));
+    const err = await post([]).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: 'offline', reason: 'retry_safe' });
+    expect(messageFor(err, 'en')).toBe(en.errors.offlineRetrySafe);
+    expect(messageFor(err, 'ar')).toBe(ar.errors.offlineRetrySafe);
+    expect(en.errors.offlineRetrySafe).not.toMatch(/nothing was saved/i);
+    expect(ar.errors.offlineRetrySafe).not.toContain('ما تم الحفظ');
+  });
+
+  it('a comment whose response was lost reports retry_safe', async () => {
+    rpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: { message: 'TypeError: Network request failed' } }));
+    const err = await addCommentOnce('post-1', 'hi').catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: 'offline', reason: 'retry_safe' });
+  });
+
+  it('a photo upload cut mid-batch reports retry_safe', async () => {
+    failUploadAt = 1;
+    const err = await post(['file:///1.jpg', 'file:///2.jpg']).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: 'offline', reason: 'retry_safe' });
+  });
+
+  it('a real rejection is not turned into a connection message', async () => {
+    rpc.mockImplementationOnce(() => Promise.resolve({ data: null, error: { code: '42501', message: 'forbidden' } }));
+    const err = await post([]).catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: 'forbidden' });
+  });
+
+  it('other actions no longer claim nothing was saved after a dropped connection', () => {
+    expect(en.errors.offlineAction).not.toMatch(/nothing was saved/i);
+    expect(ar.errors.offlineAction).not.toContain('ما تم الحفظ');
   });
 });

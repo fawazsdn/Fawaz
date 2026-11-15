@@ -4,48 +4,51 @@ import { Alert } from 'react-native';
 import { ActionError } from '@/backend/actions';
 import { useI18n } from '@/i18n/useI18n';
 
+type Dictionary = ReturnType<typeof useI18n>['t'];
+
 /** Maps an ActionError to a translated, human message. */
+export function actionErrorMessage(t: Dictionary, err: unknown): string {
+  const code = err instanceof ActionError ? err.code : 'unknown';
+  // Specific reasons raised by club/activity RPCs ("not_adult", "rate_limited", "invalid:name", ...).
+  const reason = err instanceof ActionError ? err.reason : undefined;
+  if (reason) {
+    if (reason === 'neighborhood_locked') return t.neighborhoodChange.locked;
+    if (reason === 'content_blocked') return t.errors.contentBlocked;
+    const clubErrors = t.clubs.errors as Record<string, string>;
+    if (clubErrors[reason]) return clubErrors[reason];
+    const neighborErrors = t.neighbors.errors as Record<string, string>;
+    if (neighborErrors[reason]) return neighborErrors[reason];
+    if (reason === 'invalid:custom_category') return t.eventCreate.customCategoryRequired;
+    if (reason === 'invalid:images' || reason === 'invalid:image_size') return t.social.imageRejected;
+    if (reason === 'blocked') return t.errors.forbidden;
+    if (reason === 'server_update_required') return t.errors.serverUpdateRequired;
+    if (reason === 'retry_safe') return t.errors.offlineRetrySafe;
+    if (reason.startsWith('invalid:')) return t.clubs.fixFields;
+  }
+  switch (code) {
+    case 'not_signed_in':
+      return t.errors.notSignedIn;
+    case 'not_verified':
+      return t.errors.notVerified;
+    case 'no_neighborhood':
+      return t.errors.noNeighborhood;
+    case 'offline':
+      return t.errors.offlineAction;
+    case 'closed':
+      return t.errors.closed;
+    case 'forbidden':
+      return t.errors.forbidden;
+    case 'invalid':
+      return t.errors.invalid;
+    default:
+      return t.errors.genericBody;
+  }
+}
+
+/** Hook form of actionErrorMessage for the active language. */
 export function useActionErrorMessage() {
   const { t } = useI18n();
-  return useCallback(
-    (err: unknown): string => {
-      const code = err instanceof ActionError ? err.code : 'unknown';
-      // Specific reasons raised by club/activity RPCs ("not_adult", "rate_limited", "invalid:name", ...).
-      const reason = err instanceof ActionError ? err.reason : undefined;
-      if (reason) {
-        if (reason === 'neighborhood_locked') return t.neighborhoodChange.locked;
-        if (reason === 'content_blocked') return t.errors.contentBlocked;
-        const clubErrors = t.clubs.errors as Record<string, string>;
-        if (clubErrors[reason]) return clubErrors[reason];
-        const neighborErrors = t.neighbors.errors as Record<string, string>;
-        if (neighborErrors[reason]) return neighborErrors[reason];
-        if (reason === 'invalid:custom_category') return t.eventCreate.customCategoryRequired;
-        if (reason === 'invalid:images' || reason === 'invalid:image_size') return t.social.imageRejected;
-        if (reason === 'blocked') return t.errors.forbidden;
-        if (reason === 'server_update_required') return t.errors.serverUpdateRequired;
-        if (reason.startsWith('invalid:')) return t.clubs.fixFields;
-      }
-      switch (code) {
-        case 'not_signed_in':
-          return t.errors.notSignedIn;
-        case 'not_verified':
-          return t.errors.notVerified;
-        case 'no_neighborhood':
-          return t.errors.noNeighborhood;
-        case 'offline':
-          return t.errors.offlineAction;
-        case 'closed':
-          return t.errors.closed;
-        case 'forbidden':
-          return t.errors.forbidden;
-        case 'invalid':
-          return t.errors.invalid;
-        default:
-          return t.errors.genericBody;
-      }
-    },
-    [t],
-  );
+  return useCallback((err: unknown) => actionErrorMessage(t, err), [t]);
 }
 
 export type ActionResult<T> = { ok: true; value: T } | { ok: false };

@@ -87,6 +87,22 @@ function fail(error: { code?: string; message?: string }): never {
   throw new ActionError('unknown', msg);
 }
 
+/**
+ * Exactly-once writes reuse their operation id (and uploaded photos) on retry,
+ * so a dropped connection - even after the server committed - is safe to retry.
+ * Says so instead of a generic "connection lost".
+ */
+async function retrySafe<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    const e = err as { code?: string; message?: string } | null;
+    const offline = err instanceof ActionError ? err.code === 'offline' : /network|fetch|timed out/i.test(e?.message ?? String(err));
+    if (offline) throw new ActionError('offline', 'retry_safe');
+    throw err;
+  }
+}
+
 async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.rpc(name, args);
   if (isMissingFunction(error)) {
@@ -450,7 +466,11 @@ async function uploadDraftPhotos(uid: string, scope: string, op: PendingOp, loca
  * the server cleans up abandoned uploads and refuses to delete photos a post
  * uses. Fails closed (server_update_required) when the function is missing.
  */
-export async function publishPostOnce(input: PublishInput): Promise<string> {
+export function publishPostOnce(input: PublishInput): Promise<string> {
+  return retrySafe(() => publishPostOnceInner(input));
+}
+
+async function publishPostOnceInner(input: PublishInput): Promise<string> {
   const uid = me();
   await requireExactlyOnce();
   const scope = input.scope ?? POST_COMPOSER_SCOPE;
@@ -495,7 +515,11 @@ export async function publishPostOnce(input: PublishInput): Promise<string> {
 }
 
 /** Adds a comment exactly once per draft; same retry and fail-closed rules as publishPostOnce. */
-export async function addCommentOnce(postId: string, text: string, parentId?: string): Promise<string> {
+export function addCommentOnce(postId: string, text: string, parentId?: string): Promise<string> {
+  return retrySafe(() => addCommentOnceInner(postId, text, parentId));
+}
+
+async function addCommentOnceInner(postId: string, text: string, parentId?: string): Promise<string> {
   const uid = me();
   await requireExactlyOnce();
   const scope = commentScope(postId, parentId);
