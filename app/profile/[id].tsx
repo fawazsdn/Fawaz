@@ -119,7 +119,8 @@ export default function ProfileScreen() {
   const recommendations = useMemo(() => allRecommendations.filter((r) => r.authorId === id), [allRecommendations, id]);
 
   const waiting = !user && (loadState === 'loading' || (socialOn && spStatus === 'loading'));
-  if (!user && !sp) {
+  // Hidden by the server (blocked, or no longer visible): never fall back to local data.
+  if ((!user && !sp) || (spStatus === 'hidden' && !isOwn)) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <AppHeader title="" fallbackRoute="/" />

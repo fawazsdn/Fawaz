@@ -164,6 +164,23 @@ export async function fetchSocialProfile(userId: string): Promise<SocialProfile 
   return mapSocialProfile(signed);
 }
 
+/**
+ * The server no longer shows this profile to the viewer (they were blocked, or
+ * a private account's neighborhood visibility ended). Drop what this device
+ * still holds about them - profile record, interests, signed photo links and
+ * in-memory images - and resync so lists reflect the server. Links already
+ * issued stay valid until they expire (documented limitation).
+ */
+export async function forgetHiddenProfile(userId: string): Promise<void> {
+  const state = useStore.getState();
+  if (userId === getCurrentUserId()) return;
+  const { [userId]: _forgotten, ...interests } = state.profileInterests;
+  state.applyEntities({ users: state.users.filter((u) => u.id !== userId) });
+  useStore.setState({ profileInterests: interests });
+  await clearPrivateMediaCaches();
+  await requestSync().catch(() => undefined);
+}
+
 export async function followUser(userId: string): Promise<FollowState> {
   me();
   const state = await rpc<FollowState>('follow_user', { target: userId });

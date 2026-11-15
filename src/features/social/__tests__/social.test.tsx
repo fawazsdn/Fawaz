@@ -279,6 +279,21 @@ describe('Profile', () => {
     expect(mockPush).toHaveBeenCalledWith(`/follows/${TEST_NEIGHBOR}?tab=followers`);
   });
 
+  it('when the server hides a profile (e.g. they blocked you), shows unavailable and forgets local data', async () => {
+    mockParams = { id: TEST_NEIGHBOR };
+    const s = useStore.getState();
+    const known = s.getUser(TEST_NEIGHBOR) ?? { ...s.users[0], id: TEST_NEIGHBOR };
+    s.applyEntities({
+      users: [...s.users.filter((u) => u.id !== TEST_NEIGHBOR), { ...known, firstName: 'Stale', avatarUrl: 'https://example.invalid/storage/v1/object/sign/profile-photos/x.jpg?token=t' }],
+    });
+    expect(useStore.getState().getUser(TEST_NEIGHBOR)).toBeTruthy();
+    mockRpc({ social_profile: () => ({ data: null }) });
+    await renderScreen(<ProfileScreen />);
+    expect(await screen.findByText(en.social.unavailable)).toBeTruthy();
+    expect(screen.queryByText(/Stale/)).toBeNull();
+    await waitFor(() => expect(useStore.getState().getUser(TEST_NEIGHBOR)).toBeUndefined());
+  });
+
   it('hides content of a private account you do not follow', async () => {
     mockParams = { id: TEST_NEIGHBOR };
     mockRpc({ social_profile: () => ({ data: card({ is_private: true, can_view_content: false }) }) });

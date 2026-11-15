@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 
-import { fetchSocialProfile, type SocialProfile } from '@/backend/social';
+import { fetchSocialProfile, forgetHiddenProfile, type SocialProfile } from '@/backend/social';
 import { useSocialStore } from '@/backend/socialState';
 import { useCurrentUserId } from '@/store/useStore';
 
@@ -25,7 +25,10 @@ export function useSocialProfile(userId: string | undefined) {
     const id = ++request.current;
     try {
       const profile = await fetchSocialProfile(userId);
-      if (id === request.current) setProfile(profile);
+      if (id !== request.current) return;
+      setProfile(profile);
+      // Hidden by the server (e.g. they blocked you): forget what this device holds.
+      if (!profile && userId !== viewer) void forgetHiddenProfile(userId);
     } catch {
       if (id !== request.current) return;
       const status = useSocialStore.getState().available === false ? 'unavailable' : 'error';
