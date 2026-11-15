@@ -1,11 +1,23 @@
 import { useCallback, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { fetchSocialProfile, forgetHiddenProfile, type SocialProfile } from '@/backend/social';
 import { useSocialStore } from '@/backend/socialState';
 import { useCurrentUserId } from '@/store/useStore';
 
-/** Loads the social profile card for the active viewer and refreshes it on focus. */
+/**
+ * How often an open profile re-checks that it may still be shown. The blocked
+ * person can't see block rows (by design), so there is no event to listen to;
+ * a short re-check bounds how long a block takes to reach an open screen.
+ */
+export const PROFILE_RECHECK_MS = 30_000;
+
+/**
+ * Loads the social profile card for the active viewer, refreshes it on focus,
+ * when the app returns to the foreground, and every PROFILE_RECHECK_MS while
+ * the screen is focused.
+ */
 export function useSocialProfile(userId: string | undefined) {
   const viewer = useCurrentUserId();
   const key = JSON.stringify([viewer, userId]);
@@ -38,7 +50,15 @@ export function useSocialProfile(userId: string | undefined) {
 
   useFocusEffect(useCallback(() => {
     void reload();
-    return () => { request.current++; };
+    const timer = setInterval(() => void reload(), PROFILE_RECHECK_MS);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void reload();
+    });
+    return () => {
+      request.current++;
+      clearInterval(timer);
+      sub.remove();
+    };
   }, [reload]));
 
   const current = result?.key === key ? result : undefined;

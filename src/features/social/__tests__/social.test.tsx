@@ -13,6 +13,7 @@ import { useSocialStore } from '@/backend/socialState';
 import { movePhoto } from '../photoOrder';
 import { FollowButton } from '../FollowButton';
 import ProfileScreen from '../../../../app/profile/[id]';
+import { PROFILE_RECHECK_MS } from '../useSocialProfile';
 import CreatePostScreen from '../../../../app/create/post';
 import FollowsScreen from '../../../../app/follows/[id]';
 import { bidiSafeName } from '@/utils/format';
@@ -292,6 +293,25 @@ describe('Profile', () => {
     expect(await screen.findByText(en.social.unavailable)).toBeTruthy();
     expect(screen.queryByText(/Stale/)).toBeNull();
     await waitFor(() => expect(useStore.getState().getUser(TEST_NEIGHBOR)).toBeUndefined());
+  });
+
+  it('an open profile re-checks on its own and goes unavailable when the server starts hiding it', async () => {
+    jest.useFakeTimers();
+    try {
+      mockParams = { id: TEST_NEIGHBOR };
+      let hidden = false;
+      mockRpc({ social_profile: () => ({ data: hidden ? null : card() }) });
+      await renderScreen(<ProfileScreen />);
+      expect(await screen.findByText('12')).toBeTruthy();
+      hidden = true; // e.g. they blocked you while you are looking at their profile
+      await act(async () => {
+        jest.advanceTimersByTime(PROFILE_RECHECK_MS);
+      });
+      expect(await screen.findByText(en.social.unavailable)).toBeTruthy();
+      expect(screen.queryByText('12')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('hides content of a private account you do not follow', async () => {
