@@ -1,0 +1,7 @@
+Supabase advisors on staging (2026-11-15), counts by level/category/name:
+  18 INFO  PERFORMANCE  unindexed_foreign_keys
+  35 INFO  PERFORMANCE  unused_index
+   1 WARN  SECURITY     anon_security_definer_function_executable
+   1 WARN  SECURITY     auth_insufficient_mfa_options
+   1 WARN  SECURITY     auth_leaked_password_protection
+  80 WARN  SECURITY     authenticated_security_definer_function_executable

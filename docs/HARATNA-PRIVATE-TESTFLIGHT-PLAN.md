@@ -76,6 +76,23 @@ Sequence (staging only; production is never touched):
     `EXPO_PUBLIC_SUPABASE_ANON_KEY` (staging's publishable key; set by the owner or through
     the EAS CLI, never pasted into chat or Git).
 
+## 3b. Staging backend status (2026-11-15)
+
+Project `qcinkzciwjmiavptlfxy` ("haratna-staging", organization "حارتنا", Free,
+`ap-southeast-1`). Built from the verified 2026-11-09 backup (structure only), real public
+geography, synthetic `@example.test` accounts only; production was not contacted for the
+build. Results: `docs/HARATNA-STAGING-RESULTS.md`.
+
+Values the staging build needs (EAS environment `preview`; the owner sets them, or approves
+setting them):
+- `EXPO_PUBLIC_SUPABASE_URL` = `https://qcinkzciwjmiavptlfxy.supabase.co`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` = staging's **publishable/anon** key (Dashboard → Project
+  Settings → API, or `supabase projects api-keys --project-ref qcinkzciwjmiavptlfxy`). Never the
+  service key.
+
+Owner test account on staging: sign up in the app with any email (auto-confirmed, no email is
+sent). Location verification works against the real neighborhood boundaries.
+
 ## 4. Build and private TestFlight (after section 3 passes)
 
 1. **Owner:** approve pushing `2e0ab44` (or build it from the local commit).

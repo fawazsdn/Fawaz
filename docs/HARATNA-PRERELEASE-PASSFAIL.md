@@ -26,6 +26,18 @@ Status values:
 Production head: `20261108142118`, unchanged. PR #5 is not merged. No production functions
 deployed. No cleanup scheduled. Nothing uploaded to TestFlight. Build 13 remains the fallback.
 
+## 0. Hosted staging (2026-11-15)
+
+The **Hosted staging** columns below are now filled by `docs/HARATNA-STAGING-RESULTS.md`
+(project `qcinkzciwjmiavptlfxy`, production structure from the verified 2026-11-09 backup,
+public geography, synthetic accounts). Summary: 13/13 SQL suites PASS (before and after a full
+rollback/re-apply); hosted matrix 45 PASS / 2 FAIL (deleted posts keep their photos: design
+gap, owner decision); JWT, RLS, Storage, exactly-once and account deletion PASS; cleanup job
+FAIL → fixed (authorization) → PASS; rollback/re-apply on synthetic data identical. New
+production findings: cleanup authorization bug (fixed), rollback prerequisite script can't run
+with production's `service_role` grants, `supabase db push` would apply the unapproved
+`20261014110000`.
+
 ## 1. Hosted permissions (JWT role switching, RLS)
 
 | Case | Offline | Hosted staging |

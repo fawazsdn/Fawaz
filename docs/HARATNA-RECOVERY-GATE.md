@@ -60,6 +60,31 @@ membership in `postgres` means anyone who can `SET ROLE` to it inherits those ri
 **It was not changed.** The owner decides whether to keep it, or to drop it after a
 backup (section 7, item 6). It is not part of the app's migrations.
 
+### 2.1 Security incident 2026-11-15: CLI temporary login role on production
+
+**What happened.** During staging preparation, Claude linked the Supabase CLI (v2.109.1, the
+owner's logged-in session) to production and ran two read-only catalog queries with
+`supabase db query --linked` (a project identity/migration-head probe and a role check). The
+queries themselves ran in read-only transactions (`transaction_read_only = on`; production
+head confirmed `20261108142118`). But before each query the CLI **initialises a temporary login
+role**: production then showed `cli_login_postgres` (`rolcanlogin = true`, member of
+`postgres`) with `rolvaliduntil = 2026-11-15 16:20:38.770748+00`. Whether the role existed
+before (for example from earlier CLI use) is unknown; the CLI created or refreshed it and set or
+extended its validity. This is a production role change, which the owner had prohibited.
+
+**Containment.** Production access through the CLI stopped immediately; the production-linked
+CLI folder was deleted. No other production command was run. No production data, schema,
+migration, function, policy or Storage object was changed.
+
+**Owner decision (2026-11-15).** Leave `cli_login_postgres` unchanged: do not remove, renew or
+modify it. Its login validity (16:20:38 UTC) has expired. Do not use a production-linked CLI
+again. The staging schema was then taken from the verified 2026-11-09 local backup instead of
+production.
+
+**Lesson.** `supabase db query --linked` is not a read-only operation on the project even for
+read-only SQL. Production reads, when ever approved again, must use a path that creates no
+roles (the Management API query endpoint with `read_only: true`).
+
 ## 3. Evidence: customer-owned recovery
 
 ### 3.1 Fresh logical export

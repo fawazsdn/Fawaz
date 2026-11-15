@@ -1,0 +1,49 @@
+### A. roll back 20261115100000
+[{"head": "20261110090000"}]
+EXPECTED-FAIL private_profile_audience :: ERROR:  P0001: FAIL followers-only post exposed the private profile row
+FAIL social_follows :: ERROR:  P0001: FAIL photo listing leaks
+PASS private_profile_photos
+PASS build13_compat
+PASS social_resilience
+PASS neighbors
+### B. roll back 20261110090000
+[{"head": "20261109130000"}]
+FAIL social_follows :: ERROR:  P0001: FAIL photo listing leaks
+PASS private_profile_photos
+PASS build13_compat
+PASS neighbors
+PASS compliance
+PASS clubs
+### C. seed drill data
+[{"drill_accounts": 4}]
+### before (check.sql)
+[{"k": "audiences", "v": "b0000000-0000-0000-0000-000000000001=public,b0000000-0000-0000-0000-000000000002=followers,b0000000-0000-0000-0000-000000000003=neighborhood"}, {"k": "avatar_paths", "v": "3"}, {"k": "follow_notifications", "v": "4"}, {"k": "follows", "v": "5"}, {"k": "follows_pending", "v": "1"}, {"k": "private_accounts", "v": "2"}, {"k": "profile_photo_files", "v": "6"}]
+### D. roll back 20261109130000 (must STOP: private-only photo)
+rollback stopped: 1 profile(s) have only a private photo; run --restore-public first (or set haratna.allow_photo_fallback=on to accept initials)
+### E. give private-only photos a public link (SQL stand-in for --restore-public)
+[{"private_only_left": 1}]
+### F. roll back 20261109130000, then 20261109120000
+[{"head": "20261109120000"}]
+[{"head": "20261108142118"}]
+### rolled-back state (check_rolled_back.sql)
+[{"k": "audiences_while_rolled_back", "v": "b0000000-0000-0000-0000-000000000001=neighborhood,b0000000-0000-0000-0000-000000000002=neighborhood,b0000000-0000-0000-0000-000000000003=neighborhood"}, {"k": "profile_photo_files_kept", "v": "6"}, {"k": "r2_public_link_restored", "v": "1"}, {"k": "saved_audiences", "v": "12"}, {"k": "saved_avatar_paths", "v": "3"}, {"k": "saved_follows", "v": "5"}, {"k": "saved_notifications", "v": "4"}, {"k": "saved_private", "v": "2"}]
+### baseline suites while rolled back
+PASS neighbors
+PASS compliance
+PASS clubs
+PASS poll_vote_change
+PASS admin_support
+PASS public_support
+PASS business_directory
+PASS neighborhood_locking
+### G. re-apply the four migrations
+20261109120000_social_follows_photo_posts: [{"head": "20261109120000"}]
+20261109130000_private_profile_photos: [{"head": "20261109130000"}]
+20261110090000_social_resilience: [{"head": "20261110090000"}]
+20261115100000_private_profile_audience: [{"head": "20261115100000"}]
+### restore archived social data
+[{"result": "RESTORE_OK"}]
+### after (check.sql)
+[{"k": "audiences", "v": "b0000000-0000-0000-0000-000000000001=public,b0000000-0000-0000-0000-000000000002=followers,b0000000-0000-0000-0000-000000000003=neighborhood"}, {"k": "avatar_paths", "v": "3"}, {"k": "follow_notifications", "v": "4"}, {"k": "follows", "v": "5"}, {"k": "follows_pending", "v": "1"}, {"k": "private_accounts", "v": "2"}, {"k": "profile_photo_files", "v": "6"}]
+### before vs after
+IDENTICAL
