@@ -219,7 +219,10 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
   select count(*) into cnt from storage.objects where name = photo;
   if cnt <> 0 then raise exception 'FAIL non-follower reads followers-post photo'; end if;
-  select count(*) into cnt from storage.objects where bucket_id = 'community-media';
+  -- Only this suite's own accounts' files: legitimate public posts by other residents
+  -- (e.g. on a shared staging database) are visible Saudi-wide by design.
+  select count(*) into cnt from storage.objects where bucket_id = 'community-media'
+    and (storage.foldername(name))[2] in (a::text, b::text, c::text, u::text, s::text);
   if cnt <> 0 then raise exception 'FAIL photo listing leaks'; end if;
   passed := passed + 1;
 

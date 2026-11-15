@@ -9,7 +9,9 @@ Haratna hosted staging kit: synthetic users and the hosted PASS/FAIL test matrix
 
 STAGING ONLY. Every command first runs `guard`, which refuses to continue unless:
   * STAGING_REF is set, is not the production ref, and the URL host is <STAGING_REF>.supabase.co;
-  * every row in public.regions is source = 'synthetic' (production's geography never is).
+  * geography: with the synthetic seed, every region is source = 'synthetic'; with
+    STAGING_GEOGRAPHY=public (real public boundaries), every Auth account is a synthetic
+    @example.test account (production has real users), so production is still refused.
 Production is never contacted.
 
 Settings (environment):
@@ -41,11 +43,15 @@ SERVICE = os.environ.get("STAGING_SERVICE_KEY", "")
 STATE = os.path.expanduser(os.environ.get("STAGING_STATE", "~/.haratna-staging"))
 JPEG = bytes.fromhex("ffd8ffe000104a46494600010100000100010000ffdb004300") + b"\x08" * 64 + bytes.fromhex("ffd9")
 
+PUBLIC_GEOGRAPHY = os.environ.get("STAGING_GEOGRAPHY") == "public"
+# Synthetic seed ids, or real public neighborhoods (Ajyal x2 in one city, and Al Amal, Riyadh).
+N1, N2, N3 = (("sa-district-10500227013", "sa-district-10500227005", "sa-district-10100003001")
+              if PUBLIC_GEOGRAPHY else ("stg-n1", "stg-n2", "stg-n3"))
 # name: (neighborhood, verified)
 USERS = {
-    "alice": ("stg-n1", True), "bob": ("stg-n1", True), "carol": ("stg-n1", True),
-    "dave": ("stg-n3", True), "erin": ("stg-n1", False), "mallory": ("stg-n1", True),
-    "deleteme1": ("stg-n2", True),
+    "alice": (N1, True), "bob": (N1, True), "carol": (N1, True),
+    "dave": (N3, True), "erin": (N1, False), "mallory": (N1, True),
+    "deleteme1": (N2, True),
 }
 
 
@@ -82,6 +88,35 @@ def svc(method, path, **kw):
     return call(method, path, key=SERVICE, **kw)
 
 
+# Production's service_role has no table privileges (its server work goes through granted
+# definer functions), and a faithful staging copy keeps that. Test setup and oracle reads
+# therefore run as SQL through STAGING_SQL_CMD, a wrapper that refuses any project but
+# staging and checks the staging database marker before each statement.
+SQL_CMD = os.environ.get("STAGING_SQL_CMD", "")
+SQL_GUARD = os.environ.get("STAGING_SQL_GUARD", "")
+
+
+def db(sql):
+    import subprocess, tempfile
+    if not SQL_CMD or not SQL_GUARD:
+        sys.exit("STAGING_SQL_CMD and STAGING_SQL_GUARD are required")
+    with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False) as f:
+        f.write(open(SQL_GUARD).read() + "\n" + sql)
+        path = f.name
+    try:
+        out = subprocess.run([SQL_CMD, path], capture_output=True, text=True, timeout=300).stdout.strip().splitlines()
+    finally:
+        os.unlink(path)
+    try:
+        return json.loads(out[-1]) if out else None
+    except (ValueError, IndexError):
+        return {"error": out[-1] if out else "no output"}
+
+
+def lit(v):
+    return "'" + str(v).replace("'", "''") + "'"
+
+
 # --------------------------------------------------------------------------- guard
 def guard():
     problems = []
@@ -97,14 +132,25 @@ def guard():
         problems.append("STAGING_ANON_KEY and STAGING_SERVICE_KEY are required")
     if problems:
         sys.exit("GUARD STOP: " + "; ".join(problems))
-    status, rows = svc("GET", "/rest/v1/regions?select=source")
+    status, rows = call("GET", "/rest/v1/regions?select=source")   # public key: geography is readable
     if status != 200 or not isinstance(rows, list) or not rows:
-        sys.exit(f"GUARD STOP: cannot read synthetic geography (HTTP {status}); run seed_synthetic_geography.sql first")
-    if any(r.get("source") != "synthetic" for r in rows):
-        sys.exit("GUARD STOP: non-synthetic geography found: this is not the staging project")
+        sys.exit(f"GUARD STOP: cannot read geography (HTTP {status})")
+    if PUBLIC_GEOGRAPHY:
+        s2, page = svc("GET", "/auth/v1/admin/users?per_page=1000")
+        accounts = page.get("users", []) if isinstance(page, dict) else []
+        if s2 != 200:
+            sys.exit(f"GUARD STOP: cannot list Auth accounts (HTTP {s2})")
+        real = [u for u in accounts if not str(u.get("email", "")).endswith("@example.test")]
+        if real:
+            sys.exit(f"GUARD STOP: {len(real)} non-synthetic account(s) found: this is not the staging project")
+        what = f"{len(rows)} public region(s), {len(accounts)} synthetic account(s)"
+    else:
+        if any(r.get("source") != "synthetic" for r in rows):
+            sys.exit("GUARD STOP: non-synthetic geography found: this is not the staging project")
+        what = f"{len(rows)} synthetic region(s)"
     os.makedirs(STATE, mode=0o700, exist_ok=True)
     os.chmod(STATE, 0o700)
-    print(f"guard ok: staging {REF}, {len(rows)} synthetic region(s)")
+    print(f"guard ok: staging {REF}, {what}")
 
 
 def load_state():
@@ -138,21 +184,19 @@ def users():
             u = st["users"][name] = {"id": r["id"], "email": email, "password": pw}
             save_state(st)
         uid = u["id"]
-        svc("PATCH", f"/rest/v1/profiles?id=eq.{uid}",
-            body={"first_name": name.capitalize(), "last_name": "Synthetic", "profile_completed": True, "locale": "en"})
-        svc("POST", "/rest/v1/age_declarations", body={"user_id": uid, "date_of_birth": "1990-01-01"},
-            headers={"Prefer": "resolution=ignore-duplicates"})
-        s, existing = svc("GET", f"/rest/v1/neighborhood_memberships?user_id=eq.{uid}&select=id")
-        if not existing:
-            m = {"user_id": uid, "neighborhood_id": nb, "verification_status": "verified" if verified else "pending"}
-            if verified:
-                m["verified_at"] = now
-            s, r = svc("POST", "/rest/v1/neighborhood_memberships", body=m)
-            if s not in (200, 201):
-                sys.exit(f"membership {name}: HTTP {s} {r}")
-    svc("POST", "/rest/v1/user_blocks",
-        body={"blocker_id": st["users"]["alice"]["id"], "blocked_id": st["users"]["mallory"]["id"]},
-        headers={"Prefer": "resolution=ignore-duplicates"})
+        status_ = "verified" if verified else "pending"
+        r = db(f"""begin;
+update public.profiles set first_name = {lit(name.capitalize())}, last_name = 'Synthetic', profile_completed = true, locale = 'en' where id = {lit(uid)};
+insert into public.age_declarations(user_id, date_of_birth) values ({lit(uid)}, '1990-01-01') on conflict do nothing;
+insert into public.neighborhood_memberships(user_id, neighborhood_id, verification_status, active, verified_at)
+select {lit(uid)}, {lit(nb)}, {lit(status_)}, true, {"now()" if verified else "null"}
+where not exists (select 1 from public.neighborhood_memberships where user_id = {lit(uid)});
+commit;
+select count(*) as memberships from public.neighborhood_memberships where user_id = {lit(uid)};""")
+        if not (isinstance(r, list) and r and r[0].get("memberships") == 1):
+            sys.exit(f"setup {name}: {r}")
+    db(f"""insert into public.user_blocks(blocker_id, blocked_id) values ({lit(st["users"]["alice"]["id"])}, {lit(st["users"]["mallory"]["id"])}) on conflict do nothing;
+select 1 as ok;""")
     print(f"users ok: {len(USERS)} synthetic accounts (@example.test); alice blocks mallory")
 
 
@@ -190,7 +234,18 @@ def rows_of(r):
 
 
 def upload(jwt, bucket, path, data=JPEG, ctype="image/jpeg"):
-    return call("POST", f"/storage/v1/object/{bucket}/{path}", jwt=jwt, raw=data, ctype=ctype)[0]
+    status = call("POST", f"/storage/v1/object/{bucket}/{path}", jwt=jwt, raw=data, ctype=ctype)[0]
+    # Like the app (src/backend/social.ts uploadDraftPhotos): a post photo is recorded in
+    # media_attachments by its owner, under RLS; publish_post refuses unrecorded photos.
+    if status in (200, 201) and bucket == "community-media" and path.startswith("posts/"):
+        _, m = call("GET", "/rest/v1/neighborhood_memberships?select=neighborhood_id&active=eq.true", jwt=jwt)
+        nb = (rows_of(m) or [{}])[0].get("neighborhood_id")
+        rs, rr = call("POST", "/rest/v1/media_attachments", jwt=jwt,
+                      body={"owner_id": path.split("/")[1], "neighborhood_id": nb, "bucket_id": bucket,
+                            "object_path": path, "mime_type": ctype, "size_bytes": len(data)})
+        if rs not in (200, 201):
+            return rs
+    return status
 
 
 def sign(jwt, bucket, path):
@@ -264,8 +319,8 @@ def matrix(report_path):
     rep.check("Exactly-once", "comment retry returns existing, same comment",
               isinstance(c1, dict) and isinstance(c2, dict) and c1.get("outcome") == "created"
               and c2.get("outcome") == "existing" and c1.get("comment_id") == c2.get("comment_id"), c2)
-    s, n = svc("GET", f"/rest/v1/posts?author_id=eq.{ID['alice']}&client_op_id=eq.{op}&select=id")
-    rep.check("Exactly-once", "exactly one post row for the op", len(rows_of(n)) == 1, n)
+    n = db(f"select count(*) as n from public.posts where author_id = {lit(ID['alice'])} and client_op_id = {lit(op)};")
+    rep.check("Exactly-once", "exactly one post row for the op", isinstance(n, list) and n[0].get("n") == 1, n)
 
     # 5.2 RLS audiences and blocks
     def post(user, audience, photos=()):
@@ -331,10 +386,9 @@ def matrix(report_path):
     rep.check("Account deletion", "delete-account-v2 succeeds", s == 200, f"HTTP {s} {r}")
     s, _ = svc("GET", f"/auth/v1/admin/users/{ID['deleteme1']}")
     rep.check("Account deletion", "Auth user removed", s == 404, f"HTTP {s}")
-    s, r = svc("GET", f"/rest/v1/profiles?id=eq.{ID['deleteme1']}&select=id")
-    rep.check("Account deletion", "profile removed", rows_of(r) == [], r)
-    s, r = svc("GET", f"/rest/v1/follows?follower_id=eq.{ID['deleteme1']}&select=followee_id")
-    rep.check("Account deletion", "follows removed", rows_of(r) == [], r)
+    r = db(f"select (select count(*) from public.profiles where id = {lit(ID['deleteme1'])}) as profiles, (select count(*) from public.follows where follower_id = {lit(ID['deleteme1'])}) as follows;")
+    rep.check("Account deletion", "profile removed", isinstance(r, list) and r[0].get("profiles") == 0, r)
+    rep.check("Account deletion", "follows removed", isinstance(r, list) and r[0].get("follows") == 0, r)
     for b, p in (("community-media", d_photo), ("profile-photos", f"{ID['deleteme1']}/{tag}.jpg")):
         s, _ = svc("GET", f"/storage/v1/object/authenticated/{b}/{p}")
         rep.check("Account deletion", f"{b} object removed", s >= 400, f"HTTP {s}")
@@ -362,12 +416,13 @@ def cleanup_phase(report_path):
     rep.check("Cleanup", "dry run deletes nothing", s == 200, f"HTTP {s}")
     s, r = fn({"olderThanHours": 1})
     rep.check("Cleanup", "cleanup run succeeds", s == 200, f"HTTP {s} {r}")
+    time.sleep(75)  # Supabase's CDN can serve a deleted object for up to ~60 s
     s, _ = svc("GET", f"/storage/v1/object/authenticated/community-media/{c['abandoned']}")
     rep.check("Cleanup", "abandoned upload removed", s >= 400, f"HTTP {s}")
     s, _ = svc("GET", f"/storage/v1/object/authenticated/community-media/{c['keep']}")
     rep.check("Cleanup", "photo of a published post untouched", s == 200, f"HTTP {s}")
-    s, r = svc("GET", f"/rest/v1/media_attachments?object_path=eq.{c['abandoned']}&select=status")
-    rep.check("Cleanup", "no attachment row left for the removed file", rows_of(r) == [], r)
+    r = db(f"select count(*) as n from public.media_attachments where object_path = {lit(c['abandoned'])};")
+    rep.check("Cleanup", "no attachment row left for the removed file", isinstance(r, list) and r[0].get("n") == 0, r)
     s, r = fn({"olderThanHours": 1})
     rep.check("Cleanup", "second run is a no-op", s == 200, f"HTTP {s} {r}")
     return rep.write(report_path, "Haratna hosted staging: cleanup phase")
