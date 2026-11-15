@@ -199,11 +199,13 @@ describe('Privacy settings', () => {
 describe('Messaging gate on profiles', () => {
   it('hides Message until the neighbors are connected', async () => {
     mockParams = { id: TEST_NEIGHBOR };
+    // A server without the social layer: social_profile doesn't exist (the gate is independent of it).
     rpc.mockImplementation((fn: string) =>
-      Promise.resolve({
-        data: fn === 'neighbor_profile' ? { state: 'request_sent', can_message: false, accepts_requests: true } : null,
-        error: null,
-      }),
+      Promise.resolve(
+        fn === 'social_profile'
+          ? { data: null, error: { code: 'PGRST202', message: 'Could not find the function public.social_profile' } }
+          : { data: fn === 'neighbor_profile' ? { state: 'request_sent', can_message: false, accepts_requests: true } : null, error: null },
+      ),
     );
     await renderScreen(<ProfileScreen />);
     expect(await screen.findByText('Request Sent')).toBeTruthy();
@@ -213,11 +215,13 @@ describe('Messaging gate on profiles', () => {
 
   it('offers Message once connected', async () => {
     mockParams = { id: TEST_NEIGHBOR };
+    // A server without the social layer: social_profile doesn't exist (the gate is independent of it).
     rpc.mockImplementation((fn: string) =>
-      Promise.resolve({
-        data: fn === 'neighbor_profile' ? { state: 'connected', can_message: true, accepts_requests: true } : null,
-        error: null,
-      }),
+      Promise.resolve(
+        fn === 'social_profile'
+          ? { data: null, error: { code: 'PGRST202', message: 'Could not find the function public.social_profile' } }
+          : { data: fn === 'neighbor_profile' ? { state: 'connected', can_message: true, accepts_requests: true } : null, error: null },
+      ),
     );
     await renderScreen(<ProfileScreen />);
     expect(await screen.findByText('Message')).toBeTruthy();
