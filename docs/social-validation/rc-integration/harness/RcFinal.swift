@@ -187,4 +187,68 @@ final class RcFinal: RcBase {
     shot("lang-after-relaunch")
     print("LANG_PROBE: english=\(app.staticTexts["Comments"].exists) arabic=\(app.staticTexts["التعليقات"].exists)")
   }
+
+  func test13c_BlockWhileViewing() {
+    open("profile/" + rcIdB)
+    sleep(5)
+    shot("block3-before")
+    mode("blockab")  // B blocks A; A stays on B's profile and does nothing
+    let unavailable = app.staticTexts.matching(NSPredicate(format: "label IN %@", ["هذا الملف غير متاح", "This profile isn't available"])).firstMatch
+    let start = Date()
+    let appeared = unavailable.waitForExistence(timeout: 45)
+    print("BLOCK_WHILE_VIEWING: unavailable=\(appeared) after=\(Int(Date().timeIntervalSince(start)))s")
+    shot("block3-after-wait")
+    XCTAssertTrue(appeared, "open profile did not go unavailable within 45 s")
+  }
+
+  func test18_EnglishAuditDevBanner() {
+    open("post/" + rcPost)
+    XCTAssertTrue(item("composer-send").waitForExistence(timeout: 15))
+    sleep(2)
+    let banner = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Open debugger")).firstMatch
+    print("DEVBANNER_PRESENT: \(banner.exists)")
+    audit("post-with-dev-banner")
+    // The development-only LogBox banner (absent from release builds): tap its close (x) at the right end.
+    if banner.exists {
+      banner.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+      sleep(2)
+    }
+    print("DEVBANNER_AFTER_DISMISS: \(banner.exists)")
+    shot("post-banner-dismissed")
+    audit("post-without-dev-banner")
+  }
+
+  func test19_EnglishPostTextInventory() {
+    open("post/" + rcPost)
+    XCTAssertTrue(item("composer-send").waitForExistence(timeout: 15))
+    sleep(2)
+    shot("en-post-inventory")
+    for el in app.descendants(matching: .any).allElementsBoundByIndex where !el.label.isEmpty || !(el.value as? String ?? "").isEmpty {
+      print("A11Y_EL type=\(el.elementType.rawValue) label=\(el.label) value=\(el.value as? String ?? "") frame=\(el.frame)")
+    }
+  }
+
+  func test20_EnglishAuditBisect() {
+    open("post/" + rcPost)
+    XCTAssertTrue(item("composer-send").waitForExistence(timeout: 15))
+    sleep(2)
+    let banner = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Open debugger")).firstMatch
+    if banner.exists { banner.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap(); sleep(1) }
+    audit("bisect-top")
+    app.swipeUp(); sleep(1); app.swipeUp(); sleep(2)
+    audit("bisect-scrolled-comments-only")
+    app.swipeUp(); sleep(1); app.swipeUp(); sleep(2)
+    audit("bisect-bottom")
+  }
+
+  func test21_FramesAfterScroll() {
+    open("post/" + rcPost)
+    XCTAssertTrue(item("composer-send").waitForExistence(timeout: 15))
+    sleep(2)
+    app.swipeUp(); sleep(1); app.swipeUp(); sleep(3)
+    shot("frames-after-scroll")
+    for el in app.staticTexts.allElementsBoundByIndex where el.label.hasPrefix("RC ") || el.label.hasPrefix("Rc") || el.label.hasSuffix("ago") {
+      print("FRAME label=\(el.label) y=\(Int(el.frame.minY)) h=\(Int(el.frame.height)) x=\(Int(el.frame.minX))")
+    }
+  }
 }

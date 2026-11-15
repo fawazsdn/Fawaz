@@ -1,0 +1,84 @@
+# English post-screen audit finding: investigation
+Finding: performAccessibilityAudit 'Potentially inaccessible text' (element detection), no element attached, frame zero.
+
+## 1. Dev banner dismissed
+DEVBANNER_PRESENT: true
+AUDIT[post-with-dev-banner] count=1
+AUDIT[post-with-dev-banner] 2|Potentially inaccessible text|label=-|id=-|type=0|frame=(0.0, 0.0, 0.0, 0.0)
+DEVBANNER_AFTER_DISMISS: false
+AUDIT[post-without-dev-banner] count=1
+AUDIT[post-without-dev-banner] 2|Potentially inaccessible text|label=-|id=-|type=0|frame=(0.0, 0.0, 0.0, 0.0)
+
+## 2. Bisect by scroll position (count: top 1, comments only 7, bottom 7)
+AUDIT[bisect-top] count=1
+AUDIT[bisect-scrolled-comments-only] count=7
+AUDIT[bisect-bottom] count=7
+
+## 3. Without the LRM in names (dev worktree experiment): unchanged
+AUDIT[bisect-top] count=1
+AUDIT[bisect-scrolled-comments-only] count=7
+AUDIT[bisect-bottom] count=7
+
+## 4. Element inventory: every visible text is exposed with a label
+type=1 label=!, Open debugger to view warnings. value=
+type=1 label=Horizontal scroll bar, 1 page value=0%
+type=1 label=Verified neighbors value=
+type=1 label=Vertical scroll bar, 1 page value=0%
+type=1 label=Vertical scroll bar, 2 pages value=0%
+type=24 label=Toolbar value=
+type=42 label=RC target post rc4c4578 value=
+type=48 label=3d ago value=
+type=48 label=40m ago value=
+type=48 label=41m ago value=
+type=48 label=43m ago value=
+type=48 label=44m ago value=
+type=48 label=4d ago value=
+type=48 label=Ajyal · 4d ago value=
+type=48 label=Comments (8) value=
+type=48 label=Comments value=
+type=48 label=RC lostcomment rc4c4578 value=
+type=48 label=RC r2lostcomment rc4c4578 value=
+type=48 label=RC r2rapidcomment rc4c4578 value=
+type=48 label=RC r2switch rc4c4578 value=
+type=48 label=RC rapidcomment rc4c4578 value=
+type=48 label=RC switchcomment rc4c4578 value=
+type=48 label=RC target post rc4c4578 value=
+type=48 label=RcAlpha S.‎ value=
+type=48 label=RcBravo S.‎ value=
+type=52 label=Write a comment... value=
+type=9 label=Back value=
+type=9 label=Comments (8) value=
+type=9 label=Like value=
+type=9 label=More options value=
+type=9 label=RcAlpha S.‎ value=
+type=9 label=RcBravo S.‎ value=
+type=9 label=Reply value=
+type=9 label=Save value=
+type=9 label=Send value=
+type=9 label=Share value=
+
+## 5. Frames after scrolling match the drawn text (pt)
+FRAME label=RcAlpha S.‎ y=-21 h=19 x=66
+FRAME label=RC lostcomment rc4c4578 y=0 h=19 x=66
+FRAME label=4d ago y=34 h=17 x=58
+FRAME label=RcAlpha S.‎ y=79 h=19 x=66
+FRAME label=RC rapidcomment rc4c4578 y=100 h=19 x=66
+FRAME label=4d ago y=135 h=17 x=58
+FRAME label=RcAlpha S.‎ y=179 h=19 x=66
+FRAME label=RC switchcomment rc4c4578 y=201 h=19 x=66
+FRAME label=4d ago y=235 h=17 x=58
+FRAME label=RcBravo S.‎ y=280 h=19 x=66
+FRAME label=RC switchcomment rc4c4578 y=301 h=19 x=66
+FRAME label=4d ago y=336 h=17 x=58
+FRAME label=RcAlpha S.‎ y=380 h=19 x=66
+FRAME label=RC r2lostcomment rc4c4578 y=402 h=19 x=66
+FRAME label=52m ago y=436 h=17 x=58
+FRAME label=RcAlpha S.‎ y=481 h=19 x=66
+FRAME label=RC r2rapidcomment rc4c4578 y=503 h=19 x=66
+FRAME label=51m ago y=537 h=17 x=58
+FRAME label=RcAlpha S.‎ y=582 h=19 x=66
+FRAME label=RC r2switch rc4c4578 y=603 h=19 x=66
+FRAME label=49m ago y=638 h=17 x=58
+FRAME label=RcBravo S.‎ y=682 h=19 x=66
+FRAME label=RC r2switch rc4c4578 y=704 h=19 x=66
+FRAME label=48m ago y=738 h=17 x=58

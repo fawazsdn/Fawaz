@@ -156,7 +156,7 @@ class RcBase: XCTestCase {
 
 final class RcCases: RcBase {
   func test1_LostPostResponse() {
-    let text = marker("r3lostpost")
+    let text = marker("r4lostpost")
     let input = composePost(text)
     let confirm = tapPublish()
     mode("droprpc")

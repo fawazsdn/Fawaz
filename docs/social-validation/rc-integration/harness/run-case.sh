@@ -4,5 +4,5 @@ cd ~/Downloads/haratna-rc-worktrees/tools
 xcodebuild test-without-building -project rc-walkthrough/RcWalkthrough.xcodeproj -scheme RcWalkthrough \
   -destination 'id=4579B8D7-ABB8-4BE0-9C74-CC4D7E297DCC' -derivedDataPath rcw-derived \
   -resultBundlePath results/$1-$(date +%H%M%S).xcresult -only-testing:RcWalkthrough/${CLS:-RcCases}/$1 2>&1 \
-  | grep -E "ALERT|PAUSED|_BUTTONS|SB_ALERTS|PICKER|MOVE_|LANG_PROBE|BLOCK_REFOCUS|DRAFT_TILES|AUDIT|CONTROL|error:|failed \(|passed \(" | head -400
+  | grep -E "ALERT|PAUSED|_BUTTONS|SB_ALERTS|PICKER|MOVE_|LANG_PROBE|BLOCK_REFOCUS|BLOCK_WHILE|DEVBANNER|A11Y_EL|FRAME |DRAFT_TILES|AUDIT|CONTROL|error:|failed \(|passed \(" | head -400
 grep -E "MODE|COMMITTED|DROP|NOFUNC|CLEANUP|rpc/" rc-proxy.log | tail -12

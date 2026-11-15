@@ -1,0 +1,3 @@
+# Block while viewing (no navigation), iOS 27
+BLOCK_WHILE_VIEWING: unavailable=true after=18s (re-check interval 30 s)
+Proxy: 17:51:52 social_profile 200 | 17:52:04 B blocks A | 17:52:22 social_profile (re-check) -> hidden
