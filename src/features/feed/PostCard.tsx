@@ -104,13 +104,13 @@ export function PostCard({ post, onPress }: PostCardProps) {
           </Pressable>
           <View style={{ flex: 1 }}>
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
-              <Text style={theme.text('title')} numberOfLines={1}>
+              <Text style={theme.text('title')} numberOfLines={2}>
                 {authorName}
               </Text>
             </View>
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
               <AudienceIcon size={11} color={theme.colors.textMuted} accessibilityLabel={audienceLabel} />
-              <Text style={[theme.text('caption', theme.colors.textMuted), { flexShrink: 1 }]} numberOfLines={1}>
+              <Text style={[theme.text('caption', theme.colors.textMuted), { flexShrink: 1 }]} numberOfLines={2}>
                 {[post.locationLabel ?? (locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn), formatRelativeTime(post.createdAt, locale)]
                   .filter(Boolean)
                   .join(' · ')}
@@ -239,6 +239,6 @@ export function PostCard({ post, onPress }: PostCardProps) {
 const styles = StyleSheet.create({
   header: { alignItems: 'center', gap: 10, marginBottom: 10 },
   body: { marginBottom: 4 },
-  footer: { alignItems: 'center', gap: 22, marginTop: 12 },
-  footerBtn: { alignItems: 'center', gap: 6 },
+  footer: { alignItems: 'center', gap: 22, marginTop: 2 },
+  footerBtn: { alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: 44, minHeight: 44 },
 });

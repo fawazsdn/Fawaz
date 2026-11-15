@@ -16,6 +16,8 @@ interface Props {
   info: NeighborProfileInfo | null;
   onChanged: () => void;
   size?: 'sm' | 'md';
+  /** Stretch to the container's width (avoids clipped labels in narrow auto-sized buttons). */
+  fullWidth?: boolean;
 }
 
 /**
@@ -23,7 +25,7 @@ interface Props {
  * Sent (cancel) / Accept · Decline → Neighbors ✓ (remove). Accepting is only
  * ever possible for the recipient's own incoming request.
  */
-export function NeighborButton({ userId, name, info, onChanged, size = 'md' }: Props) {
+export function NeighborButton({ userId, name, info, onChanged, size = 'md', fullWidth = false }: Props) {
   const theme = useTheme();
   const { t } = useI18n();
   const { run, pending } = useAction();
@@ -37,19 +39,19 @@ export function NeighborButton({ userId, name, info, onChanged, size = 'md' }: P
 
   switch (info.state) {
     case 'blocked':
-      return <Button label={t.neighbors.blocked} onPress={() => {}} variant="outline" size={size} disabled />;
+      return <Button label={t.neighbors.blocked} onPress={() => {}} variant="outline" size={size} fullWidth={fullWidth} disabled />;
     case 'request_received':
       return (
         <View style={[theme.row(), { gap: 8 }]}>
           <Button
             label={t.neighbors.accept}
-            size={size}
+            size={size} fullWidth={fullWidth}
             loading={pending}
             onPress={() => info.incomingRequestId && act(() => respondNeighborRequest(info.incomingRequestId!, true))}
           />
           <Button
             label={t.neighbors.decline}
-            size={size}
+            size={size} fullWidth={fullWidth}
             variant="outline"
             disabled={pending}
             onPress={() => info.incomingRequestId && act(() => respondNeighborRequest(info.incomingRequestId!, false))}
@@ -59,10 +61,10 @@ export function NeighborButton({ userId, name, info, onChanged, size = 'md' }: P
     case 'request_sent':
       return (
         <View style={[theme.row(), { gap: 8 }]}>
-          <Button label={t.neighbors.requestSent} size={size} variant="outline" onPress={() => {}} disabled />
+          <Button label={t.neighbors.requestSent} size={size} fullWidth={fullWidth} variant="outline" onPress={() => {}} disabled />
           <Button
             label={t.neighbors.cancelRequest}
-            size={size}
+            size={size} fullWidth={fullWidth}
             variant="ghost"
             disabled={pending}
             onPress={() => act(() => cancelNeighborRequest(userId))}
@@ -74,7 +76,7 @@ export function NeighborButton({ userId, name, info, onChanged, size = 'md' }: P
         <>
           <Button
             label={t.neighbors.connected}
-            size={size}
+            size={size} fullWidth={fullWidth}
             variant="outline"
             icon={<Check size={15} color={theme.colors.primary} />}
             onPress={() => setConfirmRemove(true)}
@@ -98,7 +100,7 @@ export function NeighborButton({ userId, name, info, onChanged, size = 'md' }: P
       return (
         <Button
           label={info.acceptsRequests ? t.neighbors.addNeighbor : t.neighbors.requestsClosed}
-          size={size}
+          size={size} fullWidth={fullWidth}
           disabled={!info.acceptsRequests || pending}
           loading={pending}
           icon={info.acceptsRequests ? <UserPlus size={15} color={theme.colors.onPrimary} /> : undefined}

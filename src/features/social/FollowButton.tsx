@@ -41,6 +41,7 @@ export function FollowButton({ userId, name, state, followsYou, size = 'md', onC
           onPress={follow}
           loading={pending}
           size={size}
+          fullWidth
           testID="follow-button"
         />
       ) : (
@@ -50,6 +51,7 @@ export function FollowButton({ userId, name, state, followsYou, size = 'md', onC
           variant="outline"
           loading={pending}
           size={size}
+          fullWidth
           testID="follow-button"
         />
       )}

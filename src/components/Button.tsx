@@ -110,8 +110,9 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
         <>
           {icon}
           <Text
-            style={[theme.text('button', textColor), { fontSize }, icon || trailingIcon ? styles.withIconGap : undefined]}
-            numberOfLines={1}
+            style={[theme.text('button', textColor), { fontSize, textAlign: 'center', flexShrink: 1 }, icon || trailingIcon ? styles.withIconGap : undefined]}
+            // Wrap rather than clip at large accessibility text sizes.
+            numberOfLines={2}
           >
             {label}
           </Text>

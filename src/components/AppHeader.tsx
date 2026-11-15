@@ -52,7 +52,7 @@ export function AppHeader({ title, onBack, showBack = true, fallbackRoute = '/',
           </IconButton>
         ) : null}
       </View>
-      <Text style={[theme.text('title'), styles.title]} numberOfLines={1}>
+      <Text style={[theme.text('title'), styles.title]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
         {title}
       </Text>
       <View style={[styles.side, { alignItems: 'flex-end' }]}>{right}</View>

@@ -95,13 +95,12 @@ export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) 
             {formatRelativeTime(comment.createdAt, locale)}
             {comment.edited ? ` · ${t.common.edit}` : ''}
           </Text>
-          <Pressable onPress={() => onReply(comment)} hitSlop={10} accessibilityRole="button">
+          <Pressable onPress={() => onReply(comment)} style={styles.target} accessibilityRole="button">
             <Text style={theme.text('caption', theme.colors.textSecondary)}>{t.post.reply}</Text>
           </Pressable>
           <Pressable
             onPress={() => run(() => toggleCommentLike(comment.id, comment.postId))}
-            style={[theme.row(), { alignItems: 'center', gap: 3 }]}
-            hitSlop={10}
+            style={[theme.row(), styles.target, { gap: 3 }]}
             accessibilityRole="button"
             accessibilityLabel={comment.likedBy.length ? `${t.post.like} (${comment.likedBy.length})` : t.post.like}
             accessibilityState={{ selected: liked }}
@@ -117,7 +116,7 @@ export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) 
           </Pressable>
         </View>
       </View>
-      <Pressable onPress={() => setMenuOpen(true)} hitSlop={12} accessibilityRole="button" accessibilityLabel={t.common.more}>
+      <Pressable onPress={() => setMenuOpen(true)} style={styles.target} accessibilityRole="button" accessibilityLabel={t.common.more}>
         <MoreHorizontal size={16} color={theme.colors.textMuted} />
       </Pressable>
 
@@ -152,6 +151,8 @@ export function CommentRow({ comment, onReply, postAuthorId }: CommentRowProps) 
 }
 
 const styles = StyleSheet.create({
+  // 44 pt touch targets without making the row taller (negative vertical margin).
+  target: { minWidth: 44, minHeight: 44, marginVertical: -12, alignItems: 'center', justifyContent: 'center' },
   wrap: { gap: 8, paddingVertical: 8, alignItems: 'flex-start' },
   bubble: { padding: 10 },
   metaRow: { gap: 14, marginTop: 4, paddingHorizontal: 2, alignItems: 'center' },

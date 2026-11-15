@@ -3,6 +3,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import MapView, { Marker, Polygon, type Region } from 'react-native-maps';
 
 import { groupMapMarkers } from '@/features/map/clusterMarkers';
+import { useI18n } from '@/i18n/useI18n';
 import { useTheme } from '@/theme/useTheme';
 
 export interface MapCoordinate {
@@ -57,6 +58,7 @@ export const HaratnaMap = forwardRef<HaratnaMapHandle, HaratnaMapProps>(function
   ref,
 ) {
   const theme = useTheme();
+  const { t } = useI18n();
   const mapRef = useRef<MapView>(null);
   const [span, setSpan] = useState({ latitudeDelta: delta, longitudeDelta: delta });
   const groups = groupMapMarkers(markers, clusterMarkers ? span.latitudeDelta : 0, span.longitudeDelta);
@@ -84,7 +86,7 @@ export const HaratnaMap = forwardRef<HaratnaMapHandle, HaratnaMapProps>(function
       scrollEnabled={scrollEnabled}
       onPress={onMapPress ? (e) => onMapPress(e.nativeEvent.coordinate) : undefined}
       userInterfaceStyle={theme.scheme === 'dark' ? 'dark' : 'light'}
-      accessibilityLabel="map"
+      accessibilityLabel={t.map.title}
     >
       {polygons.map((coords, i) => (
         <Polygon

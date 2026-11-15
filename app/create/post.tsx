@@ -288,7 +288,7 @@ export default function CreatePostScreen() {
         ) : null}
 
         <Text style={[theme.text('bodySmall', theme.colors.textSecondary), styles.label]}>{t.post.category}</Text>
-        <View style={[theme.row(), { gap: 8 }]}>
+        <View style={[theme.row(), { gap: 8, flexWrap: 'wrap' }]}>
           {CATEGORY_TYPES.map((c) => (
             <Chip
               key={c}

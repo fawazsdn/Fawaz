@@ -7,7 +7,9 @@ import en from '@/i18n/en';
 import { useStore } from '@/store/useStore';
 import { resetStoreForTests } from '@/testing/fixtures';
 import { Card } from '../Card';
+import { Button } from '../Button';
 import { Composer } from '../Composer';
+import { SearchBar } from '../SearchBar';
 
 const frame = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
 
@@ -36,5 +38,16 @@ describe('VoiceOver can reach controls', () => {
       </SafeAreaProvider>,
     );
     expect(r.getByTestId('composer-send').props.accessibilityLabel).toBe(label);
+  });
+
+  it.each([['ar', ar.search.clear], ['en', en.search.clear]] as const)('the search clear button is labeled in %s', async (locale, label) => {
+    useStore.getState().setLocale(locale);
+    const r = await render(<SearchBar value="x" onChangeText={() => undefined} placeholder="Search" />);
+    expect(r.getByLabelText(label)).toBeTruthy();
+  });
+
+  it('button labels wrap instead of being clipped at large text sizes', async () => {
+    const r = await render(<Button label="إضافة جار" onPress={() => undefined} />);
+    expect(r.getByText('إضافة جار').props.numberOfLines).toBe(2);
   });
 });

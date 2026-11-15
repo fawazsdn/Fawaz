@@ -1,6 +1,7 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 
+import { useI18n } from '@/i18n/useI18n';
 import { useTheme } from '@/theme/useTheme';
 import { IconButton } from './IconButton';
 
@@ -14,6 +15,7 @@ interface SearchBarProps {
 
 export function SearchBar({ value, onChangeText, placeholder, onSubmit, autoFocus }: SearchBarProps) {
   const theme = useTheme();
+  const { t } = useI18n();
 
   return (
     <View
@@ -36,7 +38,7 @@ export function SearchBar({ value, onChangeText, placeholder, onSubmit, autoFocu
         accessibilityLabel={placeholder}
       />
       {value.length > 0 ? (
-        <IconButton accessibilityLabel="clear" size={28} onPress={() => onChangeText('')}>
+        <IconButton accessibilityLabel={t.search.clear} size={28} onPress={() => onChangeText('')}>
           <X size={16} color={theme.colors.textMuted} />
         </IconButton>
       ) : null}

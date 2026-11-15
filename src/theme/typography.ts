@@ -40,7 +40,7 @@ export function getTypeScale(locale: Locale): Record<TypeScaleKey, TypeSpec> {
     body: { fontSize: 15, lineHeight: lh(15, 1.45), weight: 'regular' },
     bodySmall: { fontSize: 13, lineHeight: lh(13, 1.45), weight: 'regular' },
     caption: { fontSize: 12, lineHeight: lh(12, 1.4), weight: 'medium' },
-    button: { fontSize: 15, lineHeight: lh(15, 1.2), weight: 'bold' },
+    button: { fontSize: 15, lineHeight: lh(15, 1.45), weight: 'bold' },
     metadata: { fontSize: 12, lineHeight: lh(12, 1.35), weight: 'medium' },
   };
 }

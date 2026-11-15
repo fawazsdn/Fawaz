@@ -38,7 +38,7 @@ export function Chip({ label, selected, onPress, icon }: ChipProps) {
       ]}
     >
       {icon}
-      <Text style={theme.text('bodySmall', selected ? theme.colors.onPrimary : theme.colors.textSecondary)} numberOfLines={1}>
+      <Text style={theme.text('bodySmall', selected ? theme.colors.onPrimary : theme.colors.textSecondary)} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {label}
       </Text>
     </Pressable>

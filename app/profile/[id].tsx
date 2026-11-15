@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -56,7 +56,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
 
   const me = useCurrentUserId();
   const { run } = useAction();
@@ -211,10 +211,12 @@ export default function ProfileScreen() {
           ? events.map((e) => ({ key: e.id, kind: 'event' as const, event: e }))
           : recommendations.map((r) => ({ key: r.id, kind: 'rec' as const, rec: r }));
 
+  // Large accessibility text: counts move below the photo so they don't collide.
+  const largeText = fontScale >= 1.3;
   const header = (
     <View style={{ padding: theme.spacing.md }}>
       {/* Identity */}
-      <View style={[theme.row(), { alignItems: 'center', gap: 18 }]}>
+      <View style={largeText ? { alignItems: 'flex-start', gap: 12 } : [theme.row(), { alignItems: 'center', gap: 18 }]}>
         <Pressable onPress={() => setPhotoOpen(true)} accessibilityRole="imagebutton" accessibilityLabel={t.social.profilePhoto} testID="profile-avatar">
           <Avatar uri={avatarUrl} name={name} size={88} ring />
           {isOwn ? (
@@ -223,12 +225,12 @@ export default function ProfileScreen() {
             </View>
           ) : null}
         </Pressable>
-        <View style={[theme.row(), { flex: 1, justifyContent: 'space-around' }]}>
-          <Count value={sp?.postsCount ?? posts.length} label={t.social.posts} />
+        <View style={largeText ? { alignSelf: 'stretch', gap: 4 } : [theme.row(), { flex: 1, justifyContent: 'space-around' }]}>
+          <Count value={sp?.postsCount ?? posts.length} label={t.social.posts} inline={largeText} />
           {sp ? (
             <>
-              <Count value={sp.followersCount} label={t.social.followers} onPress={() => openList('followers')} testID="followers-count" />
-              <Count value={sp.followingCount} label={t.social.following} onPress={() => openList('following')} testID="following-count" />
+              <Count value={sp.followersCount} label={t.social.followers} onPress={() => openList('followers')} testID="followers-count" inline={largeText} />
+              <Count value={sp.followingCount} label={t.social.following} onPress={() => openList('following')} testID="following-count" inline={largeText} />
             </>
           ) : null}
         </View>
@@ -384,7 +386,7 @@ export default function ProfileScreen() {
 
       {!isOwn ? (
         <View style={{ alignItems: 'center', gap: 10, marginTop: 14 }}>
-          <NeighborButton userId={user.id} name={name} info={info} onChanged={reloadNeighbor} />
+          <NeighborButton userId={user.id} name={name} info={info} onChanged={reloadNeighbor} fullWidth />
           <Button
             label={t.profile.thankNeighbor}
             onPress={() => setThankOpen(true)}
@@ -500,13 +502,21 @@ export default function ProfileScreen() {
   );
 }
 
-function Count({ value, label, onPress, testID }: { value: number; label: string; onPress?: () => void; testID?: string }) {
+function Count({ value, label, onPress, testID, inline }: { value: number; label: string; onPress?: () => void; testID?: string; inline?: boolean }) {
   const theme = useTheme();
   const { locale } = useI18n();
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={{ alignItems: 'center', minWidth: 64 }} accessibilityRole={onPress ? 'button' : 'text'} testID={testID}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      // Large text: one count per row ("12 Followers") so labels never break mid-word.
+      style={inline ? [theme.row(), { alignItems: 'center', gap: 8, minHeight: 44 }] : { alignItems: 'center', flex: 1, minWidth: 64, minHeight: 44 }}
+      accessibilityRole={onPress ? 'button' : 'text'}
+      accessibilityLabel={`${localizeDigits(value, locale)} ${label}`}
+      testID={testID}
+    >
       <Text style={theme.text('heading3')}>{localizeDigits(value, locale)}</Text>
-      <Text style={theme.text('caption', theme.colors.textSecondary)} numberOfLines={1}>
+      <Text style={[theme.text(inline ? 'body' : 'caption', theme.colors.textSecondary), { textAlign: 'center' }]} numberOfLines={inline ? undefined : 2}>
         {label}
       </Text>
     </Pressable>
