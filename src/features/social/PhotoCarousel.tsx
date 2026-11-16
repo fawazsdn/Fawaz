@@ -17,10 +17,12 @@ interface PhotoCarouselProps {
   onDoubleTapLike?: () => void;
   aspectRatio?: number;
   radius?: number;
+  /** Called when the visible photo changes. An empty string in `images` is a not-yet-loaded placeholder. */
+  onIndexChange?: (index: number) => void;
 }
 
 /** Swipeable photos with position dots; double-tap likes, single tap opens the full-screen viewer. */
-export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius }: PhotoCarouselProps) {
+export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius, onIndexChange }: PhotoCarouselProps) {
   const theme = useTheme();
   const { t, locale } = useI18n();
   const [width, setWidth] = useState(0);
@@ -63,8 +65,12 @@ export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius
               showsHorizontalScrollIndicator={false}
               keyExtractor={(_, i) => String(i)}
               getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
-              onMomentumScrollEnd={(e) => setIndex(Math.round(Math.abs(e.nativeEvent.contentOffset.x) / width))}
-              renderItem={({ item, index: i }) => (
+              onMomentumScrollEnd={(e) => {
+                const next = Math.round(Math.abs(e.nativeEvent.contentOffset.x) / width);
+                setIndex(next);
+                onIndexChange?.(next);
+              }}
+              renderItem={({ item, index: i }) => item ? (
                 <Image
                   source={{ uri: item }}
                   cachePolicy={imageCachePolicy(item)}
@@ -73,6 +79,8 @@ export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius
                   transition={150}
                   accessibilityLabel={t.social.photoOf.replace('{i}', String(i + 1)).replace('{n}', String(images.length))}
                 />
+              ) : (
+                <View style={{ width, height }} />
               )}
             />
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.center, heartStyle]}>
@@ -100,7 +108,7 @@ export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius
           ))}
         </View>
       ) : null}
-      <ImageViewerModal visible={viewerOpen} images={images} initialIndex={index} onClose={() => setViewerOpen(false)} />
+      <ImageViewerModal visible={viewerOpen} images={images.filter(Boolean)} initialIndex={Math.max(0, images.slice(0, index).filter(Boolean).length)} onClose={() => setViewerOpen(false)} />
     </View>
   );
 }

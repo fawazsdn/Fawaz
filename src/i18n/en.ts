@@ -931,7 +931,7 @@ const en: typeof ar = {
     feedRetry: 'Try again',
     findNeighbors: 'Find neighbors',
 
-    title: 'Discover',
+    title: 'Explore',
     searchPlaceholder: 'Search your neighborhood...',
     nearYou: 'Happening near you',
     trending: 'Trending discussions',

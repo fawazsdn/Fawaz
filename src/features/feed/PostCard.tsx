@@ -30,9 +30,17 @@ interface PostCardProps {
   onPress?: () => void;
   discovery?: boolean;
   onChanged?: () => void;
+  /** Discovery only: masked author display fields from the server, and a photo already loaded in memory. */
+  discoveryAuthor?: { firstName: string; lastName: string; namePrivacy: 'full' | 'first_last_initial' | 'first_only' };
+  discoveryAvatar?: string;
+  /** Discovery only: the post's neighborhood name (never an address). */
+  discoveryArea?: { ar: string; en: string };
+  onPhotoIndexChange?: (index: number) => void;
 }
 
-export function PostCard({ post, onPress, discovery, onChanged }: PostCardProps) {
+export function PostCard({
+  post, onPress, discovery, onChanged, discoveryAuthor, discoveryAvatar, discoveryArea, onPhotoIndexChange,
+}: PostCardProps) {
   const theme = useTheme();
   const { t, locale, isRTL } = useI18n();
   const router = useRouter();
@@ -48,7 +56,8 @@ export function PostCard({ post, onPress, discovery, onChanged }: PostCardProps)
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const caption = discovery && locale === 'en' ? post.textEn || post.textAr : post.textAr;
-  const authorName = author ? displayName(author) : t.common.neighbor;
+  const authorName = discovery && discoveryAuthor ? displayName(discoveryAuthor) : author ? displayName(author) : t.common.neighbor;
+  const areaName = discovery && discoveryArea ? (locale === 'ar' ? discoveryArea.ar : discoveryArea.en || discoveryArea.ar) : undefined;
   const isOwn = post.authorId === me;
   const liked = post.reactions.some((r) => r.userId === me);
   const saved = post.savedBy.includes(me);
@@ -109,7 +118,7 @@ export function PostCard({ post, onPress, discovery, onChanged }: PostCardProps)
             accessibilityRole="button"
             accessibilityLabel={authorName}
           >
-            <Avatar uri={discovery ? undefined : author?.avatarUrl} name={authorName} size={42} />
+            <Avatar uri={discovery ? discoveryAvatar : author?.avatarUrl} name={authorName} size={42} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
@@ -120,7 +129,7 @@ export function PostCard({ post, onPress, discovery, onChanged }: PostCardProps)
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
               <AudienceIcon size={11} color={theme.colors.textMuted} accessibilityLabel={audienceLabel} />
               <Text style={[theme.text('caption', theme.colors.textMuted), { flexShrink: 1 }]} numberOfLines={2}>
-                {[(discovery ? undefined : post.locationLabel) ?? (locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn), formatRelativeTime(post.createdAt, locale)]
+                {[(discovery ? areaName : post.locationLabel) ?? (locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn), formatRelativeTime(post.createdAt, locale)]
                   .filter(Boolean)
                   .join(' · ')}
               </Text>
@@ -159,7 +168,7 @@ export function PostCard({ post, onPress, discovery, onChanged }: PostCardProps)
           <>
             {post.images.length > 0 ? (
               <View style={{ marginBottom: 8 }}>
-                <PhotoCarousel images={post.images} onDoubleTapLike={like} aspectRatio={post.images.length > 1 ? 4 / 5 : 1} />
+                <PhotoCarousel images={post.images} onDoubleTapLike={like} aspectRatio={post.images.length > 1 ? 4 / 5 : 1} onIndexChange={onPhotoIndexChange} />
               </View>
             ) : null}
             {caption ? <Text style={[theme.text('body'), styles.body]}>{caption}</Text> : null}

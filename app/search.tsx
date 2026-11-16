@@ -11,8 +11,8 @@ import { SearchBar } from '@/components/SearchBar';
 import { FilterBar } from '@/components/FilterBar';
 import { EmptyState } from '@/components/EmptyState';
 import { UserRow } from '@/components/UserRow';
-import { fetchExploreFeed, fetchVisibleExplorePeople, stagingExploreEnabled } from '@/backend/exploreFeed';
-import type { Post } from '@/models';
+import { fetchExploreFeed, fetchVisibleExplorePeople, stagingExploreEnabled, type ExploreItem } from '@/backend/exploreFeed';
+import { ExplorePostCard } from '@/features/explore/ExploreSocialFeed';
 import { PostCard } from '@/features/feed/PostCard';
 import { EventCard } from '@/features/events/EventCard';
 import { eventCategoryLabel } from '@/features/events/categories';
@@ -56,7 +56,7 @@ export default function SearchScreen() {
   const q = query.trim().toLowerCase();
   const viewer = useCurrentUserId();
   const blocked = useStore((s) => s.blockedUserIds);
-  const [fresh, setFresh] = useState<{ key: string; posts: Post[]; people: string[] }>();
+  const [fresh, setFresh] = useState<{ key: string; items: ExploreItem[]; people: string[] }>();
   const matchingUsers = useMemo(() => !q ? [] : users
     .filter((u) => `${u.firstName} ${u.lastName}`.toLowerCase().includes(q)), [q, users]);
   const peopleIds = useMemo(() => matchingUsers.filter((u) => !blocked.includes(u.id)).slice(0, 50).map((u) => u.id), [matchingUsers, blocked]);
@@ -67,9 +67,9 @@ export default function SearchScreen() {
     let active = true;
     const timer = setTimeout(() => {
       void Promise.all([
-        fetchExploreFeed('community', 0, q).catch(() => []),
+        fetchExploreFeed('community', null, q).then((page) => page.items).catch(() => []),
         fetchVisibleExplorePeople(peopleIds).catch(() => []),
-      ]).then(([posts, people]) => { if (active) setFresh({ key: searchKey, posts, people }); });
+      ]).then(([items, people]) => { if (active) setFresh({ key: searchKey, items, people }); });
     }, 250);
     return () => {
       active = false;
@@ -82,7 +82,7 @@ export default function SearchScreen() {
     if (!q) return null;
     return {
       posts: stagingExploreEnabled
-        ? (fresh?.key === searchKey ? fresh.posts.filter((p) => !blocked.includes(p.authorId)) : [])
+        ? (fresh?.key === searchKey ? fresh.items.map((i) => i.post).filter((p) => !blocked.includes(p.authorId)) : [])
         : posts.filter((p) => p.textAr.toLowerCase().includes(q)),
       events: events.filter((e) =>
         [e.title, eventCategoryLabel(e, t.eventCreate.categories as Record<string, string>)].some((v) => v.toLowerCase().includes(q)),
@@ -164,7 +164,9 @@ export default function SearchScreen() {
               {(tab === 'all' || tab === 'posts') && results!.posts.length > 0 ? (
                 <ResultGroup title={t.search.tabs.posts}>
                   {results!.posts.map((p) => (
-                    <PostCard key={p.id} post={p} discovery={stagingExploreEnabled} />
+                    stagingExploreEnabled && fresh?.key === searchKey
+                      ? <ExplorePostCard key={p.id} item={fresh.items.find((i) => i.post.id === p.id) ?? { post: p }} />
+                      : <PostCard key={p.id} post={p} />
                   ))}
                 </ResultGroup>
               ) : null}

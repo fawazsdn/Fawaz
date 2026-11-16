@@ -2,5 +2,5 @@
 -- notification visibility policy. No data changes; hidden notifications become visible again.
 begin;
 drop policy if exists notifications_social_visibility on public.notifications;
-drop function if exists public.explore_social_feed(text, integer, text);
+drop function if exists public.explore_social_feed(text, jsonb, text);
 commit;

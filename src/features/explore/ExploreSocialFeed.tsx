@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, FlatList, Pressable, ScrollView, Text, View, type ViewToken } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Compass, LayoutGrid, Search, Users } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { EXPLORE_PAGE_SIZE, fetchExploreFeed, fetchExplorePhoto, type ExploreFeed } from '@/backend/exploreFeed';
+import { fetchExploreFeed, fetchExplorePhoto, type ExploreCursor, type ExploreFeed, type ExploreItem } from '@/backend/exploreFeed';
+import { PROFILE_PHOTO_BUCKET } from '@/backend/media';
 import { EmptyState } from '@/components/EmptyState';
 import { IconButton } from '@/components/IconButton';
 import { NoNeighborhoodState } from '@/components/NoNeighborhoodState';
 import { VerifyGate, useNeedsVerification } from '@/components/VerifyGate';
 import { PostCard } from '@/features/feed/PostCard';
 import { useI18n } from '@/i18n/useI18n';
-import type { Post } from '@/models';
 import { useCurrentUserId, useStore } from '@/store/useStore';
 import { useTheme } from '@/theme/useTheme';
 
@@ -109,12 +109,14 @@ function FeedList({ feed, active, bottom }: { feed: ExploreFeed; active: boolean
   const { t } = useI18n();
   const router = useRouter();
   const blocked = useStore((s) => s.blockedUserIds);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [items, setItems] = useState<ExploreItem[]>([]);
   const [loading, setLoading] = useState(active);
   const [failed, setFailed] = useState(false);
   const [foreground, setForeground] = useState(AppState.currentState === 'active');
   const [more, setMore] = useState(false);
-  const offset = useRef(0);
+  // Indexes of the rows on screen; photos load only for these and their neighbors.
+  const [near, setNear] = useState<{ first: number; last: number }>({ first: 0, last: 2 });
+  const cursor = useRef<ExploreCursor>(null);
   const request = useRef(0);
   const busy = useRef(false);
   const enabled = useRef(false);
@@ -125,21 +127,21 @@ function FeedList({ feed, active, bottom }: { feed: ExploreFeed; active: boolean
     const version = ++request.current;
     setLoading(true);
     setFailed(false);
-    const start = reset ? 0 : offset.current;
     if (reset) {
-      setPosts([]);
+      cursor.current = null;
+      setItems([]);
       setMore(false);
     }
     try {
-      const next = await fetchExploreFeed(feed, start);
+      const page = await fetchExploreFeed(feed, cursor.current);
       if (request.current !== version) return;
-      setPosts((old) => reset ? next : [...old, ...next.filter((row) => !old.some((item) => item.id === row.id))]);
-      offset.current = start + next.length;
-      setMore(next.length === EXPLORE_PAGE_SIZE && offset.current <= 10000);
+      setItems((old) => reset ? page.items : [...old, ...page.items.filter((row) => !old.some((item) => item.post.id === row.post.id))]);
+      cursor.current = page.next;
+      setMore(page.next !== null);
     } catch {
       if (request.current !== version) return;
       setFailed(true);
-      setPosts([]);
+      setItems([]);
       setMore(false);
     } finally {
       if (request.current === version) {
@@ -161,24 +163,35 @@ function FeedList({ feed, active, bottom }: { feed: ExploreFeed; active: boolean
     return () => {
       enabled.current = false;
       request.current++;
-      setPosts([]);
+      setItems([]);
       setLoading(false);
     };
   }, [active, foreground, load]));
 
+  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const indexes = viewableItems.map((v) => v.index).filter((i): i is number => i !== null);
+    if (indexes.length) setNear({ first: Math.min(...indexes), last: Math.max(...indexes) });
+  }).current;
+
   const refresh = useCallback(() => { void load(true); }, [load]);
   const friendFeed = feed === 'friends';
-  const visible = active && foreground ? posts.filter((post) => !blocked.includes(post.authorId)) : [];
+  const visible = active && foreground ? items.filter((item) => !blocked.includes(item.post.authorId)) : [];
   return (
     <FlatList
       style={{ flex: 1 }}
       contentContainerStyle={{ flexGrow: 1, gap: 12, paddingHorizontal: theme.spacing.md, paddingBottom: bottom + 24 }}
       data={visible}
-      keyExtractor={(post) => post.id}
+      keyExtractor={(item) => item.post.id}
       onRefresh={refresh}
       refreshing={loading && visible.length === 0}
       onEndReached={() => { if (more && !failed) void load(false); }}
       onEndReachedThreshold={0.5}
+      // Keep few rows mounted: an unmounted row releases its photos.
+      initialNumToRender={4}
+      maxToRenderPerBatch={4}
+      windowSize={5}
+      onViewableItemsChanged={onViewable}
+      viewabilityConfig={VIEWABILITY}
       ListFooterComponent={loading && visible.length > 0 ? <ActivityIndicator color={theme.colors.primary} /> : null}
       ListEmptyComponent={loading ? null : failed ? (
         <EmptyState title={t.discover.feedError} actionLabel={t.discover.feedRetry} onAction={refresh} />
@@ -191,26 +204,75 @@ function FeedList({ feed, active, bottom }: { feed: ExploreFeed; active: boolean
           onAction={() => router.push('/neighbors')}
         />
       )}
-      renderItem={({ item }) => <ExplorePostCard key={JSON.stringify(item.imagePaths)} post={item} refresh={refresh} />}
+      renderItem={({ item, index }) => (
+        <ExplorePostCard
+          key={JSON.stringify(item.post.imagePaths)}
+          item={item}
+          nearScreen={index >= near.first - 1 && index <= near.last + 1}
+          refresh={refresh}
+        />
+      )}
     />
   );
 }
 
-export function ExplorePostCard({ post, refresh, onPress }: { post: Post; refresh?: () => void; onPress?: () => void }) {
-  const [images, setImages] = useState<string[]>([]);
-  const paths = post.imagePaths;
+const VIEWABILITY = { itemVisiblePercentThreshold: 10 };
+
+/**
+ * Loads a post's photos and its author's photo only while the card is on or next to the screen,
+ * and only the visible carousel photo plus the next one. Everything is released when the card
+ * moves away. Photos stay in memory (data URIs); nothing is cached on disk.
+ */
+export function ExplorePostCard({ item, nearScreen = true, refresh, onPress }: {
+  item: ExploreItem; nearScreen?: boolean; refresh?: () => void; onPress?: () => void;
+}) {
+  const { post, author, area } = item;
+  const paths = post.imagePaths ?? [];
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [loaded, setLoaded] = useState<Record<number, string>>({});
+  const [avatar, setAvatar] = useState<string>();
+  const wanted = nearScreen ? [photoIndex - 1, photoIndex, photoIndex + 1].filter((i) => i >= 0 && i < paths.length) : [];
+  const wantedKey = wanted.join(',');
+
   useEffect(() => {
+    const keep = wantedKey ? wantedKey.split(',').map(Number) : [];
+    setLoaded((old) => Object.fromEntries(Object.entries(old).filter(([i]) => keep.includes(Number(i)))));
     const controller = new AbortController();
-    async function load() {
-      for (const path of paths ?? []) {
+    void (async () => {
+      for (const i of keep) {
         if (controller.signal.aborted) break;
-        const photo = await fetchExplorePhoto(path, controller.signal).catch(() => null);
-        if (photo && !controller.signal.aborted) setImages((old) => [...old, photo]);
+        const photo = await fetchExplorePhoto(paths[i], controller.signal).catch(() => null);
+        if (photo && !controller.signal.aborted) setLoaded((old) => (i in old ? old : { ...old, [i]: photo }));
       }
-    }
-    setImages([]);
-    void load();
+    })();
     return () => controller.abort();
-  }, [paths]);
-  return <PostCard post={{ ...post, images }} discovery onChanged={refresh} onPress={onPress} />;
+    // paths is stable for a card (the list keys cards by their photo paths).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedKey]);
+
+  const avatarPath = nearScreen ? author?.avatarPath : undefined;
+  useEffect(() => {
+    setAvatar(undefined);
+    if (!avatarPath) return;
+    const controller = new AbortController();
+    void fetchExplorePhoto(avatarPath, controller.signal, PROFILE_PHOTO_BUCKET)
+      .then((photo) => { if (photo && !controller.signal.aborted) setAvatar(photo); })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [avatarPath]);
+
+  // Placeholders keep the card's height while photos are not loaded, so scrolling doesn't jump.
+  const images = paths.map((_, i) => loaded[i] ?? '');
+  return (
+    <PostCard
+      post={{ ...post, images }}
+      discovery
+      discoveryAuthor={author}
+      discoveryAvatar={avatar}
+      discoveryArea={area}
+      onPhotoIndexChange={setPhotoIndex}
+      onChanged={refresh}
+      onPress={onPress}
+    />
+  );
 }

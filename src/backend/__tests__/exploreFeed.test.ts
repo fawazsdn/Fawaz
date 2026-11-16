@@ -1,4 +1,4 @@
-import { fetchExploreFeed, fetchExplorePhoto } from '../exploreFeed';
+import { EXPLORE_PAGE_SIZE, fetchExploreFeed, fetchExplorePhoto, mapExploreAuthor } from '../exploreFeed';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/store/useStore';
 
@@ -22,24 +22,48 @@ beforeEach(() => {
 });
 
 test('uses the server feed and maps rows without resolving their media links', async () => {
-  rpc.mockResolvedValue({ data: [{ id: 'post-a', saved: true, image_paths: ['posts/test.jpg'] }], error: null } as never);
-  await expect(fetchExploreFeed('friends', 16)).resolves.toEqual([
-    { id: 'post-a', saved: true, viewer: 'viewer-one', images: [] },
-  ]);
-  expect(rpc).toHaveBeenCalledWith('explore_social_feed', { feed: 'friends', page_offset: 16, search_text: null });
+  rpc.mockResolvedValue({ data: [{
+    id: 'post-a', saved: true, image_paths: ['posts/test.jpg'],
+    author: { id: 'u1', first_name: 'Reem', last_name: 'H', name_privacy: 'first_last_initial', avatar_path: 'u1/a.jpg' },
+    area: { name_ar: 'حي', name_en: 'District' }, feed_cursor: { id: 'post-a' },
+  }], error: null } as never);
+  const cursor = { as_of: '2026-11-16T00:00:00Z', id: 'x' };
+  await expect(fetchExploreFeed('friends', cursor)).resolves.toEqual({
+    items: [{
+      post: { id: 'post-a', saved: true, viewer: 'viewer-one', images: [] },
+      author: { id: 'u1', firstName: 'Reem', lastName: 'H', namePrivacy: 'first_last_initial', avatarPath: 'u1/a.jpg' },
+      area: { ar: 'حي', en: 'District' },
+    }],
+    next: null, // a short page is the last one
+  });
+  expect(rpc).toHaveBeenCalledWith('explore_social_feed', { feed: 'friends', cursor, search_text: null });
   expect(bucket).not.toHaveBeenCalled();
+});
+
+test('a full page hands back the last row cursor for the next request', async () => {
+  const rows = Array.from({ length: EXPLORE_PAGE_SIZE }, (_, i) => ({ id: `p${i}`, feed_cursor: { id: `p${i}` } }));
+  rpc.mockResolvedValue({ data: rows, error: null } as never);
+  const page = await fetchExploreFeed('community', null);
+  expect(page.next).toEqual({ id: `p${EXPLORE_PAGE_SIZE - 1}` });
+  expect(rpc).toHaveBeenCalledWith('explore_social_feed', { feed: 'community', cursor: null, search_text: null });
+});
+
+test('author mapping keeps only display fields and defaults to the masked name setting', () => {
+  expect(mapExploreAuthor({ id: 'u2', first_name: 'Huda', last_name: 'K', name_privacy: 'weird', email: 'x' } as never))
+    .toEqual({ id: 'u2', firstName: 'Huda', lastName: 'K', namePrivacy: 'first_last_initial', avatarPath: undefined });
+  expect(mapExploreAuthor(null)).toBeUndefined();
 });
 
 test('drops a response if the active account switched while the request was pending', async () => {
   viewer.mockReturnValueOnce('viewer-one').mockReturnValueOnce('viewer-two');
   rpc.mockResolvedValue({ data: [{ id: 'post-a' }], error: null } as never);
-  await expect(fetchExploreFeed('community', 0)).resolves.toEqual([]);
+  await expect(fetchExploreFeed('community', null)).resolves.toEqual({ items: [], next: null });
 });
 
 test('propagates API failures so the screen can show a retry action', async () => {
   const error = new Error('offline');
   rpc.mockResolvedValue({ data: null, error } as never);
-  await expect(fetchExploreFeed('community', 0)).rejects.toBe(error);
+  await expect(fetchExploreFeed('community', null)).rejects.toBe(error);
 });
 
 test('never opens bearer URLs, and Storage rejection is handled without signing', async () => {

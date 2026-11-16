@@ -12,6 +12,7 @@ STAGING ONLY. Every command first runs `guard`, which refuses to continue unless
   * geography: with the synthetic seed, every region is source = 'synthetic'; with
     STAGING_GEOGRAPHY=public (real public boundaries), every Auth account is a synthetic
     @example.test account (production has real users), so production is still refused.
+    The only exception is STAGING_ALLOWED_ACCOUNTS (below).
 Production is never contacted.
 
 Settings (environment):
@@ -21,6 +22,15 @@ Settings (environment):
                         app. Read from the Keychain or a 0600 file, never pasted in chat.
   STAGING_STATE         state folder (default ~/.haratna-staging, mode 0700): synthetic
                         passwords and test ids. Staging-only data.
+  STAGING_ALLOWED_ACCOUNTS
+                        optional 0600 JSON file outside Git listing at most 3 real accounts the
+                        owner approved on staging (e.g. their own TestFlight tester account):
+                        [{"id": "<uuid>", "created_at": "<exact Auth created_at>",
+                          "reason": "...", "approved_by": "...", "approved_on": "YYYY-MM-DD"}]
+                        Each real account must match an entry by id AND creation time, or the
+                        guard stops. Allowed accounts are never touched: admin calls naming
+                        them are refused. Every use is appended to <STATE>/allowance-audit.log
+                        (counts and reasons only, no ids or emails).
 Synthetic accounts use the reserved domain example.test, so no email can ever be delivered.
 """
 import base64
@@ -84,8 +94,28 @@ def rpc(fn, args, jwt=None, key=None):
     return call("POST", f"/rest/v1/rpc/{fn}", jwt=jwt, key=key, body=args)
 
 
+ALLOWED_IDS = set()   # filled by guard(); never acted on
+
+
 def svc(method, path, **kw):
+    if any(a in path for a in ALLOWED_IDS) or any(a in json.dumps(kw.get("body") or {}) for a in ALLOWED_IDS):
+        sys.exit("GUARD STOP: refusing an admin call that names an allowed real account")
     return call(method, path, key=SERVICE, **kw)
+
+
+def load_allowances():
+    path = os.environ.get("STAGING_ALLOWED_ACCOUNTS", "")
+    if not path:
+        return []
+    if os.stat(path).st_mode & 0o077:
+        sys.exit("GUARD STOP: STAGING_ALLOWED_ACCOUNTS must be mode 0600")
+    entries = json.load(open(path))
+    if not isinstance(entries, list) or len(entries) > 3:
+        sys.exit("GUARD STOP: STAGING_ALLOWED_ACCOUNTS must list at most 3 accounts")
+    for e in entries:
+        if not all(e.get(k) for k in ("id", "created_at", "reason", "approved_by", "approved_on")):
+            sys.exit("GUARD STOP: every allowance needs id, created_at, reason, approved_by, approved_on")
+    return entries
 
 
 # Production's service_role has no table privileges (its server work goes through granted
@@ -141,9 +171,21 @@ def guard():
         if s2 != 200:
             sys.exit(f"GUARD STOP: cannot list Auth accounts (HTTP {s2})")
         real = [u for u in accounts if not str(u.get("email", "")).endswith("@example.test")]
+        allowances = {e["id"]: e for e in load_allowances()}
+        unexpected = [u for u in real if u["id"] not in allowances
+                      or allowances[u["id"]]["created_at"] != u.get("created_at")]
+        if unexpected:
+            sys.exit(f"GUARD STOP: {len(unexpected)} non-synthetic account(s) found that are not allowed: "
+                     "this may not be the staging project")
+        ALLOWED_IDS.update(u["id"] for u in real)
+        what = f"{len(rows)} public region(s), {len(accounts) - len(real)} synthetic account(s)"
         if real:
-            sys.exit(f"GUARD STOP: {len(real)} non-synthetic account(s) found: this is not the staging project")
-        what = f"{len(rows)} public region(s), {len(accounts)} synthetic account(s)"
+            reasons = "; ".join(sorted({allowances[u['id']]['reason'] for u in real}))
+            what += f", {len(real)} allowed real account(s) left untouched ({reasons})"
+            os.makedirs(STATE, mode=0o700, exist_ok=True)
+            with open(os.path.join(STATE, "allowance-audit.log"), "a") as log:
+                log.write(f"{datetime.datetime.now(datetime.timezone.utc).isoformat()} {' '.join(sys.argv[1:2]) or 'import'}: "
+                          f"{len(real)} allowed real account(s): {reasons}\n")
     else:
         if any(r.get("source") != "synthetic" for r in rows):
             sys.exit("GUARD STOP: non-synthetic geography found: this is not the staging project")

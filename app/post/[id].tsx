@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/useI18n';
 import { useCurrentUserId, useStore } from '@/store/useStore';
 import { useAction } from '@/hooks/useAction';
 import { addComment, loadComments } from '@/backend/actions';
-import { canOpenExplorePost, stagingExploreEnabled } from '@/backend/exploreFeed';
+import { canOpenExplorePost, fetchExploreAuthor, stagingExploreEnabled, type ExploreAuthor } from '@/backend/exploreFeed';
 import { ExplorePostCard } from '@/features/explore/ExploreSocialFeed';
 import { fetchPost } from '@/backend/social';
 import { SkeletonCardRow } from '@/components/Skeleton';
@@ -40,7 +40,7 @@ export default function PostDetailScreen() {
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [fetchState, setFetchState] = useState<'idle' | 'loading' | 'missing'>('idle');
 
-  const [access, setAccess] = useState<{ key: string; granted: boolean }>();
+  const [access, setAccess] = useState<{ key: string; granted: boolean; author?: ExploreAuthor }>();
   const accessKey = JSON.stringify([viewer, id]);
   useFocusEffect(useCallback(() => {
     if (!stagingExploreEnabled || !id || !viewer) return;
@@ -49,8 +49,9 @@ export default function PostDetailScreen() {
     const check = async () => {
       const authorized = await canOpenExplorePost(id);
       if (!active) return;
-      const granted = authorized && !!await fetchPost(id, false);
-      if (active) setAccess({ key: accessKey, granted });
+      const opened = authorized ? await fetchPost(id, false) : null;
+      const author = opened ? await fetchExploreAuthor(opened.authorId) : undefined;
+      if (active) setAccess({ key: accessKey, granted: !!opened, author });
     };
     void check().catch(() => { if (active) setAccess({ key: accessKey, granted: false }); });
     return () => { active = false; setAccess(undefined); };
@@ -114,7 +115,7 @@ export default function PostDetailScreen() {
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
       >
-        {stagingExploreEnabled ? <ExplorePostCard post={post} onPress={() => {}} /> : <PostCard post={post} onPress={() => {}} />}
+        {stagingExploreEnabled ? <ExplorePostCard item={{ post, author: access?.author }} onPress={() => {}} /> : <PostCard post={post} onPress={() => {}} />}
         <Text style={[theme.text('title'), { marginTop: 20, marginBottom: 4 }]}>
           {t.post.commentsTitle} {comments.length > 0 ? `(${comments.length})` : ''}
         </Text>
