@@ -63,7 +63,8 @@ export function PhotoCarousel({ images, onDoubleTapLike, aspectRatio = 1, radius
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(_, i) => String(i)}
+              // Data URIs and placeholders are keyed by position (a multi-megabyte key is wasteful); URLs keep their key.
+              keyExtractor={(uri, i) => (!uri || uri.startsWith('data:') ? String(i) : `${i}-${uri}`)}
               getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
               onMomentumScrollEnd={(e) => {
                 const next = Math.round(Math.abs(e.nativeEvent.contentOffset.x) / width);
