@@ -1,4 +1,5 @@
 import 'react-native-url-polyfill/auto';
+import PRODUCTION_PUBLISHABLE_KEY from './productionPublishableKey';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupportedStorage } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
@@ -23,8 +24,6 @@ const noopStorage: SupportedStorage = {
 // All real data access is enforced server-side by RLS, never by keeping this
 // pair secret. A staging build names its own backend (see backendConfig.ts and
 // app.config.js) and refuses to fall back to these.
-const PRODUCTION_PUBLISHABLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXd6aXV0bXFvaGlocmVuc3R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1MTU1NDUsImV4cCI6MjEwMzA5MTU0NX0.EBr_g8UfZ0OVM3haGV_Stzfox20b1vZMdEz0861UkOg';
 const backend = resolveBackend(
   Constants.expoConfig?.extra as BackendExtra | undefined,
   { url: process.env.EXPO_PUBLIC_SUPABASE_URL, key: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY },
