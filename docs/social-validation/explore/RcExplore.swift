@@ -42,6 +42,9 @@ final class RcExplore: XCTestCase {
     let nearby = contains("مقهى جديد")
     for _ in 0..<12 where !nearby.isHittable { app.swipeUp(velocity: .fast); sleep(1) }
     log("nearby post found=\(nearby.exists)")
+    XCTAssertTrue(contains("Reem H.").exists, "nearby public author shown by masked name")
+    XCTAssertFalse(label(ar("جار", "Neighbor")).exists, "generic Neighbor label still shown")
+    log("nearby author named=\(contains("Reem H.").exists)")
     shot("02-community-nearby")
 
     // Friends: tap the switcher.

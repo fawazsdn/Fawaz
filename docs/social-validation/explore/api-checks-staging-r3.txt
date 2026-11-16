@@ -1,0 +1,17 @@
+guard ok: staging qcinkzciwjmiavptlfxy, 13 public region(s), 13 synthetic account(s), 1 allowed real account(s) left untouched (owner's TestFlight tester account (Haratna Staging build 14))
+PASS community: 14 posts over 1 page(s), no duplicates
+PASS community: expected demo posts ['noura', 'khalid', 'reem'], none restricted
+PASS community: no location fields
+PASS community: author has display fields only
+PASS community: nearby post reached exactly once by paging
+PASS nearby public author: name masked to initial, photo allowed
+PASS nearby post carries the area name only
+PASS friends: 3 posts over 1 page(s), no duplicates
+PASS friends: expected demo posts ['noura', 'faisal_f', 'faisal_old'], none restricted
+PASS friends: no location fields
+PASS friends: author has display fields only
+PASS private account photo path hidden from non-follower
+PASS private account photo download refused to non-follower (HTTP 400)
+PASS owner can still read own photo (control)
+PASS anonymous call refused (HTTP 401)
+RESULT PASS

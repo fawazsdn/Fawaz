@@ -1,9 +1,10 @@
 """Synthetic Explore demo data on Haratna STAGING only (for Simulator screenshots).
 
 Reuses supabase/staging/staging_kit.py: its guard refuses production, any URL that isn't the
-staging ref, and any project with a non-@example.test account; db() checks the staging DB marker.
+staging ref, and any non-@example.test account not listed in STAGING_ALLOWED_ACCOUNTS (allowed
+accounts are never touched); db() checks the staging DB marker.
 State (synthetic passwords) goes to STAGING_STATE (0700), never printed.
-usage: demo_seed.py seed | session <name> <out.json> | cleanup
+usage: demo_seed.py seed | session <name> <out.json> | cleanup-dry-run | cleanup
 """
 import io
 import json
@@ -48,36 +49,8 @@ def image(seed):
 
 
 def guard():
-    """K.guard() plus one allowance: the owner's own TestFlight tester account (created
-    2026-11-16 16:26 UTC through Haratna Staging build 14) may exist. Anything else non-synthetic
-    still stops. The staging ref, URL host and DB marker checks are unchanged."""
-    allowed = set(filter(None, os.environ.get("DEMO_ALLOWED_ACCOUNT_IDS", "").split(",")))
-    s2, page = K.svc("GET", "/auth/v1/admin/users?per_page=1000")
-    accounts = page.get("users", []) if isinstance(page, dict) else []
-    if s2 != 200:
-        sys.exit(f"GUARD STOP: cannot list Auth accounts (HTTP {s2})")
-    real = [u for u in accounts if not str(u.get("email", "")).endswith("@example.test")]
-    if len(real) > 1 or any(u["id"] not in allowed for u in real):
-        sys.exit(f"GUARD STOP: unexpected non-synthetic account(s): {len(real)}")
-    real_svc = K.svc
-    def only_synthetic(method, path, **kw):   # never touch the allowed real account
-        if any(a in path for a in allowed):
-            sys.exit("GUARD STOP: refusing to act on the owner's account")
-        return real_svc(method, path, **kw)
-    K.svc = only_synthetic
-    K.PUBLIC_GEOGRAPHY = False
-    K.call("GET", "/rest/v1/regions?select=source")
-    # K.guard() minus the account scan done above
-    problems = []
-    if not K.REF or K.REF == K.PROD_REF or K.PROD_REF in K.URL:
-        problems.append("not staging")
-    if K.urllib.parse.urlparse(K.URL).hostname != f"{K.REF}.supabase.co":
-        problems.append("URL host does not match STAGING_REF")
-    if problems:
-        sys.exit("GUARD STOP: " + "; ".join(problems))
-    os.makedirs(K.STATE, mode=0o700, exist_ok=True)
-    os.chmod(K.STATE, 0o700)
-    print(f"guard ok: staging {K.REF}, {len(accounts)} accounts ({len(real)} allowed owner account)")
+    """The staging kit's guard, including its audited STAGING_ALLOWED_ACCOUNTS allowance."""
+    K.guard()
 
 
 def ok(status, what, body=None):
@@ -166,9 +139,48 @@ def session(name, out):
     print(f"session for {name} written (0600)")
 
 
-def cleanup():
+def avatar_image(seed):
+    from PIL import Image, ImageDraw
+    colors = [(31, 94, 70), (164, 120, 72), (54, 103, 132), (122, 72, 110)]
+    img = Image.new("RGB", (400, 400), colors[seed % 4])
+    d = ImageDraw.Draw(img)
+    d.ellipse([120, 70, 280, 230], fill=(244, 236, 220))
+    d.ellipse([60, 250, 340, 520], fill=(244, 236, 220))
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=85)
+    return buf.getvalue()
+
+
+def avatars():
+    """Synthetic profile photos in the private profile-photos bucket, recorded like the app does."""
     guard()
     st = K.load_state()
+    for i, name in enumerate(["noura", "khalid", "reem", "faisal", "huda"]):
+        u = st["users"][name]
+        if u.get("avatar"):
+            continue
+        jwt = K.login(st, name)
+        path = f"{u['id']}/demo-{uuid.uuid4().hex[:8]}.jpg"
+        data = avatar_image(i)
+        ok(K.call("POST", f"/storage/v1/object/profile-photos/{path}", jwt=jwt, raw=data, ctype="image/jpeg")[0], f"avatar {name}")
+        s, r = K.call("POST", "/rest/v1/media_attachments", jwt=jwt, body={"owner_id": u["id"], "neighborhood_id": None,
+              "bucket_id": "profile-photos", "object_path": path, "mime_type": "image/jpeg", "size_bytes": len(data)})
+        ok(s, f"record avatar {name}", r)
+        s, r = K.call("PATCH", f"/rest/v1/profiles?id=eq.{u['id']}", jwt=jwt, body={"avatar_path": path, "avatar_url": None})
+        ok(s, f"set avatar {name}", r)
+        u["avatar"] = True
+        K.save_state(st)
+    print("avatars ok")
+
+
+def cleanup(dry_run=False):
+    """Deletes only the demo accounts recorded in this tool's own state (their posts, photos
+    records, follows, likes and comments go with them through the existing account cascade)."""
+    guard()
+    st = K.load_state()
+    if dry_run:
+        print("would delete", len(st["users"]), "demo accounts:", ", ".join(sorted(st["users"])))
+        return
     for name, u in list(st["users"].items()):
         s, _ = K.svc("DELETE", f"/auth/v1/admin/users/{u['id']}")
         print(name, "deleted" if s in (200, 204) else f"HTTP {s}")
@@ -176,4 +188,4 @@ def cleanup():
 
 
 if __name__ == "__main__":
-    {"seed": lambda: seed(), "session": lambda: session(sys.argv[2], sys.argv[3]), "cleanup": lambda: cleanup()}[sys.argv[1]]()
+    {"seed": lambda: seed(), "session": lambda: session(sys.argv[2], sys.argv[3]), "cleanup": lambda: cleanup(), "avatars": lambda: avatars(), "cleanup-dry-run": lambda: cleanup(True)}[sys.argv[1]]()

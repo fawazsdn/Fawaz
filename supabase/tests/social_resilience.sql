@@ -179,7 +179,11 @@ begin
   perform public.finish_post_photo_cleanup(array[stale], '{}');
   select count(*) into cnt from public.media_attachments where object_path = stale;
   if cnt <> 0 then raise exception 'FAIL record kept after delete'; end if;
-  if (public.count_abandoned_post_photos(interval '24 hours')->>'deleting')::int <> 0 then raise exception 'FAIL preview count'; end if;
+  -- The preview must match the records actually being deleted. (It was "= 0", which failed on a
+  -- shared database once any real photo passed the 24-hour grace: the claims above are global.)
+  if (public.count_abandoned_post_photos(interval '24 hours')->>'deleting')::int
+     <> (select count(*) from public.media_attachments where bucket_id = 'community-media'
+         and object_path like 'posts/%' and status = 'deleting') then raise exception 'FAIL preview count'; end if;
   perform set_config('role', 'authenticated', true);
   ok := false;
   begin perform public.count_abandoned_post_photos(interval '1 hour'); exception when others then ok := true; end;

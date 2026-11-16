@@ -1,0 +1,17 @@
+# Hosted staging qcinkzciwjmiavptlfxy, 2026-11-16 18:51 UTC, branch recovery/codex-community-friends
+admin_support: ALL_PASS 7 checks
+avatar_restore_rpc: ALL_PASS 8 checks
+build13_compat: ALL_PASS 9 checks
+business_directory: SUITE_OK
+clubs: ALL_PASS 18 checks
+compliance: ALL_PASS 4 checks
+deleted_post_retention: ALL_PASS 5 checks
+explore_social_feed: ALL_PASS 17 checks
+neighborhood_locking: SUITE_OK
+neighbors: ALL_PASS 12 checks
+poll_vote_change: ALL_PASS total=2
+private_profile_audience: ALL_PASS 6 checks
+private_profile_photos: ALL_PASS 11 checks
+public_support: ALL_PASS 5 checks
+social_follows: ALL_PASS 11 checks
+social_resilience: ALL_PASS 10 checks
