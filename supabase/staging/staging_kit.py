@@ -357,13 +357,13 @@ def matrix(report_path):
     rep.check("RLS", "accepted request: post visible", visible(T["dave"], p_bob))
     rep.check("Storage", "accepted request: profile photo signable", sign(T["dave"], "profile-photos", b_photo)[0] == 200)
 
-    # 5.5 photo removal on post delete
-    s, url = sign(T["alice"], "community-media", a_photo)
+    # 5.5 post deletion: 24-hour recovery grace, then the cleanup job removes the photo
+    #     (migration 20261115110000; the cleanup phase backdates the deletion to test it)
+    s, url = sign(T["dave"], "community-media", a_photo)
     rpc("delete_post", {"target_post": p_pub}, jwt=T["alice"])
+    rep.check("Cleanup", "deleted post: other users can no longer sign its photo", sign(T["dave"], "community-media", a_photo)[0] >= 400)
     s, _ = svc("GET", f"/storage/v1/object/authenticated/community-media/{a_photo}")
-    rep.check("Cleanup", "deleting a post removes its photo object", s >= 400, f"HTTP {s}")
-    time.sleep(70)
-    rep.check("Cleanup", "old signed URL stops working (CDN, 70s)", (fetch_signed(url)[0] if url else 404) >= 400)
+    rep.check("Cleanup", "deleted post: photo kept during the 24-hour grace", s == 200, f"HTTP {s}")
 
     # abandoned upload for the cleanup phase
     ab = f"posts/{ID['alice']}/{tag}-abandoned.jpg"
@@ -371,7 +371,8 @@ def matrix(report_path):
     keep = f"posts/{ID['alice']}/{tag}-keep.jpg"
     upload(T["alice"], "community-media", keep)
     p_keep = post("alice", "public", [keep])
-    st["cleanup"] = {"abandoned": ab, "keep": keep, "keep_post": p_keep, "staged_at": time.time()}
+    st["cleanup"] = {"abandoned": ab, "keep": keep, "keep_post": p_keep, "staged_at": time.time(),
+                     "deleted_post": p_pub, "deleted_photo": a_photo, "deleted_url": url}
     s, _ = call("POST", "/functions/v1/cleanup-post-photos", jwt=T["alice"], body={"dryRun": True})
     rep.check("Cleanup", "cleanup function refuses a user JWT", s in (401, 403), f"HTTP {s}")
 
@@ -410,6 +411,10 @@ def cleanup_phase(report_path):
     if wait > 0:
         sys.exit(f"wait {int(wait / 60) + 1} more minutes (cleanup only takes uploads older than 1 hour)")
     fn = lambda body: call("POST", "/functions/v1/cleanup-post-photos", key=SERVICE, body=body)
+    gone = c.get("deleted_photo")
+    if gone:
+        # Pretend the deletion happened 25 hours ago (staging only), so its grace has passed.
+        db(f"update public.posts set deleted_at = now() - interval '25 hours' where id = {lit(c['deleted_post'])} and deleted_at is not null;")
     s, r = fn({"dryRun": True, "olderThanHours": 1})
     rep.check("Cleanup", "dry run counts the abandoned upload", s == 200, f"HTTP {s} {r}")
     s, _ = svc("GET", f"/storage/v1/object/authenticated/community-media/{c['abandoned']}")
@@ -423,6 +428,13 @@ def cleanup_phase(report_path):
     rep.check("Cleanup", "photo of a published post untouched", s == 200, f"HTTP {s}")
     r = db(f"select count(*) as n from public.media_attachments where object_path = {lit(c['abandoned'])};")
     rep.check("Cleanup", "no attachment row left for the removed file", isinstance(r, list) and r[0].get("n") == 0, r)
+    if gone:
+        s, _ = svc("GET", f"/storage/v1/object/authenticated/community-media/{gone}")
+        rep.check("Cleanup", "deleted post's photo removed after the grace", s >= 400, f"HTTP {s}")
+        url = c.get("deleted_url")
+        rep.check("Cleanup", "old signed URL of the deleted post no longer works (it has also expired by now)", (fetch_signed(url)[0] if url else 404) >= 400)
+        r = db(f"select count(*) as n from public.media_attachments where object_path = {lit(gone)};")
+        rep.check("Cleanup", "no attachment row left for the deleted post's photo", isinstance(r, list) and r[0].get("n") == 0, r)
     s, r = fn({"olderThanHours": 1})
     rep.check("Cleanup", "second run is a no-op", s == 200, f"HTTP {s} {r}")
     return rep.write(report_path, "Haratna hosted staging: cleanup phase")
