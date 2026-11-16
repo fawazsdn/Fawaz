@@ -42,7 +42,7 @@
       "environment": "preview",
       "env": {
         "APP_VARIANT": "staging",
-        "STAGING_BUILD_NUMBER": "14",
+        "STAGING_BUILD_NUMBER": "15",
         "EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN": "false",
         "EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN": "false"
       }
