@@ -915,6 +915,17 @@ const ar = {
     },
   },
   discover: {
+    directory: 'دليل الحي',
+    communityFeed: 'المجتمع',
+    friendsFeed: 'الأصدقاء',
+    communityEmpty: 'لا توجد منشورات بعد',
+    communityEmptyBody: 'تابع هذه الصفحة لأسئلة وتوصيات وأخبار الأحياء القريبة.',
+    friendsEmpty: 'لا توجد منشورات من الأصدقاء',
+    friendsEmptyBody: 'تابع جيرانك لتظهر منشوراتهم هنا.',
+    feedError: 'تعذّر تحميل المنشورات',
+    feedRetry: 'حاول مجددًا',
+    findNeighbors: 'ابحث عن جيران',
+
     title: 'استكشف',
     searchPlaceholder: 'ابحث في حيّك...',
     nearYou: 'يحدث بالقرب منك',

@@ -271,7 +271,7 @@ export async function fetchAuthorPosts(authorId: string): Promise<Post[]> {
 }
 
 /** Loads one post (e.g. opened from a notification or a follow) into the store. */
-export async function fetchPost(postId: string): Promise<Post | null> {
+export async function fetchPost(postId: string, resolvePhotos = true): Promise<Post | null> {
   const uid = me();
   const { data, error } = await supabase
     .from('posts')
@@ -282,7 +282,8 @@ export async function fetchPost(postId: string): Promise<Post | null> {
   if (error) fail(error);
   if (!data) return null;
   const { data: savedRow } = await supabase.from('saved_posts').select('post_id').eq('user_id', uid).eq('post_id', postId);
-  const urls = await resolveMediaUrls((data as Row).image_paths ?? []);
+  const urls = resolvePhotos ? await resolveMediaUrls((data as Row).image_paths ?? []) : {};
+  if (uid !== getCurrentUserId()) return null;
   const post = mapPost(data as Row, new Set(((savedRow ?? []) as Row[]).map((r) => r.post_id)), uid, (ps) =>
     (ps ?? []).map((x) => urls[x]).filter((u): u is string => !!u),
   );

@@ -1,16 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Clock, SearchX } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
+import { useCurrentUserId, useStore } from '@/store/useStore';
 import { AppHeader } from '@/components/AppHeader';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterBar } from '@/components/FilterBar';
 import { EmptyState } from '@/components/EmptyState';
 import { UserRow } from '@/components/UserRow';
+import { fetchExploreFeed, fetchVisibleExplorePeople, stagingExploreEnabled } from '@/backend/exploreFeed';
+import type { Post } from '@/models';
 import { PostCard } from '@/features/feed/PostCard';
 import { EventCard } from '@/features/events/EventCard';
 import { eventCategoryLabel } from '@/features/events/categories';
@@ -52,20 +54,47 @@ export default function SearchScreen() {
   const [tab, setTab] = useState<Tab>('all');
 
   const q = query.trim().toLowerCase();
+  const viewer = useCurrentUserId();
+  const blocked = useStore((s) => s.blockedUserIds);
+  const [fresh, setFresh] = useState<{ key: string; posts: Post[]; people: string[] }>();
+  const matchingUsers = useMemo(() => !q ? [] : users
+    .filter((u) => `${u.firstName} ${u.lastName}`.toLowerCase().includes(q)), [q, users]);
+  const peopleIds = useMemo(() => matchingUsers.filter((u) => !blocked.includes(u.id)).slice(0, 50).map((u) => u.id), [matchingUsers, blocked]);
+  const searchKey = JSON.stringify([viewer, neighborhoodId, q, peopleIds]);
+  useFocusEffect(useCallback(() => {
+    setFresh(undefined);
+    if (!stagingExploreEnabled || !viewer || !q) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      void Promise.all([
+        fetchExploreFeed('community', 0, q).catch(() => []),
+        fetchVisibleExplorePeople(peopleIds).catch(() => []),
+      ]).then(([posts, people]) => { if (active) setFresh({ key: searchKey, posts, people }); });
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      setFresh(undefined);
+    };
+  }, [q, searchKey, viewer, peopleIds, setFresh]));
 
   const results = useMemo(() => {
     if (!q) return null;
     return {
-      posts: posts.filter((p) => p.textAr.toLowerCase().includes(q)),
+      posts: stagingExploreEnabled
+        ? (fresh?.key === searchKey ? fresh.posts.filter((p) => !blocked.includes(p.authorId)) : [])
+        : posts.filter((p) => p.textAr.toLowerCase().includes(q)),
       events: events.filter((e) =>
         [e.title, eventCategoryLabel(e, t.eventCreate.categories as Record<string, string>)].some((v) => v.toLowerCase().includes(q)),
       ),
       clubs: searchClubs(clubs, q, t.clubs.categories as Record<string, string>),
-      people: users.filter((u) => `${u.firstName} ${u.lastName}`.toLowerCase().includes(q)),
+      people: stagingExploreEnabled
+        ? (fresh?.key === searchKey ? matchingUsers.filter((u) => fresh.people.includes(u.id)) : [])
+        : matchingUsers,
       services: businesses.filter((b) => b.name.toLowerCase().includes(q)),
       marketplace: listings.filter((m) => m.title.toLowerCase().includes(q)),
     };
-  }, [q, posts, events, clubs, users, businesses, listings, t]);
+  }, [q, posts, events, clubs, businesses, listings, t, fresh, searchKey, blocked, matchingUsers]);
 
   const onSubmit = () => {
     if (query.trim()) addSearchHistory(query.trim());
@@ -135,7 +164,7 @@ export default function SearchScreen() {
               {(tab === 'all' || tab === 'posts') && results!.posts.length > 0 ? (
                 <ResultGroup title={t.search.tabs.posts}>
                   {results!.posts.map((p) => (
-                    <PostCard key={p.id} post={p} />
+                    <PostCard key={p.id} post={p} discovery={stagingExploreEnabled} />
                   ))}
                 </ResultGroup>
               ) : null}
@@ -156,7 +185,7 @@ export default function SearchScreen() {
               {(tab === 'all' || tab === 'people') && results!.people.length > 0 ? (
                 <ResultGroup title={t.search.tabs.people}>
                   {results!.people.map((u) => (
-                    <UserRow key={u.id} user={u} onPress={() => router.push(`/profile/${u.id}`)} />
+                    <UserRow key={u.id} user={stagingExploreEnabled ? { ...u, avatarUrl: undefined } : u} onPress={() => router.push(`/profile/${u.id}`)} />
                   ))}
                 </ResultGroup>
               ) : null}

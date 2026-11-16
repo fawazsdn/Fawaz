@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { createURL } from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Bookmark, Globe, Lock, Megaphone, MessageCircle, MoreHorizontal, Share2, ThumbsUp, TriangleAlert, Users } from 'lucide-react-native';
 
@@ -27,9 +28,11 @@ import { PollBlock } from '@/features/polls/PollBlock';
 interface PostCardProps {
   post: Post;
   onPress?: () => void;
+  discovery?: boolean;
+  onChanged?: () => void;
 }
 
-export function PostCard({ post, onPress }: PostCardProps) {
+export function PostCard({ post, onPress, discovery, onChanged }: PostCardProps) {
   const theme = useTheme();
   const { t, locale, isRTL } = useI18n();
   const router = useRouter();
@@ -44,6 +47,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
   const [reportOpen, setReportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  const caption = discovery && locale === 'en' ? post.textEn || post.textAr : post.textAr;
   const authorName = author ? displayName(author) : t.common.neighbor;
   const isOwn = post.authorId === me;
   const liked = post.reactions.some((r) => r.userId === me);
@@ -52,19 +56,24 @@ export function PostCard({ post, onPress }: PostCardProps) {
 
   const goToDetail = () => (onPress ? onPress() : router.push(`/post/${post.id}`));
 
+  const update = (action: () => Promise<unknown>) => run(async () => {
+    await action();
+    onChanged?.();
+  });
+
   const like = () => {
     if (liked) return;
     haptics.light();
-    run(() => toggleReaction(post.id, reactionType));
+    update(() => toggleReaction(post.id, reactionType));
   };
 
   // Only public posts carry their text into other apps; everything else
   // shares a link that opens only for people allowed to see the post.
   const share = () =>
     shareContent(
-      post.audience === 'public'
+      !discovery && post.audience === 'public'
         ? { message: post.textAr, url: links.post(post.id) }
-        : { message: t.social.sharePrivateNote, url: links.post(post.id) },
+        : { message: t.social.sharePrivateNote, url: discovery ? createURL(`post/${post.id}`, { scheme: 'haratna-staging' }) : links.post(post.id) },
     );
 
   const AudienceIcon = post.audience === 'public' ? Globe : post.audience === 'followers' ? Lock : Users;
@@ -83,24 +92,24 @@ export function PostCard({ post, onPress }: PostCardProps) {
         { key: 'delete', label: t.common.delete, destructive: true, onPress: () => setDeleteOpen(true) },
       ]
     : [
-        { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => run(() => toggleSavePost(post.id)) },
+        { key: 'save', label: saved ? t.common.saved : t.common.save, onPress: () => update(() => toggleSavePost(post.id)) },
         { key: 'report', label: t.common.report, onPress: () => setReportOpen(true) },
-        { key: 'block', label: t.common.block, destructive: true, onPress: () => run(() => toggleBlockUser(post.authorId)) },
+        { key: 'block', label: t.common.block, destructive: true, onPress: () => update(() => toggleBlockUser(post.authorId)) },
       ];
 
   return (
     <>
-      <Card onPress={goToDetail} accessibilityLabel={post.textAr} interactiveChildren>
+      <Card onPress={goToDetail} accessibilityLabel={caption} interactiveChildren>
         <View style={[theme.row(), styles.header]}>
           <Pressable
             onPress={(e) => {
               e.stopPropagation?.();
-              if (author) router.push(`/profile/${author.id}`);
+              if (author || discovery) router.push(`/profile/${post.authorId}`);
             }}
             accessibilityRole="button"
             accessibilityLabel={authorName}
           >
-            <Avatar uri={author?.avatarUrl} name={authorName} size={42} />
+            <Avatar uri={discovery ? undefined : author?.avatarUrl} name={authorName} size={42} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
@@ -111,7 +120,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
             <View style={[theme.row(), { alignItems: 'center', gap: 4 }]}>
               <AudienceIcon size={11} color={theme.colors.textMuted} accessibilityLabel={audienceLabel} />
               <Text style={[theme.text('caption', theme.colors.textMuted), { flexShrink: 1 }]} numberOfLines={2}>
-                {[post.locationLabel ?? (locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn), formatRelativeTime(post.createdAt, locale)]
+                {[(discovery ? undefined : post.locationLabel) ?? (locale === 'ar' ? neighborhood?.nameAr : neighborhood?.nameEn), formatRelativeTime(post.createdAt, locale)]
                   .filter(Boolean)
                   .join(' · ')}
               </Text>
@@ -153,7 +162,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
                 <PhotoCarousel images={post.images} onDoubleTapLike={like} aspectRatio={post.images.length > 1 ? 4 / 5 : 1} />
               </View>
             ) : null}
-            {post.textAr ? <Text style={[theme.text('body'), styles.body]}>{post.textAr}</Text> : null}
+            {caption ? <Text style={[theme.text('body'), styles.body]}>{caption}</Text> : null}
           </>
         )}
 
@@ -162,7 +171,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
             onPress={(e) => {
               e.stopPropagation?.();
               haptics.light();
-              run(() => toggleReaction(post.id, reactionType));
+              update(() => toggleReaction(post.id, reactionType));
             }}
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
@@ -192,7 +201,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
           <Pressable
             onPress={(e) => {
               e.stopPropagation?.();
-              run(() => toggleSavePost(post.id));
+              update(() => toggleSavePost(post.id));
             }}
             style={[theme.row(), styles.footerBtn]}
             accessibilityRole="button"
@@ -229,7 +238,7 @@ export function PostCard({ post, onPress }: PostCardProps) {
         onCancel={() => setDeleteOpen(false)}
         onConfirm={() => {
           setDeleteOpen(false);
-          run(() => deletePost(post.id));
+          update(() => deletePost(post.id));
         }}
       />
     </>

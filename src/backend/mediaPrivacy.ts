@@ -30,7 +30,8 @@ export function isSignedStorageUrl(uri?: string | null): boolean {
  * only, never written to the disk cache where it would outlive revoked access
  * and a sign-out. Public and local images keep the default disk cache.
  */
-export function imageCachePolicy(uri?: string | null): 'memory' | 'disk' {
+export function imageCachePolicy(uri?: string | null): 'none' | 'memory' | 'disk' {
+  if (uri?.startsWith('data:image/')) return 'none';
   return isSignedStorageUrl(uri) ? 'memory' : 'disk';
 }
 

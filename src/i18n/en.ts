@@ -920,6 +920,17 @@ const en: typeof ar = {
     },
   },
   discover: {
+    directory: 'Neighborhood directory',
+    communityFeed: 'Community',
+    friendsFeed: 'Friends',
+    communityEmpty: 'Nothing to explore yet',
+    communityEmptyBody: 'Check back for questions, recommendations, and updates near you.',
+    friendsEmpty: 'Your Friends feed is quiet',
+    friendsEmptyBody: 'Follow neighbors to see their posts here.',
+    feedError: 'Could not load posts',
+    feedRetry: 'Try again',
+    findNeighbors: 'Find neighbors',
+
     title: 'Discover',
     searchPlaceholder: 'Search your neighborhood...',
     nearYou: 'Happening near you',

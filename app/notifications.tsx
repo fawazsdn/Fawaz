@@ -1,13 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, RefreshControl, SectionList, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Bell, BellRing } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/useTheme';
 import { useI18n } from '@/i18n/useI18n';
-import { useStore } from '@/store/useStore';
+import { useCurrentUserId, useStore } from '@/store/useStore';
 import { formatRelativeTime, isSameSaudiDay } from '@/utils/format';
 import { markAllNotificationsRead, markNotificationRead } from '@/backend/actions';
+import { fetchExploreNotifications, stagingExploreEnabled } from '@/backend/exploreFeed';
 import { requestSync } from '@/backend/sync';
 import { SyncNotice } from '@/components/VerifyGate';
 import type { AppNotification } from '@/models';
@@ -22,20 +23,42 @@ export default function NotificationsScreen() {
   // Raw state + useMemo, not filter()/sort() inside the selector — see
   // src/features/home/HomeHeader.tsx for why.
   const allNotifications = useStore((s) => s.notifications);
+  const viewer = useCurrentUserId();
+  const blocked = useStore((s) => s.blockedUserIds);
+  const [fresh, setFresh] = useState<{ viewer: string; rows: AppNotification[] }>();
+  const epoch = useRef(0);
+  const reload = useCallback(async () => {
+    const request = ++epoch.current;
+    setFresh(undefined);
+    if (!viewer) return;
+    const rows = await fetchExploreNotifications(viewer).catch(() => []);
+    if (epoch.current === request) setFresh({ viewer, rows });
+  }, [viewer]);
+
+  useFocusEffect(useCallback(() => {
+    if (!stagingExploreEnabled) return;
+    void reload();
+    return () => {
+      epoch.current++;
+      setFresh(undefined);
+    };
+  }, [reload]));
+
   const notifications = useMemo(
     () =>
       // Notifications are already scoped to the signed-in user by RLS.
-      [...allNotifications].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
-    [allNotifications],
+      [...(stagingExploreEnabled ? (fresh?.viewer === viewer ? fresh.rows : []).filter((n) => !n.actorId || !blocked.includes(n.actorId)) : allNotifications)].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [allNotifications, blocked, fresh, viewer],
   );
   const getUser = useStore((s) => s.getUser);
   const hasUnread = notifications.some((n) => !n.read);
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await requestSync();
+    if (stagingExploreEnabled) await reload();
+    else await requestSync();
     setRefreshing(false);
-  }, []);
+  }, [reload]);
 
   const sections = useMemo(() => {
     const now = new Date();
@@ -56,7 +79,11 @@ export default function NotificationsScreen() {
   }, [notifications, t]);
 
   const onPress = (n: AppNotification) => {
-    if (!n.read) void markNotificationRead(n.id).catch(() => {});
+    if (!n.read) {
+      void markNotificationRead(n.id).then(() => {
+        if (stagingExploreEnabled) void reload();
+      }).catch(() => {});
+    }
     if (n.deepLink?.startsWith('/')) router.push(n.deepLink as never);
   };
 
@@ -67,7 +94,7 @@ export default function NotificationsScreen() {
         fallbackRoute="/"
         right={
           hasUnread ? (
-            <Pressable onPress={() => void markAllNotificationsRead().catch(() => {})} hitSlop={8} accessibilityRole="button">
+            <Pressable onPress={() => void markAllNotificationsRead().then(() => stagingExploreEnabled ? reload() : undefined).catch(() => {})} hitSlop={8} accessibilityRole="button">
               <Text style={theme.text('caption', theme.colors.primary)}>{t.notifications.markAllRead}</Text>
             </Pressable>
           ) : undefined
@@ -84,7 +111,7 @@ export default function NotificationsScreen() {
           <Text style={[theme.text('caption', theme.colors.textMuted), { marginTop: 14, marginBottom: 6 }]}>{section.title}</Text>
         )}
         renderItem={({ item }) => {
-          const actor = item.actorId ? getUser(item.actorId) : undefined;
+          const actor = !stagingExploreEnabled && item.actorId ? getUser(item.actorId) : undefined;
           return (
             <Pressable
               onPress={() => onPress(item)}
@@ -112,7 +139,7 @@ export default function NotificationsScreen() {
                   {locale === 'en' ? (item.titleEn ?? item.titleAr) : item.titleAr}
                 </Text>
                 <Text style={theme.text('bodySmall', theme.colors.textSecondary)} numberOfLines={2}>
-                  {locale === 'en' ? (item.bodyEn ?? item.bodyAr) : item.bodyAr}
+                  {stagingExploreEnabled && item.deepLink?.startsWith('/post/') ? null : (locale === 'en' ? (item.bodyEn ?? item.bodyAr) : item.bodyAr)}
                 </Text>
                 <Text style={theme.text('caption', theme.colors.textMuted)}>{formatRelativeTime(item.createdAt, locale)}</Text>
               </View>
