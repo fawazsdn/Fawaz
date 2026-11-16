@@ -1,0 +1,119 @@
+### A0. roll back 20261115110000
+[]
+
+[{"head": "20261115100000"}]
+### A. roll back 20261115100000
+[{"head": "20261110090000"}]
+
+### B. roll back 20261110090000
+[{"head": "20261109130000"}]
+
+### C. seed drill data
+[{"drill_accounts": 4}]
+
+### C2. real file for r3's private-only photo
+upload: 200
+### before (check.sql)
+[{"k": "audiences", "v": "b0000000-0000-0000-0000-000000000001=public,b0000000-0000-0000-0000-000000000002=followers,b0000000-0000-0000-0000-000000000003=neighborhood"}, {"k": "avatar_paths", "v": "3"}, {"k": "follow_notifications", "v": "6"}, {"k": "follows", "v": "5"}, {"k": "follows_pending", "v": "1"}, {"k": "private_accounts", "v": "2"}, {"k": "profile_photo_files", "v": "9"}]
+
+### D. roll back 20261109130000 (must STOP: private-only photo)
+Initialising login role...
+unexpected status 400: {"message":"Failed to run sql query: ERROR:  P0001: rollback stopped: 1 profile(s) have only a private photo; run --restore-public first (or set haratna.allow_photo_fallback=on to accept initials)\nCONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE\n"}
+Try rerunning the command with --debug to troubleshoot the error.
+
+### E. scripts/migrate-avatars-to-private.mjs --restore-public (dry run, then --apply), staging service key
+RESTORE (dry run): { 'restore (dry run)': 1 }
+RESTORE: { 'restore:applied': 1 }
+restored public file: 200 identical=yes
+anon cannot call restore functions: 401
+### F. roll back 20261109130000, then 20261109120000
+[{"head": "20261109120000"}]
+
+### 
+[{"head": "20261108142118"}]
+
+### rolled-back state (check_rolled_back.sql)
+[{"k": "audiences_while_rolled_back", "v": "b0000000-0000-0000-0000-000000000001=neighborhood,b0000000-0000-0000-0000-000000000002=neighborhood,b0000000-0000-0000-0000-000000000003=neighborhood"}, {"k": "profile_photo_files_kept", "v": "9"}, {"k": "r2_public_link_restored", "v": "1"}, {"k": "saved_audiences", "v": "34"}, {"k": "saved_avatar_paths", "v": "6"}, {"k": "saved_follows", "v": "10"}, {"k": "saved_notifications", "v": "10"}, {"k": "saved_private", "v": "4"}]
+
+### baseline suites while rolled back
+admin_support          ALL_PASS 7 checks (rolled back)
+ALL_PASS 7 checks (rolled back) 
+business_directory     SUITE_OK
+SUITE_OK               
+clubs                  ALL_PASS 18 checks (rolled back)
+ALL_PASS 18 checks (rolled back) 
+compliance             ALL_PASS 4 checks (rolled back)
+ALL_PASS 4 checks (rolled back) 
+neighborhood_locking   SUITE_OK
+SUITE_OK               
+neighbors              ALL_PASS 12 checks (rolled back)
+ALL_PASS 12 checks (rolled back) 
+poll_vote_change       ALL_PASS total=2 (rolled back)
+ALL_PASS total=2 (rolled back) 
+public_support         ALL_PASS 5 checks (rolled back)
+ALL_PASS 5 checks (rolled back) 
+build13_compat         
+                       
+### G. re-apply the five migrations
+20261109120000_social_follows_photo_posts [{"head": "20261109120000"}]
+
+20261109130000_private_profile_photos [{"head": "20261109130000"}]
+
+20261110090000_social_resilience [{"head": "20261110090000"}]
+
+20261115100000_private_profile_audience [{"head": "20261115100000"}]
+
+20261115110000_deleted_post_photo_retention [{"head": "20261115110000"}]
+
+### restore archived social data
+[{"result": "RESTORE_OK"}]
+
+### after (check.sql)
+[{"k": "audiences", "v": "b0000000-0000-0000-0000-000000000001=public,b0000000-0000-0000-0000-000000000002=followers,b0000000-0000-0000-0000-000000000003=neighborhood"}, {"k": "avatar_paths", "v": "3"}, {"k": "follow_notifications", "v": "8"}, {"k": "follows", "v": "5"}, {"k": "follows_pending", "v": "1"}, {"k": "private_accounts", "v": "2"}, {"k": "profile_photo_files", "v": "9"}]
+
+### before vs after
+audiences: before=b0000000-0000-0000-0000-000000000001=public,b0000000-0000-0000-0000-000000000002=followers,b0000000-0000-0000-0000-000000000003=neighborhood after=b0000000-0000-0000-0000-000000000001=public,b0000000-0000-0000-0000-000000000002=followers,b0000000-0000-0000-0000-000000000003=neighborhood same
+avatar_paths: before=3 after=3 same
+follow_notifications: before=6 after=8 DIFFERENT
+follows: before=5 after=5 same
+follows_pending: before=1 after=1 same
+private_accounts: before=2 after=2 same
+profile_photo_files: before=9 after=9 same
+NOT IDENTICAL
+### suites after re-apply
+admin_support              ALL_PASS 7 checks (rolled back)
+ALL_PASS 7 checks (rolled back) 
+avatar_restore_rpc         ALL_PASS 8 checks (rolled back)
+ALL_PASS 8 checks (rolled back) 
+build13_compat             ALL_PASS 9 checks
+ALL_PASS 9 checks          
+business_directory         SUITE_OK
+SUITE_OK                   
+clubs                      ALL_PASS 18 checks (rolled back)
+ALL_PASS 18 checks (rolled back) 
+compliance                 ALL_PASS 4 checks (rolled back)
+ALL_PASS 4 checks (rolled back) 
+deleted_post_retention     ALL_PASS 5 checks (rolled back)
+ALL_PASS 5 checks (rolled back) 
+neighborhood_locking       SUITE_OK
+SUITE_OK                   
+neighbors                  ALL_PASS 12 checks (rolled back)
+ALL_PASS 12 checks (rolled back) 
+poll_vote_change           ALL_PASS total=2 (rolled back)
+ALL_PASS total=2 (rolled back) 
+private_profile_audience   ALL_PASS 6 checks (rolled back)
+ALL_PASS 6 checks (rolled back) 
+private_profile_photos     ALL_PASS 11 checks
+ALL_PASS 11 checks         
+public_support             ALL_PASS 5 checks (rolled back)
+ALL_PASS 5 checks (rolled back) 
+social_follows             ALL_PASS 11 checks
+ALL_PASS 11 checks         
+social_resilience          ALL_PASS 10 checks
+ALL_PASS 10 checks         
+### drill cleanup: real files via the Storage API, then accounts
+remove files: 200 200
+### cleanup accounts
+[{"accounts": 6, "non_kit_accounts": 0}]
+
+DRILL_DONE

@@ -1,0 +1,14 @@
+admin_support                ERROR:  P0001: ALL_PASS 7 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 113 at RAISE\n
+avatar_restore_rpc           ERROR:  P0001: ALL_PASS 8 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 32 at RAISE\n
+build13_compat               ERROR:  P0001: ALL_PASS 9 checks\nCONTEXT:  PL/pgSQL function inline_code_block line 139 at RAISE\n
+business_directory           clubs                        ERROR:  P0001: ALL_PASS 18 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 285 at RAISE\n
+compliance                   ERROR:  P0001: ALL_PASS 4 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 55 at RAISE\n
+deleted_post_retention       ERROR:  P0001: ALL_PASS 5 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 72 at RAISE\n
+neighborhood_locking         neighbors                    ERROR:  P0001: ALL_PASS 12 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 164 at RAISE\n
+poll_vote_change             ERROR:  P0001: ALL_PASS total=2 (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 37 at RAISE\n
+private_profile_audience     ERROR:  P0001: ALL_PASS 6 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 108 at RAISE\n
+private_profile_photos       ERROR:  P0001: ALL_PASS 11 checks\nCONTEXT:  PL/pgSQL function inline_code_block line 198 at RAISE\n
+public_support               ERROR:  P0001: ALL_PASS 5 checks (rolled back)\nCONTEXT:  PL/pgSQL function inline_code_block line 62 at RAISE\n
+social_follows               ERROR:  P0001: ALL_PASS 11 checks\nCONTEXT:  PL/pgSQL function inline_code_block line 295 at RAISE\n
+social_resilience            ERROR:  P0001: ALL_PASS 10 checks\nCONTEXT:  PL/pgSQL function inline_code_block line 186 at RAISE\n
+business_directory: SUITE_OK; neighborhood_locking: SUITE_OK (both PASS)

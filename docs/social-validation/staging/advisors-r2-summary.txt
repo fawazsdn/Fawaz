@@ -1,0 +1,6 @@
+Supabase advisors on staging (2026-11-16, after 20261115110000 and the restore functions), counts:
+   1 WARN  SECURITY  anon_security_definer_function_executable
+   1 WARN  SECURITY  auth_insufficient_mfa_options
+   1 WARN  SECURITY  auth_leaked_password_protection
+  80 WARN  SECURITY  authenticated_security_definer_function_executable
+ERROR-level findings: 0

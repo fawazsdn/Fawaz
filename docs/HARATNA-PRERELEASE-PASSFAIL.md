@@ -38,6 +38,18 @@ production findings: cleanup authorization bug (fixed), rollback prerequisite sc
 with production's `service_role` grants, `supabase db push` would apply the unapproved
 `20261014110000`.
 
+**Round 2 (2026-11-16, staging only)** — details in `HARATNA-STAGING-RESULTS.md` §7:
+
+| Case | Result |
+|---|---|
+| Deleted-post photo retention (new `20261115110000`: 24-hour recovery grace, then the cleanup job) | **PASS**: new suite 5/5 (local, staging); hosted matrix **47 PASS / 0 FAIL**; cleanup phase **10 PASS / 0 FAIL** incl. "deleted post's photo removed after the grace" |
+| Profile-photo rollback restore with production-like `service_role` grants (no table access) | **PASS**: two service-role-only functions; `--restore-public --apply` restored a real private-only photo (byte-identical public copy); residents and anon refused (suite 8/8, anon HTTP 401) |
+| Full rollback of all five migrations and re-apply | **PASS** (round 3): stops on the private-only photo, continues after the restore, **before = after identical**. Round 2 found a defect: a second rollback restored stale rows from the first (follow notifications 6 → 8); fixed in `restore_20261109_social_data.sql` |
+| SQL suites on staging | **15/15 PASS** (incl. the 2 new), before and after the round trip |
+| Auth / Storage / security re-audit | **PASS**: no drift from the intended settings; advisors 0 ERROR |
+| No service key in the app or EAS configuration | **PASS** |
+| Staging iOS Release build against hosted staging (local, unsigned, Simulator; not uploaded) | **PASS**: right bundle ID/build 14, staging backend embedded, anon keys only, launches |
+
 ## 1. Hosted permissions (JWT role switching, RLS)
 
 | Case | Offline | Hosted staging |

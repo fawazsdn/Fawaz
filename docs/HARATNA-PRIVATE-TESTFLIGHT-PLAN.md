@@ -10,7 +10,7 @@ deploys anything waits for the owner's approval.
 
 | Item | Value |
 |---|---|
-| Source | `claude/haratna-rc-integration` at `bf98ade` (pushed) + local commits on top (staging app variant and production-fallback guard; **not pushed**) |
+| Source | `claude/haratna-rc-integration` at `508e9ff` (pushed; staging variant and production-fallback guard included). Later local commits change only SQL, scripts and docs, not the app |
 | Production app | `sa.haratna.app`, version 1.0.0, build 13 (unchanged, stays in TestFlight as the fallback) |
 | Test app | **Haratna Staging**, `sa.haratna.app.staging`, version 1.0.0, **build 14**, EAS profile `staging-testflight` |
 | Signing | EAS-managed iOS credentials (account `fawazsdn`, project `2475da56-…`); the new bundle ID gets its own provisioning profile from EAS at build time |
@@ -102,15 +102,36 @@ sent). Location verification works against the real neighborhood boundaries.
 3. **Build:** `eas build --platform ios --profile staging-testflight` (cloud build; EAS
    creates the provisioning profile for the new bundle ID; Sign in with Apple capability is
    synced but unused).
-4. **Mandatory pre-upload check:** download the `.ipa` from EAS, unzip it, and confirm that
-   `main.jsbundle` contains the staging project's URL and **does not** contain
-   `ckqwziutmqohihrenstz` (production), and that `Info.plist` says
-   `sa.haratna.app.staging`, build 14. Stop if either check fails.
+4. **Mandatory pre-upload check** (stop if any line fails): download the `.ipa` from EAS,
+   unzip it, and confirm:
+   - `Info.plist`: `sa.haratna.app.staging`, "Haratna Staging", 1.0.0, build **14**;
+   - `EXConstants.bundle/app.config`: `extra.appVariant` = `staging`, `extra.supabaseUrl` =
+     `https://qcinkzciwjmiavptlfxy.supabase.co`;
+   - `main.jsbundle` contains `https://qcinkzciwjmiavptlfxy.supabase.co` and **not**
+     `https://ckqwziutmqohihrenstz.supabase.co`;
+   - every JWT in the app decodes to `role: anon` (staging's anon key, plus production's
+     public anon key, the existing fallback); the staging service key's signature appears
+     nowhere; no `sb_secret_` key value.
+   The bare production ref `ckqwziutmqohihrenstz` **does** appear once: it's the guard
+   constant that makes the app refuse production (`src/lib/backendConfig.ts`). An earlier
+   version of this check ("must not contain the ref") would wrongly fail on a correct build.
 5. **Upload:** `eas submit --platform ios --profile staging-testflight`.
 6. **TestFlight:** internal testing group with only the owner. No external testers, no
    App Review submission. "What to test": staging backend, synthetic data, social features.
 7. **Owner on iPhone:** install Haratna Staging from TestFlight; build 13 (Haratna) stays
    installed and unchanged.
+
+## 4b. Proposed staging build configuration (prepared, not built in EAS, not uploaded)
+
+| Item | Value |
+|---|---|
+| Command (after approval) | `eas build --platform ios --profile staging-testflight`, then the check in §4.4, then `eas submit --platform ios --profile staging-testflight` |
+| Commit | `508e9ff` or later (app code identical) |
+| EAS profile `staging-testflight` | extends `production`; `autoIncrement: false`; EAS environment `preview`; env `APP_VARIANT=staging`, `STAGING_BUILD_NUMBER=14`, Apple and Google sign-in off |
+| App | "Haratna Staging", `sa.haratna.app.staging`, version 1.0.0, build 14, scheme `haratna-staging` |
+| EAS `preview` environment (**missing today; none are set in any environment**) | `EXPO_PUBLIC_SUPABASE_URL=https://qcinkzciwjmiavptlfxy.supabase.co` (plain text); `EXPO_PUBLIC_SUPABASE_ANON_KEY=<staging anon key>` (sensitive visibility). Set by the owner, e.g. `eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --visibility sensitive`. **Never** the service key. Without them the build stops at `app.config.js` |
+| Submit | `eas.json` has no `submit.staging-testflight` entry yet: add `ascAppId` once the App Store Connect record "Haratna Staging" exists |
+| Production | `production` profile, `sa.haratna.app`, build 13 and the production EAS environment unchanged |
 
 ## 5. Verified on the Mac (2026-11-15)
 
@@ -121,6 +142,7 @@ sent). Location verification works against the real neighborhood boundaries.
 | Production config unchanged by `app.config.js` | PASS: resolved prebuild config identical with and without it |
 | Native **Release** build, production config (`sa.haratna.app` 1.0.0 (13), unsigned, Simulator) | PASS: BUILD SUCCEEDED; iOS 27 scene delegate present; not run (it targets production) |
 | Native **Release** build, staging variant (`sa.haratna.app.staging` 1.0.0 (14)) against the local synthetic stack | PASS after clearing Metro's cache (see the incident above); the app's traffic went only to the local stack |
+| 2026-11-16: native **Release** build of `508e9ff`, staging variant, against **hosted staging** (Metro cache cleared, unsigned, Simulator) | PASS: BUILD SUCCEEDED; `sa.haratna.app.staging` 1.0.0 (14); embedded config = staging URL + staging anon key; bundle has the staging URL, not the production URL; JWTs: 2, both `anon`; staging service key absent from the whole app; launches on iOS 27 to onboarding (startup guard satisfied) |
 | English accessibility item on a **Release** build | **Still present** (1 at the top of the post screen, 7 with comments scrolled), no dev banner in Release; not attributable to an element; all other screens 0. VoiceOver check on the device remains |
 
 ## 6. On-device checklist (owner)

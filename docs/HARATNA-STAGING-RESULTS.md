@@ -57,12 +57,18 @@ Evidence: `docs/social-validation/staging/`.
 2. **Cleanup counted unconfirmed deletions as deleted** (defensive fix: only objects Storage
    reports as deleted drop their records; others are retried). Not reproduced on staging, where
    deletes succeeded; covered by a unit test.
-3. **Rollback prerequisite can't run in production:** `scripts/migrate-avatars-to-private.mjs
-   --restore-public` reads and updates `profiles` with the service key, but production's
-   `service_role` has no table privileges (`permission denied for table profiles`, reproduced on
-   staging). A 130000 rollback would stop unless that step is redone in SQL or the owner accepts
-   `haratna.allow_photo_fallback=on` (initials instead of photos).
-4. **Deleted posts keep their photos** indefinitely (owner decision: retention rule).
+3. **Rollback prerequisite couldn't run in production** (fixed in round 2, §7):
+   `--restore-public` read and updated `profiles` with the service key, but production's
+   `service_role` has no table privileges. It now uses two service-role-only functions added to
+   `20261109130000` (`avatar_restore_candidates`, `set_restored_public_avatar`). Other stages of
+   `scripts/migrate-avatars-to-private.mjs` (stage 1, `--remove-public`, `--sweep-orphans`) still
+   read tables directly and would hit the same error in production; not changed (out of scope).
+4. **Deleted posts kept their photos** indefinitely. Fixed by the new migration
+   `20261115110000` (24-hour recovery grace, then the existing cleanup job removes them; §7).
+8. **Rollback restore could replay an older rollback** (found in round 2):
+   `restore_20261109_social_data.sql` restored every archived batch, so after a second rollback
+   it brought back follow notifications (and could have brought back follows, privacy or
+   audiences) from the first. Now restores only the latest batch.
 5. **`supabase db push` hazard** (`20261014110000`, §2).
 6. Production's `service_role` has no table privileges; anything server-side must use granted
    definer functions (the hosted kit was adapted to this).
@@ -87,3 +93,102 @@ Evidence: `docs/social-validation/staging/`.
   window); the same steps were run directly (`cleanup-retest.txt`).
 - Hosted JWT gateway behavior for the app build, and device tests, follow with the TestFlight
   staging build.
+
+## 7. Round 2 (2026-11-15 → 16)
+
+Staging only. Production not contacted; `supabase db push` not used; every write through the
+guarded wrapper (linked ref `qcinkzciwjmiavptlfxy` and database marker `haratna-staging`).
+
+### 7.1 Deleted-post photo retention: `20261115110000_deleted_post_photo_retention`
+
+Rule: a deleted post's photos stay for a **24-hour recovery grace**, then the existing
+`cleanup-post-photos` job removes them (file and record). The grace is a floor: a shorter
+`olderThanHours` can't shorten it. Photos used by any live post, or by any post deleted less
+than 24 hours ago, are never taken. Nothing is kept indefinitely. During the grace, other users
+can't sign the photo (unchanged). A link issued before the deletion works until it expires
+(post photos: 15 minutes), as before. The job is still **not scheduled**.
+
+| Check | Result |
+|---|---|
+| `supabase/tests/deleted_post_retention.sql` (local replica): with the migration / after its rollback / re-applied | PASS 5/5 / expected FAIL "due photos not claimed" / PASS 5/5 |
+| Applied on staging after `20261115100000` (guarded, order check) | PASS, head `20261115110000` |
+| Hosted matrix (kit, updated delete checks) | **47 PASS, 0 FAIL** (`staging-main-r2.md`): after deletion other users can't sign the photo; file kept during the grace |
+| Cleanup phase (kit; deletion backdated 25 h on staging) | **10 PASS, 0 FAIL** (`staging-cleanup-r2.md`): deleted post's photo and record removed; published photo untouched; abandoned upload removed; second run no-op |
+
+### 7.2 Profile-photo rollback restore under hosted permissions
+
+`20261109130000` now also defines (service role only; revoked from `public`, `anon`,
+`authenticated`):
+- `avatar_restore_candidates()`: profiles with a private photo and no public link;
+- `set_restored_public_avatar(target, public_url)`: sets the link only for such a profile and
+  only to a file in that user's own folder of the public `avatars` bucket.
+
+Residents gain nothing. `--restore-public` uses them instead of table reads/writes. The 130000
+rollback drops them. On staging they were added as a delta (the migration was already applied).
+
+| Check | Result |
+|---|---|
+| Script tests (fake client with **no table access**, like production) | PASS 11/11 |
+| `supabase/tests/avatar_restore_rpc.sql` (local, staging) | PASS 8/8: resident and anon refused (42501); other user's folder and external URL refused; profile with a link not overwritten |
+| Drill: real private-only photo, `--restore-public` dry run then `--apply` with the staging service key | PASS: 1 restored; public copy byte-identical; anon call HTTP 401 |
+
+### 7.3 Rollback drill (all five migrations)
+
+`rollback-drill-r2.log`, `rollback-drill-r3.log`. Order: 110000 → 100000 → 090000 → seed →
+130000 (must stop) → restore → 130000 → 120000 → baseline suites → re-apply all five → restore
+social data → compare → all suites → remove drill files (Storage API) and accounts.
+
+| Check | Round 2 | Round 3 (after the fix) |
+|---|---|---|
+| 130000 rollback stops on a private-only photo | PASS | PASS |
+| Continues after `--restore-public --apply` | PASS | PASS |
+| Baseline suites while rolled back | 8/8 PASS | 8/8 PASS |
+| Before = after | **FAIL**: follow notifications 6 → 8 (stale rows from the first drill's archive) | **PASS: identical** |
+| Suites after re-apply | 15/15 PASS | 15/15 PASS |
+
+`build13_compat` can't run while rolled back (it needs `delete_post_comment`, added by
+`20261109120000`, for its new-build account); build 13 itself doesn't call it. Expected.
+
+### 7.4 SQL suites
+
+15/15 PASS on staging after the new migration (`sql-suites-r2.txt`), and again after the round
+trip. New: `deleted_post_retention` 5, `avatar_restore_rpc` 8.
+
+### 7.5 Auth, Storage and security re-audit
+
+| Item | Result |
+|---|---|
+| `config push` preview (`--agent no`, answered "n") | API, DB, Auth, Storage: up to date (nothing pushed) |
+| Live Auth (`/auth/v1/settings`) | Email only; auto-confirm on; sign-ups on (synthetic testing); Apple, Google, phone, anonymous, SAML off. `sms_provider: twilio` is only the default label; phone sign-in is off |
+| SMS template from the earlier unintended push | Default text; SMS sign-up and Twilio disabled → inert |
+| Storage "vector" | `false` in the pushed config, which reports up to date |
+| Buckets | `avatars` public 5 MB; `community-media` and `profile-photos` private (10 / 5 MB); JPEG/PNG/WebP/HEIC (as in the backup) |
+| RLS | 65/65 `public` tables have RLS on |
+| Function grants | cleanup and restore functions: `service_role` only; `private.deleted_post_photo_due`: owner only |
+| `service_role` table access | none for reading or writing (only TRUNCATE/REFERENCES/TRIGGER/MAINTAIN, as in production's backup) |
+| Accounts | 0 non-synthetic; `haratna_backup` role absent |
+| Advisors | 0 ERROR; same WARNs as round 1 (`advisors-r2-summary.txt`) |
+
+Left on staging: a few duplicate synthetic follow notifications for kit accounts (from the
+round-2 stale restore and repeated kit runs). Synthetic only; harmless.
+
+### 7.6 Service key never reaches the app
+
+| Check | Result |
+|---|---|
+| App source and config (`src`, `app.config.js`, `app.json`, `eas.json`, `package.json`) | no `service_role`, `SERVICE_KEY` or `sb_secret_`; the only JWT is production's public **anon** key (existing fallback) |
+| Staging key values in any tracked file | none (searched by the keys' unique signatures) |
+| Variables the app reads | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN`, `EXPO_PUBLIC_ENABLE_GOOGLE_SIGN_IN`, `EXPO_PUBLIC_WEB_BASE_URL` |
+| EAS environment variables (project and account; development, preview, production) | none exist |
+| `eas.json` `staging-testflight` env | `APP_VARIANT`, `STAGING_BUILD_NUMBER`, two sign-in flags: no keys |
+| The staging key file | outside Git, mode 600; used only by the kit, the SQL wrapper and the drill |
+
+### 7.7 Staging iOS build configuration (prepared; nothing built in EAS or uploaded)
+
+Local Release build of `508e9ff` (staging variant, hosted staging backend, Metro cache cleared,
+unsigned, Simulator): **PASS**. `sa.haratna.app.staging` 1.0.0 (14); embedded config names the
+staging URL and anon key; bundle has the staging URL and not the production URL; the only JWTs
+are anon keys; the staging service key appears nowhere in the app; it launches to onboarding on
+iOS 27. Proposed EAS configuration and the corrected pre-upload check:
+`HARATNA-PRIVATE-TESTFLIGHT-PLAN.md` §4 and §4b.
+
