@@ -285,7 +285,33 @@ revoke all on function private.can_view_profile_photo(uuid) from public, anon;
 revoke all on function private.profile_visible_in_neighborhood(uuid) from public, anon;
 revoke all on function private.can_view_profile_photo_folder(text) from public, anon;
 revoke all on function private.archive_public_avatar() from public, anon;
+-- Rollback support (service role only). A rollback of this migration needs a public copy of
+-- every private-only photo first (scripts/migrate-avatars-to-private.mjs --restore-public).
+-- Production's service_role has no table privileges, so the script uses these two functions
+-- instead of reading and updating profiles directly. Residents gain nothing.
+create or replace function public.avatar_restore_candidates()
+returns table(id uuid, avatar_url text, avatar_path text) language sql stable security definer set search_path to '' as $$
+  select p.id, p.avatar_url, p.avatar_path from public.profiles p
+  where p.avatar_path is not null and p.avatar_url is null
+  order by p.id;
+$$;
+
+create or replace function public.set_restored_public_avatar(target uuid, public_url text)
+returns void language plpgsql security definer set search_path to '' as $$
+begin
+  -- Only a profile that has a private photo and no public link, and only a link into that
+  -- user's own folder of the public avatars bucket.
+  if public_url is null or public_url !~ ('/storage/v1/object/public/avatars/' || target::text || '/[^/]+$') then
+    raise exception 'invalid:public_url' using errcode = '22023';
+  end if;
+  update public.profiles set avatar_url = public_url
+  where id = target and avatar_path is not null and avatar_url is null;
+  if not found then raise exception 'not_a_candidate' using errcode = '22023'; end if;
+end; $$;
+
 revoke all on function public.legacy_avatar_inventory() from public, anon, authenticated;
+revoke all on function public.avatar_restore_candidates(), public.set_restored_public_avatar(uuid, text) from public, anon, authenticated;
+grant execute on function public.avatar_restore_candidates(), public.set_restored_public_avatar(uuid, text) to service_role;
 revoke all on function public.mark_legacy_avatar_removed(uuid, text) from public, anon, authenticated;
 grant execute on function public.legacy_avatar_inventory(), public.mark_legacy_avatar_removed(uuid, text) to service_role;
 revoke all on function private.guard_comment_update() from public, anon;

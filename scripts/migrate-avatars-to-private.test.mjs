@@ -11,7 +11,7 @@ const GONE = '99999999-9999-9999-9999-999999999999';
 const pub = (path) => `https://proj.supabase.co/storage/v1/object/public/avatars/${path}`;
 
 /** In-memory stand-in for the parts of supabase-js the script uses (incl. the archive trigger). */
-function fakeClient(profiles, files = {}, { failUpload = false, archive = [] } = {}) {
+function fakeClient(profiles, files = {}, { failUpload = false, archive = [], noTables = false } = {}) {
   const buckets = { avatars: new Map(), 'profile-photos': new Map(), 'community-media': new Map() };
   for (const [k, v] of Object.entries(files)) {
     const [bucket, ...rest] = k.split(':');
@@ -48,6 +48,15 @@ function fakeClient(profiles, files = {}, { failUpload = false, archive = [] } =
     if (name === 'legacy_avatar_inventory') {
       const current = profiles.filter((p) => p.avatar_url?.includes('/object/public/avatars/')).map((p) => ({ user_id: p.id, url: p.avatar_url, reason: 'current' }));
       return { data: [...current, ...archive], error: null };
+    }
+    if (name === 'avatar_restore_candidates') {
+      return { data: profiles.filter((p) => p.avatar_path && !p.avatar_url).map((p) => ({ ...p })), error: null };
+    }
+    if (name === 'set_restored_public_avatar') {
+      const p = profiles.find((x) => x.id === args.target && x.avatar_path && !x.avatar_url);
+      if (!p || !args.public_url.includes(`/object/public/avatars/${args.target}/`)) return { error: { message: 'not_a_candidate' } };
+      p.avatar_url = args.public_url;
+      return { error: null };
     }
     if (name === 'mark_legacy_avatar_removed') {
       for (const a of archive) if (a.user_id === args.target_user && a.url === args.file_url) a.file_removed_at = 'now';
@@ -89,7 +98,9 @@ function fakeClient(profiles, files = {}, { failUpload = false, archive = [] } =
     };
     return api;
   };
-  return { storage, rpc, from: table, buckets, attachments, archive };
+  // noTables: like production, the service role can't read or write tables directly.
+  const from = noTables ? () => { throw new Error('permission denied for table'); } : table;
+  return { storage, rpc, from, buckets, attachments, archive };
 }
 
 test('plans each kind of profile', () => {
@@ -180,9 +191,9 @@ test('a failed copy leaves everything as it was', async () => {
   assert.ok(c.buckets.avatars.has(`${U1}/a.jpg`));
 });
 
-test('restore-public gives private-only photos a public copy for a rollback', async () => {
+test('restore-public gives private-only photos a public copy, without table access (production grants)', async () => {
   const profiles = [{ id: U1, avatar_url: null, avatar_path: `${U1}/new.jpg` }];
-  const c = fakeClient(profiles, { [`profile-photos:${U1}/new.jpg`]: 'img' });
+  const c = fakeClient(profiles, { [`profile-photos:${U1}/new.jpg`]: 'img' }, { noTables: true });
   const dry = await restorePublic(c, { apply: false });
   assert.equal(dry[0].applied, false);
   assert.equal(profiles[0].avatar_url, null);

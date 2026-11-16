@@ -141,4 +141,6 @@ alter table public.profiles drop column if exists avatar_path;
 -- them) by keeping the widened bucket check.
 -- Kept on purpose: the profile-photos bucket (private, with its files),
 -- private.avatar_legacy_urls and private.rollback_20261109_avatar_paths.
+drop function if exists public.avatar_restore_candidates();
+drop function if exists public.set_restored_public_avatar(uuid, text);
 commit;

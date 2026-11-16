@@ -173,9 +173,15 @@ export async function removePublic(client, { apply, confirmed }) {
 
 /** Rollback aid: give private-only photos a public copy again (run before rolling back 20261109130000). */
 export async function restorePublic(client, { apply }) {
-  const { rows, archive } = await loadState(client);
+  // Service-role functions, not table reads: production's service_role has no table
+  // privileges (see migration 20261109130000).
+  const cand = await client.rpc('avatar_restore_candidates');
+  if (cand.error) throw new Error(`could not list restore candidates: ${cand.error.message}`);
+  const inv = await client.rpc('legacy_avatar_inventory');
+  if (inv.error) throw new Error(`could not read the legacy photo inventory: ${inv.error.message}`);
+  const archive = (inv.data ?? []).filter((r) => r.reason !== 'current');
   const out = [];
-  for (const row of rows) {
+  for (const row of cand.data ?? []) {
     if (!row.avatar_path || row.avatar_url) continue;
     const kept = archive.some((a) => a.user_id === row.id && ['went_private', 'migrated'].includes(a.reason) && !a.file_removed_at);
     if (kept) continue; // the rollback restores the archived original itself
@@ -195,7 +201,7 @@ export async function restorePublic(client, { apply }) {
       continue;
     }
     const url = client.storage.from(PUBLIC_BUCKET).getPublicUrl(path).data.publicUrl;
-    const upd = await client.from('profiles').update({ avatar_url: url }).eq('id', row.id);
+    const upd = await client.rpc('set_restored_public_avatar', { target: row.id, public_url: url });
     out.push(upd.error ? { id: row.id, action: 'error', step: 'profile' } : { id: row.id, action: 'restore', applied: true });
   }
   return out;
