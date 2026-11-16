@@ -47,7 +47,8 @@ begin atomic
   ),
   scored as (
     select c.*,
-      (select count(*) from public.post_comments cm where cm.post_id = c.id and cm.deleted_at is null) as comments,
+      (select count(*) from public.post_comments cm where cm.post_id = c.id and cm.deleted_at is null
+        and not private.is_blocked_between(c.viewer_id, cm.author_id)) as comments,
       (select coalesce(jsonb_agg(jsonb_build_object('user_id', r.user_id, 'type', r.type)), '[]')
        from public.post_reactions r where r.post_id = c.id and not private.is_blocked_between(c.viewer_id, r.user_id)) as reactions
     from candidates c
@@ -78,8 +79,8 @@ as restrictive for select to authenticated
 using (
   (actor_id is null or not private.is_blocked_between((select auth.uid()), actor_id))
   and case
-    when split_part(deep_link, '?', 1) ~ '^/post/[0-9a-fA-F-]{36}$' then
-      exists (select 1 from public.posts p where '/post/' || p.id = split_part(notifications.deep_link, '?', 1)
+    when deep_link ~ '^/post/[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}([?#].*)?$' then
+      exists (select 1 from public.posts p where p.id = substring(notifications.deep_link from 7 for 36)::uuid
         and p.deleted_at is null and not private.is_blocked_between((select auth.uid()), p.author_id))
     when deep_link like '/post/%' then false
     else true
