@@ -10,6 +10,14 @@ const PRODUCTION_PROJECT_REF = 'ckqwziutmqohihrenstz';
 // only hold staging values and the real app's project and environments stay untouched.
 const STAGING_EAS_PROJECT_ID = '2366169a-6d69-4475-b3f2-67a71dee54c6';
 
+const { withEntitlementsPlist } = require('expo/config-plugins');
+
+const withoutAppleSignInEntitlement = (config) =>
+  withEntitlementsPlist(config, (mod) => {
+    delete mod.modResults['com.apple.developer.applesignin'];
+    return mod;
+  });
+
 module.exports = ({ config }) => {
   if (process.env.APP_VARIANT !== 'staging') return config;
 
@@ -41,6 +49,14 @@ module.exports = ({ config }) => {
       // Staging Auth has email and password only (no Apple or Google providers).
       usesAppleSignIn: false,
     },
+    // expo-apple-authentication adds the Sign in with Apple entitlement whenever it's
+    // installed (usesAppleSignIn doesn't remove it), and EAS would then enable it on the
+    // staging App ID. Staging has no Apple sign-in (the button is hidden by
+    // EXPO_PUBLIC_ENABLE_APPLE_SIGN_IN=false), so drop the entitlement.
+    plugins: [
+      ...(config.plugins ?? []).filter((p) => (Array.isArray(p) ? p[0] : p) !== 'expo-apple-authentication'),
+      withoutAppleSignInEntitlement,
+    ],
     android: config.android ? { ...config.android, package: `${config.android.package}.staging` } : config.android,
     // Embedded in the native app config: the app reads its backend from here first and
     // refuses to start against production (src/lib/backendConfig.ts).

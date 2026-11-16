@@ -136,8 +136,10 @@ A dedicated EAS **environment** named `staging` needs EAS's Production or Enterp
 | Real profiles (`production`, `google-testflight`, `preview`) | unchanged: `sa.haratna.app`, build 13, project `2475da56-…` |
 | Guards | production URL refused everywhere; missing backend refused on the EAS build worker (`EAS_BUILD=true`); elsewhere the app refuses to start without a staging backend (`src/lib/backendConfig.ts`). EAS CLI reads the config once before fetching the project's variables, so the build-time check can only apply on the worker |
 | Commands (each needs separate approval) | `eas build --platform ios --profile staging-testflight` → check in §4.4 → `eas submit --platform ios --profile staging-testflight` |
-| Submit | add `submit.staging-testflight.ios.ascAppId` once the App Store Connect record "Haratna Staging" exists |
-| Signing | the first build asks EAS to create the distribution certificate use and a provisioning profile for `sa.haratna.app.staging` (Apple login); production's credentials are not changed |
+| App Store Connect | "Haratna Staging", Apple ID `6835440142`, bundle `sa.haratna.app.staging`, SKU `HARATNA-STAGING-IOS`, team `D2P6S6224L` (created by the owner 2026-11-16) |
+| Submit (`eas.json`) | `submit.staging-testflight.ios`: `ascAppId` `6835440142`, `appleTeamId` `D2P6S6224L`. Production's `submit.production` (`6821993919`) unchanged |
+| Entitlements | staging: **none**. `expo-apple-authentication` adds Sign in with Apple whenever it's installed, so the staging variant removes that entitlement (`app.config.js`); the staging App ID needs no extra capability. Production keeps it (resolved production config byte-identical) |
+| Signing | first `staging-testflight` build: EAS reuses the team's distribution certificate and creates an App Store provisioning profile for `sa.haratna.app.staging`. That needs an interactive Apple login (2FA) by the owner, or an App Store Connect API key in EAS. Production's credentials are not changed |
 
 ## 5. Verified on the Mac (2026-11-15)
 

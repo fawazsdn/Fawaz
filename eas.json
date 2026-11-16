@@ -53,6 +53,12 @@
       "ios": {
         "ascAppId": "6821993919"
       }
+    },
+    "staging-testflight": {
+      "ios": {
+        "ascAppId": "6835440142",
+        "appleTeamId": "D2P6S6224L"
+      }
     }
   }
 }
