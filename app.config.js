@@ -6,14 +6,22 @@
 // side with the production app (build 13 stays on the phone) and can't be submitted as
 // the real app by mistake.
 const PRODUCTION_PROJECT_REF = 'ckqwziutmqohihrenstz';
+// Its own EAS project (@fawazsdn/haratna-staging), so its EAS environment variables can
+// only hold staging values and the real app's project and environments stay untouched.
+const STAGING_EAS_PROJECT_ID = '2366169a-6d69-4475-b3f2-67a71dee54c6';
 
 module.exports = ({ config }) => {
   if (process.env.APP_VARIANT !== 'staging') return config;
 
   // The app falls back to the production backend when no URL is set
   // (src/lib/supabase.ts), so a staging build must name its backend explicitly.
+  // EAS CLI reads this config once before it fetches the staging project's EAS
+  // variables (it needs the project ID below to fetch them), so a missing backend only
+  // fails the build where it matters: on the EAS build worker (EAS_BUILD=true). Any
+  // other build without one embeds no backend, and the app then refuses to start
+  // (src/lib/backendConfig.ts). A production URL is refused everywhere.
   const url = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-  if (!url || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) {
+  if ((!url || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) && process.env.EAS_BUILD === 'true') {
     throw new Error('Staging build: set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY for the staging project.');
   }
   if (url.includes(PRODUCTION_PROJECT_REF)) {
@@ -23,6 +31,7 @@ module.exports = ({ config }) => {
   return {
     ...config,
     name: 'Haratna Staging',
+    slug: 'haratna-staging',
     scheme: 'haratna-staging',
     ios: {
       ...config.ios,
@@ -37,6 +46,7 @@ module.exports = ({ config }) => {
     // refuses to start against production (src/lib/backendConfig.ts).
     extra: {
       ...config.extra,
+      eas: { ...config.extra?.eas, projectId: STAGING_EAS_PROJECT_ID },
       appVariant: 'staging',
       supabaseUrl: url,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,

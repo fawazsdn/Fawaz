@@ -72,7 +72,7 @@ Sequence (staging only; production is never touched):
    `cleanup-post-photos` deployed but **not scheduled** (optional manual run).
 9. **Synthetic accounts:** alice, bob (private), carol, dave, erin, mallory, deletion
    accounts, staff — so the owner has people to follow, block and comment with.
-10. **EAS environment `preview`:** `EXPO_PUBLIC_SUPABASE_URL` and
+10. **EAS (now a dedicated project, §4b):** `EXPO_PUBLIC_SUPABASE_URL` and
     `EXPO_PUBLIC_SUPABASE_ANON_KEY` (staging's publishable key; set by the owner or through
     the EAS CLI, never pasted into chat or Git).
 
@@ -121,17 +121,23 @@ sent). Location verification works against the real neighborhood boundaries.
 7. **Owner on iPhone:** install Haratna Staging from TestFlight; build 13 (Haratna) stays
    installed and unchanged.
 
-## 4b. Proposed staging build configuration (prepared, not built in EAS, not uploaded)
+## 4b. Staging build configuration (2026-11-16; prepared, not built in EAS, not uploaded)
+
+A dedicated EAS **environment** named `staging` needs EAS's Production or Enterprise plan; the
+`fawazsdn` account is on Free. Owner decision: a dedicated EAS **project** instead.
 
 | Item | Value |
 |---|---|
-| Command (after approval) | `eas build --platform ios --profile staging-testflight`, then the check in §4.4, then `eas submit --platform ios --profile staging-testflight` |
-| Commit | `508e9ff` or later (app code identical) |
-| EAS profile `staging-testflight` | extends `production`; `autoIncrement: false`; EAS environment `preview`; env `APP_VARIANT=staging`, `STAGING_BUILD_NUMBER=14`, Apple and Google sign-in off |
-| App | "Haratna Staging", `sa.haratna.app.staging`, version 1.0.0, build 14, scheme `haratna-staging` |
-| EAS `preview` environment (**missing today; none are set in any environment**) | `EXPO_PUBLIC_SUPABASE_URL=https://qcinkzciwjmiavptlfxy.supabase.co` (plain text); `EXPO_PUBLIC_SUPABASE_ANON_KEY=<staging anon key>` (sensitive visibility). Set by the owner, e.g. `eas env:create --environment preview --name EXPO_PUBLIC_SUPABASE_ANON_KEY --visibility sensitive`. **Never** the service key. Without them the build stops at `app.config.js` |
-| Submit | `eas.json` has no `submit.staging-testflight` entry yet: add `ascAppId` once the App Store Connect record "Haratna Staging" exists |
-| Production | `production` profile, `sa.haratna.app`, build 13 and the production EAS environment unchanged |
+| EAS project | `@fawazsdn/haratna-staging`, ID `2366169a-6d69-4475-b3f2-67a71dee54c6` (account `fawazsdn`, Free). Used only by the staging variant (`app.config.js`: slug `haratna-staging`, `extra.eas.projectId`) |
+| Its variables (environment `preview`, project scope) | `EXPO_PUBLIC_SUPABASE_URL=https://qcinkzciwjmiavptlfxy.supabase.co` (plain text); `EXPO_PUBLIC_SUPABASE_ANON_KEY` = staging's anon key (sensitive; verified ref `qcinkzciwjmiavptlfxy`, role `anon`). Nothing else: no service key |
+| Real project `@fawazsdn/haratna` (`2475da56-…`) | unchanged: no variables in any environment; account scope empty |
+| EAS profile `staging-testflight` (`eas.json`, unchanged) | extends `production`; `autoIncrement: false`; environment `preview` (resolved in the staging project); `APP_VARIANT=staging`, `STAGING_BUILD_NUMBER=14`, Apple and Google sign-in off |
+| Resolved by EAS (`eas config --profile staging-testflight --platform ios`) | "Haratna Staging", slug `haratna-staging`, `sa.haratna.app.staging`, 1.0.0 (14), Apple sign-in off, staging project ID, `supabaseUrl` = staging, anon key ref staging / role anon |
+| Real profiles (`production`, `google-testflight`, `preview`) | unchanged: `sa.haratna.app`, build 13, project `2475da56-…` |
+| Guards | production URL refused everywhere; missing backend refused on the EAS build worker (`EAS_BUILD=true`); elsewhere the app refuses to start without a staging backend (`src/lib/backendConfig.ts`). EAS CLI reads the config once before fetching the project's variables, so the build-time check can only apply on the worker |
+| Commands (each needs separate approval) | `eas build --platform ios --profile staging-testflight` → check in §4.4 → `eas submit --platform ios --profile staging-testflight` |
+| Submit | add `submit.staging-testflight.ios.ascAppId` once the App Store Connect record "Haratna Staging" exists |
+| Signing | the first build asks EAS to create the distribution certificate use and a provisioning profile for `sa.haratna.app.staging` (Apple login); production's credentials are not changed |
 
 ## 5. Verified on the Mac (2026-11-15)
 
